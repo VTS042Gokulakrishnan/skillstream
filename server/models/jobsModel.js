@@ -1,0 +1,33 @@
+const mongoose = require("mongoose");
+const schema = mongoose.Schema;
+const jobsSchema = new schema({
+  companyName: String,
+  userId: String,
+  jobId: String,
+  JobTitle: String,
+  JobDescription: String,
+  EmailAddress: String,
+  Specialisms: String,
+  JobType: String,
+  employmentType: String,
+  Responsibilties: Array,
+  skill_Experience: Array,
+  offeredSalary: String,
+  jobSkills: Array,
+  Experience: String,
+  Industry: String,
+  Qualification: String,
+  ApplicationDeadlineDate: String,
+  Country: String,
+  City: String,
+  State: String,
+  CompleteAddress: String,
+  image: String,
+  postedTime: String,
+  time: String,
+  status: String,
+  website: String,
+  isVendor: Boolean,
+});
+
+module.exports = mongoose.model("job", jobsSchema);
