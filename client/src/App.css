@@ -1,0 +1,243 @@
+/* body{
+  overflow-x: hidden;
+} */
+.disabled-btn {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: none;
+}
+.p-format {
+  font-size: 20px;
+  color: #e1e1e1;
+}
+.h2-format {
+  font-size: 30px;
+  font-size: 500;
+  color: #e1e1e1;
+}
+.h3-format {
+  font-size: 28px;
+  color: #e1e1e1;
+}
+.responsibility-field {
+  display: flex;
+  align-items: center;
+}
+
+.responsibility-field input {
+  margin-right: 5px; /* Adjust as needed for spacing between input and icon */
+}
+
+.add-icon,
+.delete-icon {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 16px;
+  color: green; /* Change the color for the "+" icon */
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+.text-design {
+  padding: 12rem;
+  font-size: 25px;
+  opacity: 80%;
+  font-weight: 500;
+}
+/* HTML: <div class="spinner"></div> */
+.spinner {
+  width: 40px;
+  aspect-ratio: 1;
+  color: #f03355;
+  position: relative;
+  background: conic-gradient(from 134deg at top, currentColor 92deg, #0000 0)
+      top,
+    conic-gradient(from -46deg at bottom, currentColor 92deg, #0000 0) bottom;
+  background-size: 100% 50%;
+  background-repeat: no-repeat;
+}
+.spinner:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  --g: currentColor 14.5px, #0000 0 calc(100% - 14.5px), currentColor 0;
+  background: linear-gradient(45deg, var(--g)),
+    linear-gradient(-45deg, var(--g));
+  animation: l7 1.5s infinite cubic-bezier(0.3, 1, 0, 1);
+}
+@keyframes l7 {
+  33% {
+    inset: -10px;
+    transform: rotate(0deg);
+  }
+  66% {
+    inset: -10px;
+    transform: rotate(90deg);
+  }
+  100% {
+    inset: 0;
+    transform: rotate(90deg);
+  }
+}
+
+.voice-loading {
+  --speed-of-animation: 0.9s;
+  --gap: 6px;
+  --first-color: #4c86f9;
+  --second-color: #49a84c;
+  --third-color: #f6bb02;
+  --fourth-color: #f6bb02;
+  --fifth-color: #2196f3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  gap: 6px;
+  height: 100px;
+}
+
+.voice-loading span {
+  width: 4px;
+  height: 50px;
+  background: var(--first-color);
+  animation: scale var(--speed-of-animation) ease-in-out infinite;
+}
+
+.voice-loading span:nth-child(2) {
+  background: var(--second-color);
+  animation-delay: -0.8s;
+}
+
+.voice-loading span:nth-child(3) {
+  background: var(--third-color);
+  animation-delay: -0.7s;
+}
+
+.voice-loading span:nth-child(4) {
+  background: var(--fourth-color);
+  animation-delay: -0.6s;
+}
+
+.voice-loading span:nth-child(5) {
+  background: var(--fifth-color);
+  animation-delay: -0.5s;
+}
+
+@keyframes scale {
+  0%,
+  40%,
+  100% {
+    transform: scaleY(0.05);
+  }
+
+  20% {
+    transform: scaleY(1);
+  }
+}
+
+  .downtime-banner {
+  position: relative;
+  width: 100%;
+  /* background: linear-gradient(to right, #b91c1c, #ef4444); */
+  background: #ffff;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.marquee {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+  font-weight: 600;
+  font-size: 14px;
+  animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* HTML: <div class="initialiser"></div> */
+/* HTML: <div class="loader"></div> */
+
+/* .initialiser {
+  width: 120px;
+  height: 22px;
+  border-radius: 20px;
+  color: #514b82;
+  border: 2px solid;
+  position: relative;
+}
+.initialiser::before {
+  content: "";
+  position: absolute;
+  margin: 2px;
+  inset: 0 100% 0 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: l6 2s infinite;
+}
+@keyframes l6 {
+  100% {
+    inset: 0;
+  }
+} */
+
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  justify-content: center;
+}
+
+.logo-container img {
+  width: 80px;
+  animation: fadePulse 1.8s infinite ease-in-out;
+}
+
+@keyframes fadePulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #555;
+  letter-spacing: 1px;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

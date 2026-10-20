@@ -1,0 +1,153 @@
+/* styles.css */
+
+/* Default styles */
+.question-panel {
+    padding: 20px;
+
+    background-color: #f7f9fc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 1s ease-in-out;
+    position: relative;
+  }
+  
+  .question-panel .header {
+    display: flex;
+    /* justify-content: space-between; */
+    gap: 20px;
+    align-items: center;
+    /* margin-bottom: 10px; */
+  }
+  
+  .question-panel .header .robot-icon {
+    margin-right: 20px;
+  }
+  
+  .question-panel .header .question-text {
+    font-size: 24px;
+    margin: 0;
+    transition: transform 0.5s ease;
+  }
+  
+  .question-panel .time-left {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    transition: color 0.3s ease;
+  }
+  
+  .question-panel .frequency-wave {
+    display: flex;
+    align-items: center;
+    margin-top: 40px;
+  }
+  
+  .question-panel .frequency-wave .user-icon {
+    margin-right: 20px;
+  }
+  
+  .question-panel .frequency-wave .wave-bars {
+    display: flex;
+    align-items: center;
+  }
+  
+  .question-panel .frequency-wave .wave-bars .wave-bar {
+    width: 10px;
+    margin: 0 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 768px) { /* Tablet and below */
+    .question-panel {
+      padding: 15px;
+    }
+    .question-panel .header .question-text {
+      font-size: 20px;
+    }
+    .question-panel .time-left {
+      font-size: 18px;
+    }
+    .question-panel .frequency-wave {
+      margin-top: 30px;
+    }
+    .question-panel .frequency-wave .wave-bars .wave-bar {
+      width: 8px;
+      margin: 0 3px;
+    }
+  }
+  
+  @media (max-width: 480px) { /* Mobile and below */
+    .question-panel {
+      padding: 10px;
+    }
+    .question-panel .header .question-text {
+      font-size: 18px;
+    }
+    .question-panel .time-left {
+      font-size: 16px;
+    }
+    .question-panel .frequency-wave {
+      margin-top: 20px;
+    }
+    .question-panel .frequency-wave .wave-bars .wave-bar {
+      width: 6px;
+      margin: 0 2px;
+    }
+  }
+  
+  @keyframes waveFrequency {
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  
+/* CSS for typing animation */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blinkCursor {
+  from, to { border-color: transparent; }
+  50% { border-color: black; }
+}
+
+.typing-container {
+  overflow: hidden; /* Ensures text is clipped to container */
+  white-space: nowrap; /* Preserves spaces and wraps text */
+  border-right: .15em solid black; /* Creates the cursor effect */
+  animation: typing 4s steps(30, end), blinkCursor .75s step-end infinite;
+  font-family: monospace; /* Gives a typewriter-like effect */
+  font-size: 15px;
+  width: 100%; /* Adjust width as needed */
+  max-width: 100%; /* Ensures it doesn't overflow the container */
+  box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+}
+
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* Add this to your CSS file or within a <style> tag */
+
+
+@keyframes colorChange {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

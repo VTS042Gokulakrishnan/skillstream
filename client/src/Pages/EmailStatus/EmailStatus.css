@@ -1,0 +1,143 @@
+/* Page wrapper */
+.email-status-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f4f8ff, #eef2ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Card */
+.email-status-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 460px;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  animation: fadeScale 0.6s ease-in-out;
+}
+
+/* Logo */
+.email-logo {
+  width: 160px;
+  margin-bottom: 20px;
+  display: block;
+}
+.email-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  display: block;
+  text-align: center;
+}
+
+.email-icon.success {
+  color: #28a745;
+}
+
+.email-icon.expired {
+  color: #dc3545;
+}
+
+.email-icon.info {
+  color: #0d6efd;
+}
+
+/* Text */
+.email-status-card h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.email-status-card p {
+  font-size: 16px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+/* Button */
+.redirect-btn {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #ffffff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.redirect-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+}
+
+/* Auto redirect text */
+.auto-redirect {
+  display: block;
+  margin-top: 15px;
+  font-size: 13px;
+  color: #6b7280;
+}
+/* Center logo + icon */
+.center-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.email-icon.invalid {
+  color: #ff4d4f;
+  animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-6px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+/* Animations */
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .email-status-card {
+    padding: 30px 20px;
+  }
+
+  .email-status-card h1 {
+    font-size: 20px;
+  }
+
+  .email-icon {
+    font-size: 54px;
+  }
+}

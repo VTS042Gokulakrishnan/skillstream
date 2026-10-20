@@ -1,0 +1,15 @@
+.run-btn:disabled {
+  opacity: 0.6;              /* make it look inactive */
+  cursor: not-allowed !important;  /* show the "🚫" cursor */
+  pointer-events: none;      /* prevent clicks */
+  box-shadow: none;
+  transform: none;
+}
+
+.run-btn:disabled:hover {
+  opacity: 0.6;
+}
+
+.run-btn:disabled:active {
+  transform: none;           /* prevent press effect */
+}
