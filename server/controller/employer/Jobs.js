@@ -1,3 +1,4 @@
+const { availableJobStages, isAvailable } = require("../../services/jobAvailability");
 const employerModel = require("../../models/employerModel");
 const candidateModel = require("../../models/candidateModel");
 const jobsModel = require("../../models/jobsModel");
@@ -1320,6 +1321,9 @@ const controller = {
       } = req.body;
 
       if (userId) {
+        if (!findUser?.jobs?.some((job) => job.jobId === jobId) || await jobsModel.exists({ userId, jobId, status: "Deleted" })) {
+          return res.status(410).json({ message: "This job is no longer available." });
+        }
         const updateJob = await employerModel.updateOne(
           { userId, "jobs.jobId": jobId },
           {
@@ -1353,7 +1357,7 @@ const controller = {
 
         console.log(updateJob);
         const addjobs = await jobsModel.updateOne(
-          { jobId },
+          { userId, jobId, status: { $ne: "Deleted" } },
           {
             $set: {
               jobId,
@@ -1399,16 +1403,11 @@ const controller = {
   },
   async getAllJobs(req, res) {
     try {
-      const getAllJobs = await jobsModel.find({});
-      const employersWithJobs = getAllJobs.filter(
-        (getAllJobs) => getAllJobs.jobs.length > 0
-      );
-      const jobs = employersWithJobs.map((getAllJobs) => getAllJobs.jobs);
-      if (jobs.length === 0) {
-        res.status(400).json({ message: "No Jobs Found" });
-      } else {
-        res.status(200).json({ jobs });
-      }
+      const country = req.params.country?.replaceAll("-", " ");
+      const rows = await jobsModel.aggregate([{ $match: country ? { Country: country } : {} }, ...availableJobStages()]);
+      const grouped = new Map();
+      for (const job of rows) grouped.set(job.userId, [...(grouped.get(job.userId) || []), job]);
+      res.status(200).json({ jobs: [...grouped.values()] });
     } catch (error) {
       console.log(error);
       res
@@ -1426,50 +1425,19 @@ const controller = {
           ? `${country.split("-")[0]} ${country.split("-")[1]}`
           : country;
 
-      let jobsQuery = { Country: formatedCountry };
-      let getAllJobs = [];
+      const jobsQuery = { Country: formatedCountry };
       let locations = false;
-      let isResumeUploaded = false;
-      let CandidateCities;
-      // let isloggedIn = false;
-
       if (id) {
-        // Fetch candidate profile
-        console.log("id");
-
         const candidate = await candidateModel.findOne({ userId: id });
-
-        if (candidate && candidate.resume && candidate.skills?.length > 0) {
-          // Match jobs with candidate's skills
-          const candidateSkills = candidate.skills.map((skill) => skill);
-          console.log(candidateSkills);
-          // console.log(candidate);
-          if (
-            candidate?.preferred_locations &&
-            Array.isArray(candidate?.preferred_locations) &&
-            candidate?.preferred_locations.length !== 0
-          ) {
-            jobsQuery.City = { $in: candidate?.preferred_locations };
-            // console.log(candidate?.preferred_locations);
-            locations = true; // or State / PreferredLocation based on your schema
-          }
-          console.log(jobsQuery);
-          getAllJobs = await jobsModel.find({
-            ...jobsQuery,
-            jobSkills: { $in: candidateSkills },
-          });
-          console.log(getAllJobs.length);
-        } else {
-          // Candidate has no resume or skills → show all jobs
-          getAllJobs = await jobsModel.find(jobsQuery);
+        if (candidate?.preferred_locations?.length) {
+          jobsQuery.City = { $in: candidate.preferred_locations.map((city) => new RegExp(`^${city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")) };
+          locations = true;
         }
-      } else {
-        // No candidate id → show all jobs
-        getAllJobs = await jobsModel.find(jobsQuery);
+        if (candidate?.resume && candidate.skills?.length) jobsQuery.jobSkills = { $in: candidate.skills };
       }
-
+      const getAllJobs = await jobsModel.aggregate([{ $match: jobsQuery }, ...availableJobStages()]);
       if (getAllJobs.length === 0) {
-        return res.status(400).json({ message: "No Jobs Found" });
+        return res.status(200).json({ TotalJobs: 0, getAllJobs: [], preferred_locations: locations });
       }
       console.log(`Prefered locations : ${locations}`);
       return res.status(200).json({
@@ -1685,6 +1653,15 @@ const controller = {
         .json({ message: "Internal Server Error", error, status: false });
     }
   },
+  async getPublicJobByID(req, res) {
+    try {
+      const { userId, jobId } = req.params;
+      if (!await isAvailable(userId, jobId)) return res.status(410).json({ message: "This job is no longer available." });
+      const owner = await employerModel.findOne({ userId, jobs: { $elemMatch: { jobId, status: "Active" } } }, { "jobs.$": 1 });
+      if (!owner) return res.status(410).json({ message: "This job is no longer available." });
+      return res.json({ jobs: owner.jobs, userId });
+    } catch (error) { return res.status(500).json({ message: "Unable to load this job." }); }
+  },
   async getPostedJobByID(req, res) {
     try {
       const { userId, jobId } = req.params;
@@ -1712,18 +1689,14 @@ const controller = {
     try {
       const { userId, jobId } = req.params;
       if (userId) {
-        const jobDetails = await employerModel.updateOne(
-          { userId },
-          {
-            $pull: { jobs: { jobId }, allApplicants: { jobId } },
-            $inc: { jobCount: -1 },
-          }
-        );
-        const deletJobs = await jobsModel.deleteOne({ jobId });
-        console.log(deletJobs);
-
+        const owner = await employerModel.findOne({ userId });
+        const actor = req.user;
+        const sameOrgAdmin = actor?.access === "Admin" && actor.organisationId && actor.organisationId === owner?.organisationId;
+        if (actor?.role !== "Employer" || (actor.userId !== userId && !sameOrgAdmin)) {
+          return res.status(403).json({ message: "You cannot delete this employer's job." });
+        }
+        await require("../../services/jobDeletion").deleteJob(userId, jobId);
         res.status(200).json({ message: "Job Deleted Successfully" });
-        console.log(jobDetails);
       } else {
         res.status(400).json({ message: "User Id is required" });
       }
@@ -1738,12 +1711,17 @@ const controller = {
     try {
       const { userId, jobId } = req.params;
       const { status, email, jobTitle, region } = req.body;
+      const owner = await employerModel.findOne({ userId, "jobs.jobId": jobId });
+      const actor = req.user;
+      const sameOrgAdmin = actor?.access === "Admin" && actor.organisationId && actor.organisationId === owner?.organisationId;
+      if (actor?.role !== "Employer" || (actor.userId !== userId && !sameOrgAdmin)) return res.sendStatus(403);
+      if (!owner || await jobsModel.exists({ userId, jobId, status: "Deleted" })) return res.status(410).json({ message: "This job is no longer available." });
       const updateStatus = await employerModel.updateOne(
         { userId, "jobs.jobId": jobId },
         { $set: { "jobs.$.status": status } }
       );
       const updateJobStatus = await jobsModel.updateOne(
-        { userId, jobId },
+        { userId, jobId, status: { $ne: "Deleted" } },
         { $set: { status: status } }
       );
       // Update candidate status in appliedJobs and shortlistedJobs

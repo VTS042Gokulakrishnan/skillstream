@@ -255,7 +255,7 @@ const controller = {
     try {
       const { email } = req.body;
 
-      const deletedUser = await employerModel.findOneAndDelete({ email });
+      const deletedUser = await require("../services/jobDeletion").deleteEmployer(email);
 
       if (!deletedUser) {
         return res

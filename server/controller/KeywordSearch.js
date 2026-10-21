@@ -1,3 +1,4 @@
+const { availableJobStages } = require("../services/jobAvailability");
 const { json } = require("express");
 const usermodel = require("../models/candidateModel");
 const employerModel = require("../models/employerModel");
@@ -671,14 +672,8 @@ const controller = {
       }
 
       const keywordSearch = await jobsModel.aggregate([
-        {
-          $search: {
-            index: "default",
-            compound: {
-              must: searchConditions,
-            },
-          },
-        },
+        ...(searchConditions.length ? [{ $search: { index: "default", compound: { must: searchConditions } } }] : []),
+        ...availableJobStages(),
       ]);
 
       if (keywordSearch.length > 0) {
@@ -688,7 +683,7 @@ const controller = {
           status: true,
         });
       } else {
-        res.status(404).json({ message: "No results Found", status: false });
+        res.status(200).json({ totalresults: 0, results: [], status: true });
       }
     } catch (error) {
       console.error("Error searching for jobs:", error);
@@ -816,11 +811,13 @@ const controller = {
           }
         );
         // console.log(data);
-        if (data?.best_fit_jobs.length != 0) {
-          res.status(200).json({ Jobs: data?.best_fit_jobs, status: true });
-        } else {
-          res.status(404).json({ message: "No results Found", status: false });
-        }
+        const recommendations = data?.best_fit_jobs || [];
+        const keys = recommendations.map((item) => ({ userId: item.jobDetails?.userId, jobId: item.jobDetails?.jobId }))
+          .filter((item) => typeof item.userId === "string" && typeof item.jobId === "string");
+        const available = keys.length ? await jobsModel.aggregate([{ $match: { $or: keys } }, ...availableJobStages()]) : [];
+        const allowed = new Set(available.map((job) => JSON.stringify([job.userId, job.jobId])));
+        const visible = recommendations.filter((item) => allowed.has(JSON.stringify([item.jobDetails?.userId, item.jobDetails?.jobId])));
+        res.status(200).json({ Jobs: visible, status: true });
       } else {
         res.status(401).json({ message: "Please Login", status: false });
       }
@@ -937,7 +934,7 @@ const controller = {
       // Jobs Search
       // -------------------
       if (category === "all" || category === "jobs") {
-        results.jobs = await jobsModel.find({
+        results.jobs = await jobsModel.aggregate([{ $match: {
           $or: [
             { JobTitle: regex },
             { JobType: regex },
@@ -947,7 +944,7 @@ const controller = {
             { State: regex },
             { Country: regex },
           ],
-        });
+        } }, ...availableJobStages()]);
         // .select(
         //   "jobTitle jobType offeredSalary city state country userId _id createdAt"
         // )
@@ -957,7 +954,7 @@ const controller = {
         // Format jobId and postedTime
         results.jobs = results.jobs.map((j) => ({
           ...j,
-          jobId: j._id,
+          jobId: j.jobId,
         }));
       }
 

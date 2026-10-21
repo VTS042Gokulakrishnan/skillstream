@@ -1,0 +1,60 @@
+.practice-assessment-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px 0;
+  text-align: center;
+}
+.practice-assessment-actions .ant-btn-primary,
+.practice-plans-modal .practice-plan-purchase.ant-btn-primary {
+  background: #1967d2;
+  border-color: #1967d2;
+  box-shadow: 0 5px 14px rgba(25, 103, 210, .12);
+}
+.practice-assessment-actions .ant-btn-primary:not(:disabled):hover,
+.practice-plans-modal .practice-plan-purchase.ant-btn-primary:not(:disabled):hover {
+  background: #1254b0;
+  border-color: #1254b0;
+}
+.practice-assessment-actions .ant-btn { border-radius: 9px; height: auto; min-height: 46px; white-space: normal; }
+.practice-assessment-balance { color: #52627a; font-size: 14px; }
+.practice-plans-modal .ant-modal-content {
+  padding: 32px;
+  border-radius: 22px;
+  background: linear-gradient(155deg, #edf4ff 0%, #fff 40%, #f8faff 100%);
+}
+.practice-plans-modal .ant-modal-header { background: transparent; margin: 0; padding-right: 24px; }
+.practice-plans-eyebrow { color: #1967d2; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; }
+.practice-plans-heading { margin: 12px 0 28px; }
+.practice-plans-heading h2 { color: #172b4d; font-size: 29px; line-height: 1.25; font-weight: 700; margin: 0 0 10px; }
+.practice-plans-heading p { color: #64748b; font-size: 14px; line-height: 1.6; margin: 0; }
+.practice-plans-types { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.practice-plans-types > span { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border-radius: 20px; background: #eaf2ff; color: #1967d2; font-size: 12px; }
+.practice-plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.practice-plan-card { display: flex; flex-direction: column; padding: 24px 20px; border: 1px solid #e1e8f2; border-radius: 16px; background: #fff; }
+.practice-plan-card-featured { border: 2px solid #1967d2; padding: 23px 19px; box-shadow: 0 10px 28px rgba(25, 103, 210, .10); }
+.practice-plan-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; color: #62748e; margin-bottom: 16px; }
+.practice-plan-card-featured .practice-plan-label { color: #1967d2; }
+.practice-plan-card h3 { font-size: 18px; font-weight: 600; color: #172b4d; line-height: 1.4; min-height: 51px; margin: 0 0 18px; }
+.practice-plan-price { display: flex; align-items: baseline; gap: 3px; font-size: 38px; font-weight: 700; line-height: 1.2; letter-spacing: -1.5px; color: #172b4d; }
+.practice-plan-price > span { font-size: 22px; letter-spacing: 0; }
+.practice-plan-price small { margin-left: 5px; font-size: 11px; font-weight: 500; letter-spacing: 0; color: #64748b; }
+.practice-plan-payment { color: #64748b; font-size: 12px; margin-top: 6px; padding-bottom: 20px; border-bottom: 1px solid #edf1f7; }
+.practice-plan-description { flex: 1; margin: 18px 0 14px; color: #52627a; font-size: 13px; line-height: 1.7; }
+.practice-plan-feature { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: #52627a; margin-bottom: 22px; }
+.practice-plan-feature .anticon { color: #1967d2; }
+.practice-plans-modal .practice-plan-purchase { height: 44px; font-size: 14px; font-weight: 600; border-radius: 9px; }
+.practice-plans-modal .practice-plan-purchase.ant-btn-primary:disabled { background: #f1f4f8; color: #8994a5; border-color: #e1e8f2; box-shadow: none; }
+.practice-plans-footer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 24px; color: #64748b; font-size: 12px; text-align: center; }
+.practice-plans-footer .anticon { color: #1967d2; font-size: 16px; }
+@media (max-width: 700px) {
+  .practice-plans-modal .ant-modal-content { padding: 24px 18px; border-radius: 16px; }
+  .practice-plans-heading h2 { font-size: 24px; }
+  .practice-plans-grid { grid-template-columns: 1fr; }
+  .practice-plan-card h3 { min-height: 0; margin-bottom: 12px; }
+  .practice-plan-card { padding: 20px; }
+  .practice-plan-card-featured { padding: 19px; }
+  .practice-plans-footer { font-size: 11px; }
+}

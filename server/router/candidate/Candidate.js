@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const candidateController = require("../../controller/candidate/Candidates");
 const { Authorization } = require("../../middleware/auth");
+const preferences = require("../../controller/candidate/jobPreferences");
+router.get("/preferences/locations", Authorization, preferences.get);
+router.put("/preferences/locations", Authorization, preferences.save);
 
 router.post("/update/:userId", candidateController.updateProfile);
 router.get("/allCandidates", candidateController.getAllCandidates);

@@ -16,6 +16,7 @@ router.get(
   jobsController.getPostedJobByAdmin
 );
 
+router.get("/public/:userId/:jobId", jobsController.getPublicJobByID);
 router.get("/singleJob/:userId/:jobId", jobsController.getPostedJobByID);
 router.delete(
   "/delete/:userId/:jobId",

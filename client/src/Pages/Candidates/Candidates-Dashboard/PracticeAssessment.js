@@ -101,7 +101,7 @@ export default function PracticeAssessment() {
     const canStart = coding ? access?.canCoding : access?.canVideo;
     const label = coding ? "Coding" : "Video";
     return <>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", padding: "20px 0" }}>
+      <div className="practice-assessment-actions">
         {canStart && <Button type="primary" size="large" disabled={verifying}
           onClick={() => navigate("/practicalAssessment", { state: { round: label } })}>
           Practice {label} Assessment
@@ -109,7 +109,7 @@ export default function PracticeAssessment() {
         <Button type={canStart ? "default" : "primary"} size="large" onClick={showPlans} disabled={verifying || payment === "pending"}>
           Purchase Practice Interviews
         </Button>
-        {access?.purchased && <span>
+        {access?.purchased && <span className="practice-assessment-balance">
           {access.unlimited ? `Unlimited access until ${moment(access.unlimitedUntil).format("MMM D, YYYY, h:mm A")}`
             : `${label} interviews remaining: ${access[type]}`}
         </span>}

@@ -26,6 +26,9 @@ const jobsSchema = new schema({
   postedTime: String,
   time: String,
   status: String,
+  deletedAt: Date,
+  deletionReason: String,
+  reconciliationId: String,
   website: String,
   isVendor: Boolean,
 });

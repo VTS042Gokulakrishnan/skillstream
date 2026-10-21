@@ -17,6 +17,7 @@ Client (paths relative to `client/`):
 ```text
 src/Pages/Candidates/Candidates-Dashboard/PracticeAssessment.js
 src/Components/PracticalInterview/PracticePlansModal.js          (new)
+src/Components/PracticalInterview/PracticePlansModal.css         (new)
 src/Components/PracticalInterview/practiceApi.js                 (new)
 src/Components/PracticalInterview/SetupForm.js
 src/Components/PracticalInterview/PracticalInterview.js

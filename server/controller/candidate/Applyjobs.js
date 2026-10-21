@@ -11,6 +11,9 @@ const controller = {
       const { jobId, region } = req.body;
       // console.log("hi");
       if (userId && employerId && jobId) {
+        if (!await require("../../services/jobAvailability").isAvailable(employerId, jobId)) {
+          return res.status(410).json({ message: "This job is no longer available.", status: false });
+        }
         const candidate = await candidateModel.findOne({ userId });
         if (candidate?.appliedJobs.some((job) => job.jobId === jobId)) {
           return res
@@ -21,10 +24,10 @@ const controller = {
           const employerDetails = await employerModel.findOne({
             userId: employerId,
           });
-          const jobEntireData = employerDetails.jobs.find(
+          const jobEntireData = employerDetails?.jobs.find(
             (j) => j.jobId === jobId
           );
-          console.log(jobEntireData);
+          if (!jobEntireData || jobEntireData.status !== "Active") return res.status(410).json({ message: "This job is no longer available.", status: false });
           const jobDetails = {
             job_title: jobEntireData.JobTitle,
             company: jobEntireData.companyName,
@@ -58,35 +61,9 @@ const controller = {
             `${process.env.AI_URL}/fitment_analysis`,
             body
           );
-          const addJob = await candidateModel.updateOne(
-            { userId },
-            {
-              $push: {
-                appliedJobs: {
-                  jobId,
-                  JobTitle: req.body.JobTitle,
-                  role: req.body.role,
-                  companyName: req.body.companyName,
-                  image: employerDetails.image,
-                  employerId,
-                  Industry: req.body.Industry,
-                  offeredSalary: req.body.offeredSalary,
-                  employmentType: req.body.employmentType,
-                  jobType: req.body.jobType,
-                  appliedTime: moment().format("MMM Do YYYY"),
-                  time: moment().format("MMMM D YYYY, h:mm:ss a"),
-                  status: req.body.status,
-                  city: req.body.city,
-                  country: req.body.country,
-                  applicationStatus: "pending",
-                  isVendorApplicants: false,
-                },
-              },
-            }
-          );
-          // console.log(addJob);
+          if (!await require("../../services/jobAvailability").isAvailable(employerId, jobId)) return res.status(410).json({ message: "This job is no longer available.", status: false });
           const addCandidate = await employerModel.updateOne(
-            { userId: employerId, "jobs.jobId": jobId },
+            { userId: employerId, jobs: { $elemMatch: { jobId, status: "Active" } } },
             {
               $push: {
                 "jobs.$.applicants": {
@@ -159,6 +136,34 @@ const controller = {
               },
             }
           );
+          if (!addCandidate.modifiedCount) return res.status(410).json({ message: "This job is no longer available.", status: false });
+          const addJob = await candidateModel.updateOne(
+            { userId },
+            {
+              $push: {
+                appliedJobs: {
+                  jobId,
+                  JobTitle: req.body.JobTitle,
+                  role: req.body.role,
+                  companyName: req.body.companyName,
+                  image: employerDetails.image,
+                  employerId,
+                  Industry: req.body.Industry,
+                  offeredSalary: req.body.offeredSalary,
+                  employmentType: req.body.employmentType,
+                  jobType: req.body.jobType,
+                  appliedTime: moment().format("MMM Do YYYY"),
+                  time: moment().format("MMMM D YYYY, h:mm:ss a"),
+                  status: req.body.status,
+                  city: req.body.city,
+                  country: req.body.country,
+                  applicationStatus: "pending",
+                  isVendorApplicants: false,
+                },
+              },
+            }
+          );
+          // console.log(addJob);
           const sendUserSocket = onlineUsers.get(employerId);
           if (sendUserSocket) {
             req.app

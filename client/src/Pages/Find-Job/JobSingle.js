@@ -96,7 +96,7 @@ const JobSingle = () => {
     try {
       setStatus("Fetching");
       const { data } = await axios.get(
-        `${Server}/api/v1/employer/jobs/singleJob/${params.userId}/${params.jobId}`
+        `${Server}/api/v1/employer/jobs/public/${params.userId}/${params.jobId}`
       );
       // console.log(data);
       setStatus("Completed");
@@ -108,7 +108,7 @@ const JobSingle = () => {
       setTime(demo);
     } catch (error) {
       // console.log(error);
-      if (error.response.data.message === "No Jobs Posted") {
+      if ([404, 410].includes(error.response?.status) || error.response?.data?.message === "No Jobs Posted") {
         setStatus("Not-FOund");
       } else {
         toast.error("Internal Server Error");
@@ -260,11 +260,11 @@ const JobSingle = () => {
         {status === "Not-FOund" && (
           <Result
             status="404"
-            title="404"
-            subTitle="Job Not Found (OR) Job might be removed"
+            title="This job is no longer available"
+            subTitle="The employer may have closed or removed this position."
             extra={
               <Button type="primary" onClick={() => navigate("/find-jobs")}>
-                Back to Job Page
+                Back to Find Jobs
               </Button>
             }
           />
