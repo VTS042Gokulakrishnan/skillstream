@@ -77,7 +77,7 @@ function renderResume(doc) {
     const value = c[k];
     let body;
     if (typeof value === 'string') body = rich(value);
-    else body = value.filter(e => !e.hidden).map(e => `<article><div class="entry-title"><strong>${escape(e.title)}</strong><span>${escape([e.start, e.end].filter(Boolean).join(' – '))}</span></div><div class="organization">${escape([e.organization, e.location].filter(Boolean).join(' | '))}</div>${rich(e.description)}</article>`).join('');
+    else body = value.filter(e => !e.hidden).map(e => `<article><div class="entry-title"><strong>${escape(e.title)}</strong><span>${escape([e.start, e.end].filter(Boolean).join(' - '))}</span></div><div class="organization">${escape([e.organization, e.location].filter(Boolean).join(' | '))}</div>${rich(e.description)}</article>`).join('');
     return body ? `<section><h2>${escape(s.headings[k] || sectionNames[k])}</h2>${body}</section>` : '';
   }).join('');
   const font = s.font === 'serif' || (s.font === 'template' && ['classic', 'executive'].includes(t)) ? 'Georgia, "Times New Roman", serif' : 'Arial, Helvetica, sans-serif';
@@ -89,4 +89,4 @@ function renderResume(doc) {
     .classic header,.graduate header{text-align:center}.classic header{border:0}.classic h1{color:#111}.classic h2{color:#111;border-color:#111}.classic .headline{font-style:italic}.executive h2{letter-spacing:1.3pt;margin-top:21pt}.executive header{border-bottom:1px solid #89929d}.graduate h2{background:#eef1f4;padding:5pt 7pt;border:0}.technical h2{border-bottom:1px solid ${s.accent}}@media print{html{background:white}.paper{max-width:none;min-height:0;padding:0;margin:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     </style></head><body><main class="paper ${t}"><header><h1>${escape(p.name || 'Your name')}</h1>${p.headline ? `<div class="headline">${escape(p.headline)}</div>` : ''}<div class="contact">${[p.email,p.phone,p.location,p.website,p.linkedin].filter(Boolean).map(escape).join(' &nbsp; | &nbsp; ')}</div></header>${sectionHtml}</main></body></html>`;
 }
-module.exports = { templates, sectionNames, defaults, blankContent, sampleContent, normalize, renderResume };
+export { templates, sectionNames, defaults, blankContent, sampleContent, normalize, renderResume };

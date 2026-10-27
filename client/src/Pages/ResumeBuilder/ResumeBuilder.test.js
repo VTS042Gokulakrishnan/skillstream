@@ -63,3 +63,16 @@ test('template switching preserves content and settings', async () => {
  const body = axios.mock.calls.find(([r]) => r.method === 'patch')[0].data;
  expect(body.template).toBe('classic'); expect(body.content).toEqual(resume.content);
 });
+
+test('clearing resume title does not crash the live preview', async () => {
+ mount(); await screen.findByText('Frontend Resume'); fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+ await screen.findByLabelText('Resume name'); fireEvent.change(screen.getByLabelText('Resume name'), { target: { value: '' } });
+ expect(screen.getByTitle('Live resume preview')).toBeTruthy();
+ fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true })); await screen.findByText('Give your resume a name.');
+});
+test('failed primary upload leaves the confirmation open for retry', async () => {
+ mount(); await screen.findByText('Frontend Resume'); fireEvent.click(screen.getByRole('button', { name: 'Use this resume' }));
+ axios.mockImplementationOnce(async () => { throw { response: { data: { message: 'Upload failed' } } }; });
+ fireEvent.click(screen.getAllByRole('button', { name: 'Use this resume' }).at(-1));
+ await screen.findByText('Upload failed'); expect(screen.getByText('Make this your primary resume?')).toBeTruthy();
+});

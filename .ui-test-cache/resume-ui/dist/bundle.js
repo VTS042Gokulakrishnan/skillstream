@@ -23924,14 +23924,22 @@ function ResumeBuilder() {
 /*!**********************************************************!*\
   !*** ./client/src/Pages/ResumeBuilder/resumeTemplate.js ***!
   \**********************************************************/
-/***/ ((module, __webpack_exports__, __webpack_require__) => {
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   blankContent: () => (/* binding */ blankContent),
+/* harmony export */   defaults: () => (/* binding */ defaults),
+/* harmony export */   normalize: () => (/* binding */ normalize),
+/* harmony export */   renderResume: () => (/* binding */ renderResume),
+/* harmony export */   sampleContent: () => (/* binding */ sampleContent),
+/* harmony export */   sectionNames: () => (/* binding */ sectionNames),
+/* harmony export */   templates: () => (/* binding */ templates)
+/* harmony export */ });
 /* harmony import */ var D_GitHub_skillstream_jobs_us_node_modules_babel_runtime_helpers_esm_toConsumableArray_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/toConsumableArray.js */ "../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/toConsumableArray.js");
 /* harmony import */ var D_GitHub_skillstream_jobs_us_node_modules_babel_runtime_helpers_esm_slicedToArray_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/slicedToArray.js */ "../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/slicedToArray.js");
 /* harmony import */ var D_GitHub_skillstream_jobs_us_node_modules_babel_runtime_helpers_esm_objectSpread2_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/objectSpread2.js */ "../skillstream-jobs-us/node_modules/@babel/runtime/helpers/esm/objectSpread2.js");
-/* module decorator */ module = __webpack_require__.hmd(module);
 
 
 
@@ -24167,22 +24175,14 @@ function renderResume(doc) {
     if (typeof value === 'string') body = rich(value);else body = value.filter(function (e) {
       return !e.hidden;
     }).map(function (e) {
-      return "<article><div class=\"entry-title\"><strong>".concat(escape(e.title), "</strong><span>").concat(escape([e.start, e.end].filter(Boolean).join(' – ')), "</span></div><div class=\"organization\">").concat(escape([e.organization, e.location].filter(Boolean).join(' | ')), "</div>").concat(rich(e.description), "</article>");
+      return "<article><div class=\"entry-title\"><strong>".concat(escape(e.title), "</strong><span>").concat(escape([e.start, e.end].filter(Boolean).join(' - ')), "</span></div><div class=\"organization\">").concat(escape([e.organization, e.location].filter(Boolean).join(' | ')), "</div>").concat(rich(e.description), "</article>");
     }).join('');
     return body ? "<section><h2>".concat(escape(s.headings[k] || sectionNames[k]), "</h2>").concat(body, "</section>") : '';
   }).join('');
   var font = s.font === 'serif' || s.font === 'template' && ['classic', 'executive'].includes(t) ? 'Georgia, "Times New Roman", serif' : 'Arial, Helvetica, sans-serif';
   return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"no-referrer\"><style>\n    @page { size: ".concat(s.paper, "; margin: ").concat(s.margin, "mm; }\n    *{box-sizing:border-box} html{background:#e9eef4}body{margin:0;color:#18212c;font:").concat(s.fontSize, "pt/").concat(s.spacing, " ").concat(font, ";overflow-wrap:anywhere}\n    .paper{background:white;max-width:").concat(s.paper === 'A4' ? 210 : 215.9, "mm;min-height:").concat(s.paper === 'A4' ? 297 : 279.4, "mm;margin:0 auto;padding:").concat(s.margin, "mm;}\n    h1{font-size:26pt;line-height:1.15;margin:0 0 5pt;color:").concat(t === 'classic' ? '#111' : s.accent, ";font-weight:700} .headline{font-size:13pt;margin:0 0 7pt}.contact{font-size:9pt;color:#364252;line-height:1.6}header{border-bottom:2px solid ").concat(s.accent, ";padding-bottom:12pt;margin-bottom:15pt}h2{font-size:11pt;text-transform:uppercase;letter-spacing:.6pt;border-bottom:1px solid #bac4cf;padding-bottom:3pt;margin:15pt 0 7pt;color:").concat(s.accent, ";break-after:avoid}p{margin:3pt 0 7pt}ul{padding-left:15pt;margin:4pt 0 8pt}li{margin-bottom:3pt}article{margin-bottom:11pt}.entry-title{display:flex;justify-content:space-between;gap:15pt;break-after:avoid}.entry-title strong{min-width:0}.entry-title span{font-size:9pt;flex-shrink:0;max-width:35%;text-align:right}.organization{font-size:10pt;color:#3e4a59;break-after:avoid}p,li{orphans:3;widows:3}\n    .classic header,.graduate header{text-align:center}.classic header{border:0}.classic h1{color:#111}.classic h2{color:#111;border-color:#111}.classic .headline{font-style:italic}.executive h2{letter-spacing:1.3pt;margin-top:21pt}.executive header{border-bottom:1px solid #89929d}.graduate h2{background:#eef1f4;padding:5pt 7pt;border:0}.technical h2{border-bottom:1px solid ").concat(s.accent, "}@media print{html{background:white}.paper{max-width:none;min-height:0;padding:0;margin:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}\n    </style></head><body><main class=\"paper ").concat(t, "\"><header><h1>").concat(escape(p.name || 'Your name'), "</h1>").concat(p.headline ? "<div class=\"headline\">".concat(escape(p.headline), "</div>") : '', "<div class=\"contact\">").concat([p.email, p.phone, p.location, p.website, p.linkedin].filter(Boolean).map(escape).join(' &nbsp; | &nbsp; '), "</div></header>").concat(sectionHtml, "</main></body></html>");
 }
-module.exports = {
-  templates: templates,
-  sectionNames: sectionNames,
-  defaults: defaults,
-  blankContent: blankContent,
-  sampleContent: sampleContent,
-  normalize: normalize,
-  renderResume: renderResume
-};
+
 
 /***/ }),
 

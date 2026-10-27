@@ -56,7 +56,7 @@ test('hidden sections and entries do not appear in exported HTML', () => {
  const html = renderResume(d); assert.ok(!html.includes('Northstar Labs')); assert.ok(!html.includes('<h2>Skills</h2>'));
 });
 test('frontend and backend use exactly the same renderer', () => {
- assert.equal(fs.readFileSync(require('path').join(__dirname, '../../client/src/Pages/ResumeBuilder/resumeTemplate.js'), 'utf8'), fs.readFileSync(require('path').join(__dirname, '../services/resumeBuilder/template.js'), 'utf8'));
+ assert.equal(fs.readFileSync(require('path').join(__dirname, '../../client/src/Pages/ResumeBuilder/resumeTemplate.js'), 'utf8').replace('export {', 'module.exports = {'), fs.readFileSync(require('path').join(__dirname, '../services/resumeBuilder/template.js'), 'utf8'));
 });
 test('primary pipeline supplies CV Manager subdocument IDs and updates all primary fields atomically', () => {
  const p = primaryPipeline('https://example.test/a.pdf'); const s = p[0].$set;
