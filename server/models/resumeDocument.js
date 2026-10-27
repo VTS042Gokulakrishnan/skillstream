@@ -7,6 +7,6 @@ const schema = new mongoose.Schema({
   template: { type: String, required: true },
   settings: { type: mongoose.Schema.Types.Mixed, required: true },
   revision: { type: Number, default: 1 },
-}, { timestamps: true });
+}, { timestamps: true, minimize: false });
 schema.index({ owner: 1, updatedAt: -1 });
 module.exports = mongoose.model("ResumeDocument", schema);

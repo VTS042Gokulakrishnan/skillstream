@@ -10,6 +10,55 @@ const order = Object.keys(sectionNames);
 const defaults = { paper: 'A4', font: 'template', fontSize: 11, spacing: 1.4, margin: 16, accent: '#1769d3', order, hidden: [], headings: {} };
 const blankContent = () => ({ personal: { name: '', headline: '', email: '', phone: '', location: '', website: '', linkedin: '' }, summary: '', skills: '', languages: '', experience: [], education: [], projects: [], certifications: [], awards: [], volunteering: [] });
 const sampleContent = () => ({ ...blankContent(), personal: { name: 'Alex Morgan', headline: 'Frontend Developer', email: 'alex@example.com', phone: '', location: 'Chicago, IL', website: '', linkedin: '' }, summary: 'Frontend developer building accessible, responsive web applications with React and TypeScript.', skills: 'React, TypeScript, JavaScript, HTML, CSS, Git, REST APIs', experience: [{ id: 'sample1', title: 'Frontend Developer', organization: 'Northstar Labs', location: 'Chicago, IL', start: 'Jan 2023', end: 'Present', description: '- Built responsive interfaces with React and TypeScript.\n- Improved page performance through reusable components.\n- Collaborated with designers to deliver accessible experiences.', hidden: false }], education: [{ id: 'sample2', title: 'B.S. in Computer Science', organization: 'Lakeview University', start: '2016', end: '2020', description: '' }], projects: [{ id: 'sample3', title: 'Portfolio Website', organization: '', description: 'Designed and built a responsive personal portfolio.' }] });
+
+// Recover omitted nested objects in older Mongo documents without overwriting content.
+function hydrateResume(input) {
+  const source = input || {}, raw = source.content || {}, base = blankContent();
+  const content = { ...base, ...raw, personal: { ...base.personal, ...(raw.personal || {}) } };
+  ['summary', 'skills', 'languages'].forEach(k => { content[k] = content[k] ?? ''; });
+  order.filter(k => Array.isArray(base[k])).forEach(k => {
+    content[k] = (Array.isArray(raw[k]) ? raw[k] : []).map((e, index) => ({
+      title: '', organization: '', location: '', start: '', end: '', description: '', hidden: false,
+      ...e, id: e?.id || `${k}-legacy-${index}`, current: e?.current === true || /^present$/i.test(e?.end || ''),
+    }));
+  });
+  const old = source.settings || {};
+  const savedOrder = Array.isArray(old.order) ? old.order.filter(k => order.includes(k)) : [];
+  return { ...source, content, settings: { ...defaults, ...old,
+    order: [...new Set([...savedOrder, ...order])], hidden: Array.isArray(old.hidden) ? old.hidden : [],
+    headings: { ...(old.headings || {}) },
+  } };
+}
+function parseResumeDate(value) {
+  const text = String(value || '').trim();
+  if (!text) return null;
+  let y, m, d, precision;
+  const iso = /^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(text);
+  const named = /^([A-Za-z]+)\s+(\d{4})$/.exec(text);
+  const numericMonth = /^(\d{1,2})\/(\d{4})$/.exec(text);
+  if (iso) { y = +iso[1]; m = iso[2] ? +iso[2] : 1; d = iso[3] ? +iso[3] : 1; precision = iso[3] ? 'day' : iso[2] ? 'month' : 'year'; }
+  else if (named) { const months = ['january','february','march','april','may','june','july','august','september','october','november','december']; const index = months.findIndex(n => n === named[1].toLowerCase() || n.slice(0,3) === named[1].toLowerCase()); if (index < 0) return null; y = +named[2]; m = index + 1; d = 1; precision = 'month'; }
+  else if (numericMonth) { y = +numericMonth[2]; m = +numericMonth[1]; d = 1; precision = 'month'; }
+  else return null; // Ambiguous legacy text is preserved for the candidate to review.
+  if (y < 1000 || y > 9999 || m < 1 || m > 12 || d < 1 || d > new Date(Date.UTC(y,m,0)).getUTCDate()) return null;
+  const pad = n => String(n).padStart(2,'0');
+  const canonical = `${y}${precision !== 'year' ? `-${pad(m)}` : ''}${precision === 'day' ? `-${pad(d)}` : ''}`;
+  return { year: y, month: m, day: d, precision, canonical };
+}
+function formatResumeDate(value) {
+  const date = parseResumeDate(value);
+  if (!date) return String(value || '');
+  return date.precision === 'year' ? String(date.year) : `${String(date.month).padStart(2,'0')}/${String(date.year).slice(-2)}`;
+}
+function dateRangeError(entry) {
+  if (entry.current || /^present$/i.test(entry.end || '')) return '';
+  const start = parseResumeDate(entry.start), end = parseResumeDate(entry.end);
+  if (!start || !end) return '';
+  const earliestStart = Date.UTC(start.year, start.month - 1, start.day);
+  const latestEnd = end.precision === 'year' ? Date.UTC(end.year,11,31) : end.precision === 'month' ? Date.UTC(end.year,end.month,0) : Date.UTC(end.year,end.month-1,end.day);
+  return earliestStart > latestEnd ? 'End date must be on or after the start date.' : '';
+}
+
 const escape = (s) => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function inline(s) {
   return escape(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
@@ -44,8 +93,17 @@ function normalize(input) {
     if (!Array.isArray(raw[k]) || raw[k].length > 40) fail('Use at most 40 entries per section.');
     content[k] = raw[k].map(e => {
       if (!e || typeof e !== 'object') fail('Invalid entry.');
-      const entry = { hidden: e.hidden === true };
+      const entry = { hidden: e.hidden === true, current: e.current === true || /^present$/i.test(e.end || '') };
       ['id', 'title', 'organization', 'location', 'start', 'end', 'description'].forEach(f => { entry[f] = str(e[f] ?? '', f === 'description' ? 12000 : 300); });
+      if (['experience', 'projects'].includes(k)) {
+        for (const field of ['start', 'end']) {
+          const parsed = parseResumeDate(entry[field]);
+          if (parsed) entry[field] = parsed.canonical;
+          else if (/^\d{4}-/.test(entry[field])) fail('Choose a valid calendar date.');
+        }
+        const issue = dateRangeError(entry);
+        if (issue) fail(issue);
+      }
       return entry;
     });
   });
@@ -70,14 +128,14 @@ function normalize(input) {
   return { title, content, template: input.template, settings };
 }
 function renderResume(doc) {
-  const { content: c, template: t, settings: s } = normalize(doc);
+  const { content: c, template: t, settings: s } = normalize(hydrateResume(doc));
   const p = c.personal;
   let sections = s.order.filter(k => !s.hidden.includes(k));
   const sectionHtml = sections.map(k => {
     const value = c[k];
     let body;
     if (typeof value === 'string') body = rich(value);
-    else body = value.filter(e => !e.hidden).map(e => `<article><div class="entry-title"><strong>${escape(e.title)}</strong><span>${escape([e.start, e.end].filter(Boolean).join(' - '))}</span></div><div class="organization">${escape([e.organization, e.location].filter(Boolean).join(' | '))}</div>${rich(e.description)}</article>`).join('');
+    else body = value.filter(e => !e.hidden).map(e => `<article><div class="entry-title"><strong>${escape(e.title)}</strong><span>${escape([formatResumeDate(e.start), e.current ? 'Present' : formatResumeDate(e.end)].filter(Boolean).join(' - '))}</span></div><div class="organization">${escape([e.organization, e.location].filter(Boolean).join(' | '))}</div>${rich(e.description)}</article>`).join('');
     return body ? `<section><h2>${escape(s.headings[k] || sectionNames[k])}</h2>${body}</section>` : '';
   }).join('');
   const font = s.font === 'serif' || (s.font === 'template' && ['classic', 'executive'].includes(t)) ? 'Georgia, "Times New Roman", serif' : 'Arial, Helvetica, sans-serif';
@@ -89,4 +147,4 @@ function renderResume(doc) {
     .classic header,.graduate header{text-align:center}.classic header{border:0}.classic h1{color:#111}.classic h2{color:#111;border-color:#111}.classic .headline{font-style:italic}.executive h2{letter-spacing:1.3pt;margin-top:21pt}.executive header{border-bottom:1px solid #89929d}.graduate h2{background:#eef1f4;padding:5pt 7pt;border:0}.technical h2{border-bottom:1px solid ${s.accent}}@media print{html{background:white}.paper{max-width:none;min-height:0;padding:0;margin:0}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     </style></head><body><main class="paper ${t}"><header><h1>${escape(p.name || 'Your name')}</h1>${p.headline ? `<div class="headline">${escape(p.headline)}</div>` : ''}<div class="contact">${[p.email,p.phone,p.location,p.website,p.linkedin].filter(Boolean).map(escape).join(' &nbsp; | &nbsp; ')}</div></header>${sectionHtml}</main></body></html>`;
 }
-export { templates, sectionNames, defaults, blankContent, sampleContent, normalize, renderResume };
+export { templates, sectionNames, defaults, blankContent, sampleContent, normalize, renderResume, hydrateResume, parseResumeDate, formatResumeDate, dateRangeError };

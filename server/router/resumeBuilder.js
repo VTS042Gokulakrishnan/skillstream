@@ -4,7 +4,7 @@ const Aws = require('aws-sdk');
 const Resume = require('../models/resumeDocument');
 const Candidate = require('../models/candidateModel');
 const { Authorization } = require('../middleware/auth');
-const { normalize } = require('../services/resumeBuilder/template');
+const { normalize, hydrateResume } = require('../services/resumeBuilder/template');
 const { generatePdf } = require('../services/resumeBuilder/pdf');
 const { primaryPipeline } = require('../services/resumeBuilder/primary');
 const router = express.Router();
@@ -21,13 +21,14 @@ async function owned(req) {
   if (!mongoose.isValidObjectId(req.params.id)) fail(404, 'Resume not found.');
   const doc = await Resume.findOne({ _id: req.params.id, owner: req.user._id }).lean();
   if (!doc) fail(404, 'Resume not found.');
-  return doc;
+  return hydrateResume(doc);
 }
 function revision(req, doc) {
   if (!Number.isInteger(req.body.revision) || req.body.revision !== doc.revision) fail(409, 'This resume changed in another tab. Reopen the saved version before continuing.');
 }
 router.get('/', run(async (req, res) => {
-  res.json({ resumes: await Resume.find({ owner: req.user._id }).sort({ updatedAt: -1 }).lean() });
+  const resumes = await Resume.find({ owner: req.user._id }).sort({ updatedAt: -1 }).lean();
+  res.json({ resumes: resumes.map(hydrateResume) });
 }));
 router.post('/', run(async (req, res) => {
   const data = normalize(req.body);

@@ -6,7 +6,7 @@ import ResumeBuilder from './ResumeBuilder';
 import { defaults, sampleContent } from './resumeTemplate';
 jest.mock('../../App', () => ({ Server: 'https://api.example.test' }));
 jest.mock('axios', () => jest.fn());
-jest.mock('antd', () => ({ Modal: ({ open, title, children }) => open ? <div role="dialog"><h2>{title}</h2>{children}</div> : null }));
+jest.mock('antd', () => ({ DatePicker: ({ id, value, disabled, onChange }) => <input id={id} aria-label={id} disabled={disabled} value={value ? value.format('YYYY-MM-DD') : ''} onChange={e => onChange(e.target.value ? require('dayjs')(e.target.value) : null)} />, Modal: ({ open, title, children }) => open ? <div role="dialog"><h2>{title}</h2>{children}</div> : null }));
 const resume = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', title: 'Frontend Resume', revision: 1, updatedAt: '2026-10-27', template: 'modern', content: sampleContent(), settings: defaults };
 function mount() { return render(<MemoryRouter><ResumeBuilder /></MemoryRouter>); }
 beforeEach(() => {
@@ -61,7 +61,7 @@ test('template switching preserves content and settings', async () => {
  fireEvent.click(screen.getByRole('button', { name: /Classic Serif/ })); fireEvent.click(screen.getByText('Use this template'));
  fireEvent.click(screen.getByRole('button', { name: 'Save', exact: true })); await screen.findByText('Resume saved.');
  const body = axios.mock.calls.find(([r]) => r.method === 'patch')[0].data;
- expect(body.template).toBe('classic'); expect(body.content).toEqual(resume.content);
+ expect(body.template).toBe('classic'); expect(body.content.personal).toEqual(resume.content.personal); expect(body.content.experience[0].description).toBe(resume.content.experience[0].description);
 });
 
 test('clearing resume title does not crash the live preview', async () => {
@@ -75,4 +75,20 @@ test('failed primary upload leaves the confirmation open for retry', async () =>
  axios.mockImplementationOnce(async () => { throw { response: { data: { message: 'Upload failed' } } }; });
  fireEvent.click(screen.getAllByRole('button', { name: 'Use this resume' }).at(-1));
  await screen.findByText('Upload failed'); expect(screen.getByText('Make this your primary resume?')).toBeTruthy();
+});
+
+
+test('saved resume missing headings reopens without crashing', async () => {
+ const legacy = { ...resume, settings: { ...defaults, headings: undefined } };
+ axios.mockImplementation(async r => ({data:r.url.endsWith('/resume-builder') ? {resumes:[legacy]} : {resume:legacy}}));
+ mount(); await screen.findByText('Frontend Resume'); fireEvent.click(screen.getByRole('button',{name:'Edit'}));
+ await screen.findByLabelText('Resume name'); expect(screen.getByRole('button',{name:/Summary/})).toBeTruthy();
+});
+test('Present disables end date and saves explicit current flag', async () => {
+ mount(); await screen.findByText('Frontend Resume'); fireEvent.click(screen.getByRole('button',{name:'Edit'})); await screen.findByLabelText('Resume name');
+ fireEvent.click(screen.getByRole('button',{name:/Experience/})); fireEvent.click(screen.getByText('Frontend Developer', {selector:'summary'}));
+ const checkbox=screen.getByLabelText('Currently working here (Present)'); expect(checkbox.checked).toBe(true);
+ expect(screen.getByLabelText('End date').disabled).toBe(true); fireEvent.click(checkbox); expect(screen.getByLabelText('End date').disabled).toBe(false);
+ fireEvent.click(checkbox); fireEvent.click(screen.getByRole('button',{name:'Save',exact:true})); await screen.findByText('Resume saved.');
+ expect(axios.mock.calls.find(([r])=>r.method==='patch')[0].data.content.experience[0].current).toBe(true);
 });

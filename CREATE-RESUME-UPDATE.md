@@ -57,3 +57,15 @@ The browser and server template files intentionally contain the same renderer, w
 
 Tests from server: `node --test tests/resume-builder.test.js`.
 Frontend: `npm test -- --watchAll=false --runInBand ResumeBuilder.test.js`.
+
+## Follow-up fixes: saved settings, calendar dates, card actions
+
+- Fixed reopening saved resumes when MongoDB omitted empty `settings.headings`. Client and server restore missing nested defaults on read; model now uses `minimize: false`. Existing documents need no reset or migration.
+- Experience and Projects now use calendar pickers. New dates display DD/MM/YY in the editor and MM/YY in the resume/PDF. Month-only/year-only legacy values retain their precision. Unrecognized legacy strings remain visible with a review message until replaced. Present checkboxes disable the end date; reversed ranges are rejected on client save and server validation.
+- Card actions now have visible boxed icons and labels (Edit, Duplicate, Download PDF, Delete), wrapping into two columns on mobile.
+- PDF browser selection now checks `RESUME_CHROME_PATH`, then `PUPPETEER_EXECUTABLE_PATH`, Puppeteer's downloaded browser, then installed system Chrome/Edge/Chromium. An explicitly configured invalid path returns a clear error instead of silently choosing a different browser. Restart the backend after copying the updated service. No environment edit is needed on this Windows machine if Chrome remains in its standard install location.
+- Optional explicit Windows configuration: `RESUME_CHROME_PATH=C:/Program Files/Google/Chrome/Application/chrome.exe`. For deployment without a system browser, install Puppeteer's Chrome or use the Docker configuration above.
+
+Copy the updated builder folder (including new `ResumeDates.js`), client `package.json`/`package-lock.json`, server `models/resumeDocument.js`, `router/resumeBuilder.js`, and entire `services/resumeBuilder/` folder (including new `browser.js`). The client now explicitly declares the already-used Day.js dependency; run `npm install` in the destination client if necessary.
+
+Follow-up verification: 9 frontend tests and 8 backend tests passed. Isolated builder compiled; real calendar and boxed actions were reviewed in headless Chrome. A sample PDF generated successfully through automatic Chrome detection with no `RESUME_CHROME_PATH`. No live S3/database writes were performed.
