@@ -35,15 +35,19 @@ const Login = (isModalOpen) => {
   const location = useLocation();
   useEffect(() => {
     // console.log(isModalOpen.isVendor === true);
-    if (
+    if (isModalOpen.initialRole) {
+      setUserType(isModalOpen.initialRole);
+      setShowCandidate(isModalOpen.initialRole === "Candidate");
+      setShowEmployer(isModalOpen.initialRole === "Employer");
+    } else if (
       (location.pathname === "/" && !isModalOpen.isVendor) ||
-      location.pathname === "/practiceInterviewLanding"
+      location.pathname === "/practiceInterviewLanding" || location.pathname === "/pricing/candidate"
     ) {
       setShowCandidate(true);
       setShowEmployer(false);
       setUserType("Candidate");
     } else if (
-      location.pathname === "/employers" ||
+      location.pathname === "/employers" || location.pathname === "/pricing/employer" ||
       (location.pathname === "/pricing" && !isModalOpen.isVendor)
     ) {
       setShowCandidate(false);

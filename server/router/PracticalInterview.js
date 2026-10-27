@@ -22,6 +22,7 @@ const { Authorization } = require("../middleware/auth");
 const payments = require("../controller/practicePayments");
 const { requireSession } = require("../services/practiceSessions");
 
+router.get("/plans", payments.catalog);
 router.use(Authorization, payments.candidateOnly);
 router.get("/access", payments.status);
 router.post("/payments/checkout", payments.checkout);

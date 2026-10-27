@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const schema = mongoose.Schema;
 const userSchema = new schema(
   {
+    policyAcceptance: { termsVersion: String, privacyVersion: String, employerTerms: Boolean, role: String, acceptedAt: Date },
     userId: String,
     email: String,
     region: String,

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const apiRouter = require("../controller/Api");
+const publicBlogs = require("../controller/publicBlogs");
+const { Authorization } = require("../middleware/auth");
 const maintainModel = require("../models/MaintenanceModel");
 const LocationModel = require("../models/LocationModel");
 
@@ -14,10 +16,11 @@ router.get("/skills", apiRouter.fetchSkills);
 router.post("/addSkills", apiRouter.addSkills);
 
 router.get("/languages", apiRouter.fetchLanguages);
-router.post("/post/blog", apiRouter.postBlogs);
+router.get("/blog/editor", Authorization, publicBlogs.editorOnly, publicBlogs.editor);
+router.post("/post/blog", Authorization, publicBlogs.editorOnly, publicBlogs.save);
 
-router.get("/blogs/all", apiRouter.fetchBlogs);
-router.get("/blog/:id", apiRouter.fetchBlogSingle);
+router.get("/blogs/all", publicBlogs.list);
+router.get("/blog/:id", publicBlogs.single);
 router.post("/verify/captcha", apiRouter.verifyCaptcha);
 
 router.get("/countries", async (req, res) => {

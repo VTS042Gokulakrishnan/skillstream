@@ -10,7 +10,7 @@ import { templates, sectionNames, defaults, blankContent, sampleContent, renderR
 import './ResumeBuilder.css';
 import logo from '../../assets/logo-twos.png';
 
-const base = `${Server}/api/v1/resume-builder`;
+
 const snapshot = doc => JSON.stringify({ title: doc.title, template: doc.template, content: doc.content, settings: doc.settings });
 const fresh = (template = 'modern', sample = false) => ({ title: 'Untitled resume', template, content: sample ? sampleContent() : blankContent(), settings: { ...defaults, order: [...defaults.order], hidden: [], headings: {} } });
 const previewHtml = doc => { try { return renderResume({ ...doc, title: doc.title.trim() || 'Untitled resume' }); } catch (_) { return '<p>Preview unavailable. Please check your date ranges and resume fields, then try again.</p>'; } };
@@ -34,6 +34,7 @@ function RichInput({ value, onChange, label }) {
   return <label className="rb-field">{label}<div className="rb-rich"><div className="rb-format"><button type="button" onClick={() => format('**')} aria-label="Bold selection"><b>B</b></button><button type="button" onClick={() => format('*')} aria-label="Italic selection"><i>I</i></button><button type="button" onClick={() => format('bullet')}>• List</button><span>Bold, italic and bullet formatting</span></div><textarea ref={ref} maxLength={12000} value={value} onChange={e => onChange(e.target.value)} rows={6} /></div></label>;
 }
 export default function ResumeBuilder() {
+  const base = `${Server}/api/v1/resume-builder`;
   const [resumes, setResumes] = useState([]), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false);
   const [doc, setDoc] = useState(null), [saved, setSaved] = useState('');
   const [tab, setTab] = useState('content'), [mobileTab, setMobileTab] = useState('edit'), [section, setSection] = useState('personal');

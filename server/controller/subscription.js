@@ -68,35 +68,23 @@ const controller = {
   },
   async UScreateCheckoutSession(req, res) {
     try {
-      const { plan, amount, userId, product, priceId, role, period } = req.body;
-      console.log("body", req.body);
-      if (role === "Employer") {
-        const session = await USStripe.checkout.sessions.create({
-          payment_method_types: ["card"],
-          mode: "subscription",
-          line_items: [
-            {
-              price: priceId, // Use price ID for the recurring plan
-              quantity: 1,
-            },
-          ],
-          success_url: `http://skillstreamjobs.us/pricing/success?plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `http://skillstreamjobs.us/pricing/cancel`,
-          metadata: {
-            userId: userId,
-            plan: plan,
-            role: role,
-            period: period,
-          },
-        });
-        console.log(session);
-        res.json({ id: session.id, session: session });
-      } else if (role === "Candidate") {
-        return res.status(410).json({ message: "Please purchase a plan from Practice Assessment." });
-      }
+      if (req.user?.role !== "Employer") return res.status(403).json({ message: "Employer account required." });
+      if (require("../services/employerBilling").billingRestricted(req.user)) return res.status(403).json({ message: "Billing is managed by your organization." });
+      if (req.body.period !== "monthly") return res.status(400).json({ message: "This billing period is not available." });
+      const priceId = process.env.STRIPE_EMPLOYER_MONTHLY_PRICE_ID || "price_1PdWn2P218aRnkr8eMEL98xa";
+      const price = await USStripe.prices.retrieve(priceId);
+      if (!price.active || price.currency !== "usd" || price.unit_amount !== 24900 || price.recurring?.interval !== "month" || price.recurring?.interval_count !== 1) return res.status(503).json({ message: "This plan is not available for checkout." });
+      const base = (process.env.client || "https://skillstreamjobs.us").replace(/\/$/, "");
+      const session = await USStripe.checkout.sessions.create({
+        payment_method_types: ["card"], mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: base + "/pricing/success?plan=Recommended%20(Monthly)&session_id={CHECKOUT_SESSION_ID}",
+        cancel_url: base + "/pricing/cancel",
+        metadata: { userId: req.user.userId, plan: "Recommended (Monthly)", role: "Employer", period: "monthly" }
+      });
+      res.json({ id: session.id });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ error: error.message });
+      res.status(503).json({ message: "Checkout could not start. Please try again or contact support." });
     }
   },
   async webhook(req, res) {

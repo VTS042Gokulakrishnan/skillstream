@@ -14,7 +14,7 @@ const { Authorization } = require("../middleware/auth");
 
 router.post("/new/:userId", updateSubscription);
 router.post("/create/checkout-session", createCheckoutSession);
-router.post("/US/create/checkout-session", UScreateCheckoutSession);
+router.post("/US/create/checkout-session", Authorization, UScreateCheckoutSession);
 
 router.post("/verify/webhook", webhook);
 router.get("/get/transaction", getTransactions);

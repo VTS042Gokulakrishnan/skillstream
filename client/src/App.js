@@ -1,4 +1,8 @@
+import { AboutPage, ContactPage, CommunityPage, EmployerLanding, PracticeLanding, PolicyPage } from "./Pages/Public/PublicPages";
+import { CandidatePricing, EmployerPricing, PricingChooser } from "./Pages/Public/PublicPricing";
+import { BlogPage, BlogArticle, BlogEditor } from "./Pages/Public/PublicBlog";
 import ResumeBuilder from "./Pages/ResumeBuilder/ResumeBuilder";
+import PurchaseReturn from "./Components/PublicSite/PurchaseReturn";
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import PortalTheme from "./Components/CandidateUI/PortalTheme";
@@ -17,8 +21,6 @@ import Footer from "./Components/Footer/Footer";
 import Footer1 from "./Components/Footer1/Footer1";
 import Header1 from "./Components/Header/Header1";
 import Register from "./Pages/Auth/Register";
-import About from "./Pages/About/About";
-import Contact from "./Pages/Contact/Contact";
 import JobList from "./Pages/Find-Job/JobList";
 import JobSingle from "./Pages/Find-Job/JobSingle";
 import Dashboard from "./Pages/Employers/Employers-Dashboard/Dashboard";
@@ -62,22 +64,13 @@ import EmployersMessages from "./Pages/Employers/Employers-Dashboard/Messages";
 import EmployersChangePassword from "./Pages/Employers/Employers-Dashboard/ChangePassword";
 import EmployerProfileView from "./Pages/Employers/Employers-Dashboard/EmployerProfileView";
 import EditPostJob from "./Pages/Employers/Employers-Dashboard/EditPostJob";
-import BlogDetails from "./Pages/Blog/BlogDetails";
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // import 'jquery/dist/jquery.min.js';
 import useScript from "./Hooks/useScript";
 import { useNavigate } from "react-router-dom";
 import Success from "./Components/Success/Success";
 import { isTokenExpired } from "./utils/auth";
-import TermsAndCondition from "./Pages/TermsAndCondition";
-import Pricing from "./Pages/Pricing/Pricing";
-import PrivacyCenter from "./Pages/PrivacyCenter";
-import SecurityCenter from "./Pages/SecurityCenter";
 import HomeNew from "./Pages/HomeNew/AgencyLandingPage";
-import EmpHome from "./Pages/EmployerPage/ServiceLandingPage";
-import Blog from "./Pages/Blog/Blog";
-import BlogIndex from "./Pages/Blog/BlogIndex";
-import Community from "Components/Community/Community";
 import HeaderEmp from "Components/Header/HeaderEmp";
 import PricingSuccess from "Pages/Pricing/PricingSuccess";
 import Cancel from "Pages/Pricing/Cancel";
@@ -90,9 +83,7 @@ import Demo from "./Components/VideoAssessment/DemoModal";
 import NotFound from "Pages/NotFound";
 import { ScrollProvider } from "./Components/ScrollContext"; // Import the provider
 import FeedbackPage from "Components/VideoAssessment/FeedbackPage";
-import PracticeInterviewLanding from "Components/PracticalInterview/PracticeInterviewLanding/PracticeInterviewLanding";
 import Billing from "Pages/Employers/Employers-Dashboard/Billing";
-import BlogPost from "./Components/blogs/BlogPost/BlogPosting";
 import CodeEditor from "Components/VideoAssessment/CodeEditor";
 import ProtectedRoute from "config/ProtectedRoute";
 import UpdateProfile from "Pages/Employers/Employers-Dashboard/UpdateProfile";
@@ -359,32 +350,12 @@ function App() {
             </div>
           }
         />
-        <Route
-          path="/postBlog"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <BlogPost />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/postBlog" element={<BlogEditor />} />
         <Route
           path="/codingRound/:userId/:id/:jobId"
           element={<CodingRound />}
         />
-        <Route
-          path="/about"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <About />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/demo" element={<Demo />} />
         <Route
           path="/videoAssessment/:userId/:id/:jobId"
@@ -405,39 +376,9 @@ function App() {
               element={<DemoVideoAssessment />}
             /> */}
         <Route path="/feedbackForm" element={<FeedbackPage />} />
-        <Route
-          path="/blog"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <Blog />
-              <Footer />
-            </div>
-          }
-        />
-        <Route
-          path="/blog-details/:topic/:id"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <BlogDetails />
-              <Footer />
-            </div>
-          }
-        />
-        <Route
-          path="/community"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <Community />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog-details/:topic/:id" element={<BlogArticle />} />
+        <Route path="/community" element={<CommunityPage />} />
         <Route
           path="/reports"
           element={
@@ -448,29 +389,11 @@ function App() {
             </div>
           }
         />
-        <Route
-          path="/pricing"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <Pricing />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/pricing" element={<PricingChooser />} />
+        <Route path="/pricing/candidate" element={<CandidatePricing />} />
+        <Route path="/pricing/employer" element={<EmployerPricing />} />
         {/**employer */}
-        <Route
-          path="/employers"
-          element={
-            <div>
-              {" "}
-              <HeaderEmp />
-              <EmpHome />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/employers" element={<EmployerLanding />} />
         <Route element={<ProtectedRoute allowedRole="Employer" />}>
           <Route
             path="/aiFitment"
@@ -496,17 +419,7 @@ function App() {
             }
           />
         </Route>
-        <Route
-          path="/practiceInterviewLanding"
-          element={
-            <div>
-              {" "}
-              <Header />
-              <PracticeInterviewLanding />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/practiceInterviewLanding" element={<PracticeLanding />} />
         <Route element={<ProtectedRoute allowedRole="Candidate" />}>
           <Route
             path="/practicalAssessment"
@@ -549,50 +462,10 @@ function App() {
           }
         />
         <Route path="/linkedIn/success" element={<Success />} />
-        <Route
-          path="/contact"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <Contact />
-              <Footer />
-            </div>
-          }
-        />
-        <Route
-          path="/termsAndCondition"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <TermsAndCondition />
-              <Footer />
-            </div>
-          }
-        />
-        <Route
-          path="/privacyCenter"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <PrivacyCenter />
-              <Footer />
-            </div>
-          }
-        />
-        <Route
-          path="/securityCenter"
-          element={
-            <div>
-              {" "}
-              <Header1 />
-              <SecurityCenter />
-              <Footer />
-            </div>
-          }
-        />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/termsAndCondition" element={<PolicyPage kind="terms" />} />
+        <Route path="/privacyCenter" element={<PolicyPage kind="privacy" />} />
+        <Route path="/securityCenter" element={<PolicyPage kind="security" />} />
         <Route
           path="/find-jobs"
           element={
@@ -785,7 +658,7 @@ function App() {
       <Toaster position="top-center" reverseOrder={false} />
       <ScrollProvider>
         {" "}
-        <BrowserRouter><PortalTheme />
+        <BrowserRouter><PortalTheme /><PurchaseReturn />
           <AppLayout />
         </BrowserRouter>
       </ScrollProvider>

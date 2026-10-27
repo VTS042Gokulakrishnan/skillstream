@@ -5,7 +5,7 @@ import { Server } from "../../App";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-const Googlelogin = ({ userType, setIsModalOpen }) => {
+const Googlelogin = ({ userType, setIsModalOpen = () => {}, policyAcceptance }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const clientId =
@@ -15,6 +15,7 @@ const Googlelogin = ({ userType, setIsModalOpen }) => {
     try {
       let body = {
         credential: credentialResponse.credential,
+        policyAcceptance,
         clientId: credentialResponse.clientId,
         role: userType,
         region: "United States",

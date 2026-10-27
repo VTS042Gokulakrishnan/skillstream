@@ -1,0 +1,4 @@
+dist/
+full-dist/
+chrome-profile/
+*.png

@@ -14,7 +14,7 @@ const msalConfig = {
 };
 
 const msalInstance = new PublicClientApplication(msalConfig);
-const MicrosoftLogin = ({ role, region }) => {
+const MicrosoftLogin = ({ role, region, policyAcceptance }) => {
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
   const location = useLocation();
@@ -33,6 +33,7 @@ const MicrosoftLogin = ({ role, region }) => {
         `${Server}/api/v1/auth/microsoft/login`,
         {
           token: accessToken,
+          policyAcceptance,
           role,
           region,
         }

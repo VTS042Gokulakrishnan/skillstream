@@ -102,7 +102,7 @@ export default function CandidatePage() {
     </main>
     <footer className="cl-footer"><div className="cl-container cl-footer-grid">
       <div className="cl-footer-brand"><img src={logo} alt="SkillStream" /><p>Your career journey, one place.</p></div>
-      <nav aria-label="About us"><h3>About Us</h3><Link to="/about">About</Link><Link to="/pricing">Pricing</Link><Link to="/blog">Blog</Link><Link to="/contact">Contact</Link><Link to="/employers">Employers Page</Link></nav>
+      <nav aria-label="About us"><h3>About Us</h3><Link to="/about">About</Link><Link to="/pricing/candidate">Pricing</Link><Link to="/blog">Blog</Link><Link to="/contact">Contact</Link><Link to="/employers">Employers Page</Link></nav>
       <nav aria-label="Helpful resources"><h3>Helpful Resources</h3><a href="#site-map">Site Map</a><Link to="/termsAndCondition">Terms of Use</Link><Link to="/privacyCenter">Privacy Center</Link><Link to="/securityCenter">Security Center</Link></nav>
       <div className="cl-reach"><h3>Reach Us</h3><a href="mailto:info@skillstreamjobs.us">info@skillstreamjobs.us</a><a href="tel:+18475981122">+1 (847) 598-1122</a><address>1827 Walden Office Sq Suite #260<br />Schaumburg, IL 60173</address></div>
       <details id="site-map" className="cl-site-map"><summary>Site Map</summary><nav aria-label="Site map"><Link to="/">Home</Link><Link to="/find-jobs">Find Jobs</Link><Link to="/employers-list">Companies</Link><Link to="/practiceInterviewLanding">Practice Interviews</Link><Link to="/employers">Employers</Link><Link to="/contact">Contact</Link></nav></details>

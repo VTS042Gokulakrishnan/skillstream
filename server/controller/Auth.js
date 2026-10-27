@@ -1,3 +1,4 @@
+const { requireAcceptance, acceptanceRecord } = require("../services/policyAcceptance");
 const usermodel = require("../models/candidateModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -256,6 +257,7 @@ const getRegionBaseUrl = (region) => {
 };
 const controller = {
   async register(req, res) {
+    if (!requireAcceptance(req, res)) return;
     try {
       const { email, password, role, name, region } = req.body;
       if (role === "Candidate") {
@@ -462,6 +464,7 @@ const controller = {
                   .sendMail(details)
                   .then(async (info) => {
                     const newUser = await usermodel.create({
+              policyAcceptance: acceptanceRecord(req),
                       email: email,
                       password: hashedPassword,
                       role: role,
@@ -743,6 +746,7 @@ const controller = {
                   .sendMail(details)
                   .then(async (info) => {
                     const newUser = await EmployerModel.create({
+              policyAcceptance: acceptanceRecord(req),
                       email: email,
                       password: hashedPassword,
                       role: role,
@@ -1021,6 +1025,7 @@ const controller = {
                   .sendMail(details)
                   .then(async (info) => {
                     const newUser = await VendorModel.create({
+              policyAcceptance: acceptanceRecord(req),
                       email: email,
                       password: hashedPassword,
                       role: role,
@@ -2178,6 +2183,7 @@ const controller = {
             email: new RegExp(`^${payload.email}$`, "i"),
           });
           if (!isUserExists) {
+            if (!requireAcceptance(req, res)) return;
             const maxUserIdUser = await usermodel.findOne(
               {},
               {},
@@ -2209,6 +2215,7 @@ const controller = {
             }
 
             const newUser = await usermodel.create({
+              policyAcceptance: acceptanceRecord(req),
               email: payload.email,
               password: "GoogleLogin",
               role: role,
@@ -2379,6 +2386,7 @@ const controller = {
           //   email: new RegExp(`^${payload.email}$`, "i"),
           // });
           if (!isUserExists) {
+            if (!requireAcceptance(req, res)) return;
             const maxUserIdUser = await employerModel.findOne(
               {},
               {},
@@ -2411,6 +2419,7 @@ const controller = {
             const organisationId = await generateUniqueOrgId();
 
             const newUser = await employerModel.create({
+              policyAcceptance: acceptanceRecord(req),
               email: payload.email,
               password: "GoogleLogin",
               role: role,
@@ -2580,6 +2589,7 @@ const controller = {
               email: new RegExp(`^${payload.email}$`, "i"),
             });
             if (!isUserExists) {
+            if (!requireAcceptance(req, res)) return;
               const maxUserIdUser = await vendorModel.findOne(
                 {},
                 {},
@@ -2628,6 +2638,7 @@ const controller = {
               const organisationId = await generateUniqueOrgId();
 
               const newUser = await vendorModel.create({
+              policyAcceptance: acceptanceRecord(req),
                 email: payload.email,
                 password: "GoogleLogin",
                 role: role,
@@ -2791,6 +2802,7 @@ const controller = {
         });
 
         if (!user) {
+          if (!requireAcceptance(req, res)) return;
           // Handle user creation (similar to your Google logic)
           // Generate userId based on max count
           const maxUser = await usermodel.findOne(
@@ -2831,6 +2843,7 @@ const controller = {
           };
           const data = await s3.upload(params).promise();
           user = await usermodel.create({
+              policyAcceptance: acceptanceRecord(req),
             email,
             password: "MicrosoftLogin",
             role,
@@ -3003,6 +3016,7 @@ const controller = {
         // });
 
         if (!user) {
+          if (!requireAcceptance(req, res)) return;
           // Handle user creation (similar to your Google logic)
           // Generate userId based on max count
           const maxUser = await employerModel.findOne(
@@ -3043,6 +3057,7 @@ const controller = {
           };
           const data = await s3.upload(params).promise();
           user = await employerModel.create({
+              policyAcceptance: acceptanceRecord(req),
             email,
             password: "MicrosoftLogin",
             role,
@@ -3195,6 +3210,7 @@ const controller = {
         });
 
         if (!user) {
+          if (!requireAcceptance(req, res)) return;
           // Handle user creation (similar to your Google logic)
           // Generate userId based on max count
           const maxUser = await VendorModel.findOne(
@@ -3235,6 +3251,7 @@ const controller = {
           };
           const data = await s3.upload(params).promise();
           user = await VendorModel.create({
+              policyAcceptance: acceptanceRecord(req),
             email,
             password: "MicrosoftLogin",
             role,

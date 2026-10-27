@@ -3,6 +3,11 @@ const { plans, access } = require("../services/practicePlans");
 const billing = require("../services/practiceBilling");
 const sessions = require("../services/practiceSessions");
 
+exports.catalog = (req, res) => res.json({ plans: Object.entries(plans).map(([id, plan]) => ({
+  id, name: plan.name, amount: plan.amount, description: plan.description,
+  available: /^price_/.test(process.env[plan.env] || "") && !!process.env.STRIPE_PRACTICE_WEBHOOK_SECRET,
+})) });
+
 exports.candidateOnly = (req, res, next) => {
   if (req.user?.role !== "Candidate") return res.sendStatus(403);
   next();
