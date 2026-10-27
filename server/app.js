@@ -143,6 +143,7 @@ app.use("/api/v1/password", forgotPasswordRouter);
 app.use("/api/v1/candidate", candidateRouter);
 app.use("/api/v1/employer", employerRouter);
 app.use("/api/v1/upload", uploadRouter);
+app.use("/api/v1/resume-builder", require("./router/resumeBuilder"));
 app.use("/api/v1/search/keyword", searchrouter);
 app.use("/api/v1/candidate/shortlistJob", shortlistedRouter);
 app.use("/api/v1/employer/shortlistResume", shortlistedResumeRouter);

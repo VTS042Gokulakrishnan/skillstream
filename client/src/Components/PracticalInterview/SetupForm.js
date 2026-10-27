@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Modal, Button, Upload, message } from "antd";
-import {
-  UploadOutlined,
-  DeleteOutlined,
-  ConsoleSqlOutlined,
-} from "@ant-design/icons";
+import { Button, Upload } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import practiceApi from "./practiceApi";
 import { Server } from "App";
-import backgroundImage from "../../assets/abstract-design-background-smooth-flowing-lines.jpg";
-import backgroundImageOne from "../../assets/down.jpeg";
 import { Toaster, toast } from "react-hot-toast";
 
 const SetupForm = () => {
@@ -19,9 +13,7 @@ const SetupForm = () => {
   const location = useLocation();
   const { round } = location.state || {};
 
-  const [showForm, setShowForm] = useState(false);
-  const [showModeModal, setShowModeModal] = useState(false);
-  const [mode, setMode] = useState(null);
+  const [mode, setMode] = useState("manual");
   const [appliedJobs, setAppliedJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [attachment, setAttachment] = useState([]);
@@ -40,32 +32,9 @@ const SetupForm = () => {
   });
 
   const isCoding = round?.toLowerCase() === "coding";
-  const buttonText = isCoding
-    ? "Start Coding Practice"
-    : "Start Practice Video Interview";
-  const submitText = isCoding
-    ? "Generate Coding Questions"
-    : "Generate Questions";
-
-  const videoInstructions = [
-    "Ensure your webcam and microphone are working properly.",
-    "Enable screen recording permissions when prompted.",
-    'Click "Next Question" for each question and answer thoroughly.',
-    "Recording captures video and audio — choose a quiet, well-lit environment.",
-    'Do not click "Stop Sharing" during the interview.',
-  ];
-
-  const codingInstructions = [
-    "Ensure your webcam and microphone are working properly.",
-    "Enable screen recording permissions when prompted.",
-    'Write your code for each question, click "Run" to see output, then click "Submit".',
-    "Recording captures video and audio — choose a quiet, well-lit environment.",
-    'Do not click "Stop Sharing" during the session.',
-  ];
-
   const props = {
     onChange({ file }) {
-      setAttachment(file);
+      setAttachment(file.originFileObj || file);
       setErrors((prev) => ({ ...prev, resume: "" }));
     },
     beforeUpload: (file) => {
@@ -98,23 +67,23 @@ const SetupForm = () => {
     }
   };
   useEffect(() => {
-    practiceApi.get("/access").then(({ data }) => {
-      if (!(isCoding ? data.access.canCoding : data.access.canVideo)) {
-        navigate("/practiceInterview", { replace: true });
-      } else fetchAppliedJobs();
-    }).catch(() => navigate("/practiceInterview", { replace: true }));
+    practiceApi
+      .get("/access")
+      .then(({ data }) => {
+        if (!(isCoding ? data.access.canCoding : data.access.canVideo)) {
+          navigate("/practiceInterview", { replace: true });
+        } else fetchAppliedJobs();
+      })
+      .catch(() => navigate("/practiceInterview", { replace: true }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleModeSelect = async (type) => {
-    setMode(type);
-    if (type === "applied") await fetchAppliedJobs();
-  };
 
   const findJobdetails = async (e) => {
     setErrors((prev) => ({ ...prev, jobTitle: "" }));
     const jobId = e.target.value;
     setSelectedJob(jobId);
+    setJobTitle("");
+    setJobDescription("");
     if (!jobId) return;
     try {
       const job = appliedJobs.find((j) => j.jobId === jobId);
@@ -125,7 +94,6 @@ const SetupForm = () => {
       );
 
       setJobTitle(job?.JobTitle);
-      console.log(data?.jobs[0]?.JobDescription);
 
       setJobDescription(data?.jobs[0]?.JobDescription || "");
 
@@ -143,7 +111,7 @@ const SetupForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(attachment);
+
     let valid = true;
     const newErrors = { jobTitle: "", jobDescription: "", resume: "" };
 
@@ -156,7 +124,7 @@ const SetupForm = () => {
       valid = false;
     }
 
-    if (!resumeFetched && attachment.length === 0) {
+    if (!resumeFetched && !(attachment instanceof File)) {
       newErrors.resume = "Please upload a resume.";
       valid = false;
     }
@@ -170,7 +138,10 @@ const SetupForm = () => {
     const requestId = uuidv4();
     try {
       setSubmitting(true);
-      await practiceApi.post("/sessions", { type: isCoding ? "coding" : "video", requestId });
+      await practiceApi.post("/sessions", {
+        type: isCoding ? "coding" : "video",
+        requestId,
+      });
       const formData = new FormData();
       formData.append("file", resumeFetched ? resume : attachment);
       formData.append("jobTitle", jobTitle);
@@ -183,9 +154,7 @@ const SetupForm = () => {
       const { data } = await practiceApi.post("/upload", formData, {
         headers: { "X-Practice-Session": requestId },
       });
-      console.log(data);
-      setShowModeModal(false);
-      setShowForm(false);
+
       setMode(null);
       setSubmitting(false);
       if (isCoding) {
@@ -211,7 +180,10 @@ const SetupForm = () => {
     } catch (error) {
       console.log(error);
       await practiceApi.post(`/sessions/${requestId}/cancel`).catch(() => {});
-      toast.error(error.response?.data?.message || "Error preparing your interview. Please try again.");
+      toast.error(
+        error.response?.data?.message ||
+          "Error preparing your interview. Please try again."
+      );
       if (error.response?.status === 402) navigate("/practiceInterview");
     } finally {
       setSubmitting(false);
@@ -241,396 +213,185 @@ const SetupForm = () => {
   };
 
   return (
-    <div style={{ display: "flex", width: "100%", height: "100vh" }}>
-      <Toaster position="top-center" reverseOrder={false} />
-
-      {/* Left Panel */}
-      <div
-        style={{
-          flex: "1",
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#000",
-        }}
+    <main className="ss-setup">
+      <Toaster position="top-center" />
+      <button
+        className="ss-back"
+        onClick={() => navigate("/practiceInterview")}
       >
-        <div
-          style={{
-            background: "rgba(255,255,255,0.9)",
-            borderRadius: "20px",
-            padding: "30px",
-            maxWidth: "520px",
-          }}
-        >
-          <h2 style={{ textAlign: "center", fontWeight: "bold" }}>
-            {isCoding
-              ? "Welcome to Coding Practice"
-              : "Welcome to Video Practice Assessment"}
-          </h2>
-          <ul style={{ marginTop: "20px", fontWeight: "bold" }}>
-            {(isCoding ? codingInstructions : videoInstructions).map(
-              (line, i) => (
-                <li key={i} style={{ marginBottom: "8px" }}>
-                  {line}
-                </li>
-              )
-            )}
-          </ul>
-          <p style={{ color: "blue", marginTop: "15px" }}>
-            Get started and step into your next interview with confidence!
+        ← Back to practice
+      </button>
+      <section className="ss-card">
+        <header className="ss-setup-top">
+          <span>{isCoding ? "⌘ Coding practice" : "◉ Video practice"}</span>
+          <ol className="ss-steps">
+            <li className="active">
+              1 <span>Setup</span>
+            </li>
+            <li>
+              2 <span>Device check</span>
+            </li>
+            <li>
+              3 <span>Interview</span>
+            </li>
+            <li>
+              4 <span>Results</span>
+            </li>
+          </ol>
+        </header>
+        <form onSubmit={handleSubmit} className="ss-setup-form">
+          <h1>Set up {isCoding ? "coding" : "video"} practice</h1>
+          <p>
+            Tell us about the role you want to practise. We’ll tailor your
+            interview to the job and your resume.
           </p>
-        </div>
-      </div>
-
-      {/* Right Panel */}
-      <div
-        style={{
-          flex: "1",
-          backgroundImage: `url(${backgroundImageOne})`,
-          backgroundSize: "cover",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {!showForm ? (
-          <div
-            style={{
-              backgroundColor: "#fff",
-              padding: "30px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-            }}
-          >
-            <button
-              onClick={() => setShowModeModal(true)}
-              style={{
-                backgroundColor: "#1d4ed8",
-                color: "#fff",
-                padding: "12px 25px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
-            >
-              {buttonText}
-            </button>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Mode Selection Modal */}
-      <Modal
-        title="Choose Practice Mode"
-        open={showModeModal}
-        onCancel={() => {
-          setMode(null);
-          setShowModeModal(false);
-          setSelectedJob(null);
-          setJobTitle(null);
-          setErrors({
-            jobTitle: "",
-            jobDescription: "",
-            resume: "",
-            codingLevel: "",
-          });
-        }}
-        footer={null}
-        centered
-      >
-        {!mode ? (
-          <div style={{ display: "flex", justifyContent: "space-around" }}>
-            <Button type="primary" onClick={() => handleModeSelect("applied")}>
-              Prepare for Applied Jobs
-            </Button>
-            <Button onClick={() => handleModeSelect("manual")}>
-              Prepare Manually
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            {mode === "applied" ? (
-              <>
-                <label style={{ fontWeight: 600 }}>Select Job</label>
-                <select
-                  value={selectedJob || ""}
-                  onChange={(e) => findJobdetails(e)}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    marginBottom: "15px",
-                  }}
-                >
-                  <option value="">Select Job</option>
-                  {appliedJobs.map((job) => (
-                    <option key={job.jobId} value={job.jobId}>
-                      {job.JobTitle}
-                    </option>
-                  ))}
-                </select>
-                {errors.jobTitle && (
-                  <p style={{ color: "#e74c3c", marginTop: "2px" }}>
-                    {errors.jobTitle}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <label style={{ fontWeight: 600 }}>Job Title</label>
-                <input
-                  type="text"
-                  value={jobTitle}
-                  onChange={(e) => {
-                    setJobTitle(e.target.value);
-                    setErrors((prev) => ({ ...prev, jobTitle: "" }));
-                  }}
-                  placeholder="Enter Job Title"
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    marginBottom: "15px",
-                  }}
-                />
-                {errors.jobTitle && (
-                  <p style={{ color: "#e74c3c", marginTop: "2px" }}>
-                    {errors.jobTitle}
-                  </p>
-                )}
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <label style={{ fontWeight: 600 }}>Job Description</label>
-                  <Button
-                    type="primary"
-                    onClick={completeAI}
-                    disabled={loader}
-                    style={{ marginBottom: "15px" }}
-                  >
-                    {loader ? "Fetching..." : "Complete with AI"}
-                  </Button>
-                </div>
-                <textarea
-                  value={jobDescription}
-                  onChange={(e) => {
-                    setJobDescription(e.target.value);
-                    setErrors((prev) => ({ ...prev, jobDescription: "" }));
-                  }}
-                  placeholder="Enter Job Description"
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    height: "100px",
-                    marginBottom: "15px",
-                  }}
-                />
-                {errors.jobDescription && (
-                  <p style={{ color: "#e74c3c", marginTop: "2px" }}>
-                    {errors.jobDescription}
-                  </p>
-                )}
-              </>
-            )}
-            {isCoding && (
-              <>
-                {" "}
-                <label style={{ fontWeight: 600 }}>Select level</label>
-                <select
-                  value={codingLevel || ""}
-                  onChange={(e) => {
-                    setCodingLevel(e.target.value);
-                    setErrors((prev) => ({ ...prev, codingLevel: "" }));
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    borderRadius: "4px",
-                    border: "1px solid #ccc",
-                    marginBottom: "15px",
-                  }}
-                >
-                  <option value="">Select Coding level</option>
-
-                  <option value="Easy">Easy</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Hard">Hard</option>
-                </select>
-                {errors.codingLevel && (
-                  <p style={{ color: "#e74c3c", marginTop: "2px" }}>
-                    {errors.codingLevel}
-                  </p>
-                )}
-              </>
-            )}
-            {/* Resume Section */}
-            <label style={{ fontWeight: 600 }}>Resume</label>
-            {resumeFetched && resume ? (
-              <div
-                style={{
-                  marginTop: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  border: "1px solid #ccc",
-                  borderRadius: "5px",
-                  padding: "8px",
-                  background: "#f9f9f9",
+          <div className="ss-segment" role="group" aria-label="Job source">
+            {[
+              ["applied", "Applied job"],
+              ["manual", "Enter manually"],
+            ].map(([value, label]) => (
+              <button
+                type="button"
+                className={mode === value ? "active" : ""}
+                key={value}
+                onClick={() => {
+                  setMode(value);
+                  setJobTitle("");
+                  setJobDescription("");
+                  setSelectedJob("");
                 }}
               >
-                <a
-                  href={resume}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#1d4ed8", textDecoration: "underline" }}
-                >
-                  {resume.split("/").pop()}
-                </a>
-                <DeleteOutlined
-                  onClick={handleResumeDelete}
-                  style={{ color: "red", cursor: "pointer", fontSize: "16px" }}
-                />
+                {label}
+              </button>
+            ))}
+          </div>
+          {mode === "applied" ? (
+            <label className="ss-field">
+              Select applied job
+              <select value={selectedJob || ""} onChange={findJobdetails}>
+                <option value="">Choose a job</option>
+                {appliedJobs.map((job) => (
+                  <option key={job.jobId} value={job.jobId}>
+                    {job.JobTitle}
+                  </option>
+                ))}
+              </select>
+              {!appliedJobs.length && (
+                <small>
+                  No applied jobs yet. Choose Enter manually to continue.
+                </small>
+              )}
+            </label>
+          ) : (
+            <label className="ss-field">
+              Job title
+              <input
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                placeholder="e.g. Frontend Developer"
+              />
+            </label>
+          )}
+          {errors.jobTitle && (
+            <p className="ss-field-error" role="alert">
+              {errors.jobTitle}
+            </p>
+          )}
+          <label className="ss-field">
+            Role description
+            <textarea
+              rows={5}
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Describe the responsibilities and skills for this role."
+            />
+          </label>
+          {mode === "manual" && (
+            <button
+              className="ss-ai-link"
+              type="button"
+              disabled={loader || submitting}
+              onClick={completeAI}
+            >
+              {loader ? "Generating description…" : "✧ Complete with AI"}
+            </button>
+          )}
+          {errors.jobDescription && (
+            <p className="ss-field-error" role="alert">
+              {errors.jobDescription}
+            </p>
+          )}
+          {isCoding && (
+            <fieldset className="ss-difficulty">
+              <legend>Difficulty level</legend>
+              <div className="ss-segment">
+                {["Easy", "Medium", "Hard"].map((level) => (
+                  <button
+                    type="button"
+                    key={level}
+                    className={codingLevel === level ? "active" : ""}
+                    onClick={() => setCodingLevel(level)}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              {errors.codingLevel && (
+                <p className="ss-field-error">{errors.codingLevel}</p>
+              )}
+            </fieldset>
+          )}
+          <div className="ss-field">
+            <span>Your resume</span>
+            {resumeFetched && resume ? (
+              <div className="ss-saved-resume">
+                <span>
+                  ▤ Saved resume <b>Primary</b>
+                </span>
+                <div className="ss-actions">
+                  <a href={resume} target="_blank" rel="noreferrer">
+                    Preview ↗
+                  </a>
+                  <button
+                    type="button"
+                    className="ss-ai-link"
+                    onClick={handleResumeDelete}
+                  >
+                    Change resume
+                  </button>
+                </div>
               </div>
             ) : (
-              <Upload {...props}>
-                <Button icon={<UploadOutlined />}>Upload</Button>
+              <Upload {...props} accept=".pdf,.doc,.docx" maxCount={1}>
+                <Button icon={<UploadOutlined />}>Choose resume</Button>
               </Upload>
             )}
-            {errors.resume && (
-              <p style={{ color: "#e74c3c", marginTop: "2px" }}>
-                {errors.resume}
-              </p>
-            )}
-
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitting}
-              style={{ width: "100%", marginTop: "20px" }}
-            >
-              {submitText}
-            </Button>
-          </form>
-        )}
-      </Modal>
-    </div>
+            {errors.resume && <p className="ss-field-error">{errors.resume}</p>}
+          </div>
+          <div className="ss-info">
+            ⓘ Your camera, microphone and screen will be recorded during
+            practice.
+          </div>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            size="large"
+            loading={submitting}
+            disabled={loader}
+          >
+            {submitting
+              ? "Preparing your interview…"
+              : "Continue to device check →"}
+          </Button>
+          {submitting && (
+            <p role="status" className="ss-preparing-note">
+              Preparing your role and resume. Please keep this tab open.
+            </p>
+          )}
+        </form>
+      </section>
+    </main>
   );
 };
-
 export default SetupForm;
-
-{
-  /* <h2
-              style={{
-                fontSize: "18px",
-                fontWeight: "bold",
-                marginBottom: "20px",
-                textAlign:"center",
-              }}
-            >
-              Ace your next interview
-            </h2>
-            <p
-              style={{
-                fontSize: "14px",
-                lineHeight: "1.6",
-                marginBottom: "20px",
-                color: "#000",
-              }}
-            >
-              Prepare for your next big opportunity with confidence! Our
-              AI-powered platform helps you simulate real-world interview
-              scenarios, providing you with instant feedback and personalized
-              tips to sharpen your skills. Whether you're prepping for your
-              first interview or a seasoned professional aiming to refine your
-              responses, we’ve got you covered.
-            </p>
-            <p
-              style={{
-                fontSize: "14px",
-                lineHeight: "1.6",
-                marginBottom: "20px",
-              }}
-            >
-              What can you expect?
-            </p>
-            <ul
-              style={{
-                fontSize: "14px",
-                lineHeight: "1.6",
-                marginBottom: "20px",
-              }}
-            >
-              <li>
-                <b>Realistic Interview Questions:</b> Practice with commonly
-                asked questions tailored to your industry or role.
-              </li>
-              <li>
-                <b>AI-Powered Feedback:</b> Receive instant insights on your
-                communication, body language, and overall performance.
-              </li>
-              <li>
-                <b>Customizable Sessions:</b> Choose your difficulty level,
-                interview type, and time limits to match your needs.
-              </li>
-              <li>
-                <b>Track Your Progress:</b> Review your performance over time
-                and identify areas for improvement.
-              </li>
-            </ul>
-            <p
-              style={{
-                fontSize: "14px",
-                lineHeight: "1.6",
-                marginBottom: "20px",
-              }}
-            >
-              Get started today and step into your next interview feeling
-              confident, prepared, and polished!
-            </p> */
-}
-
-{
-  /* <div style={{ marginBottom: "15px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "700",
-                }}
-              >
-                Number of Questions
-              </label>
-              <input
-                type="number"
-                min="1"
-                max={poolQuestions.length}
-                value={numQuestions}
-                onChange={(e) => {
-                  setNumQuestions(parseInt(e.target.value, 10));
-                  setErrors((prev) => ({ ...prev, numQuestions: "" }));
-                }}
-                placeholder={`1-${poolQuestions.length}`}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  border: `1px solid ${
-                    errors.numQuestions ? "#e74c3c" : "#ccc"
-                  }`,
-                }}
-              />
-              {errors.numQuestions && (
-                <p style={{ color: "#e74c3c", marginTop: "5px" }}>
-                  {errors.numQuestions}
-                </p>
-              )}
-            </div> */
-}

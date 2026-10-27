@@ -14,13 +14,25 @@ function nextMonth(date) {
   return result;
 }
 
+function demoValid(candidate, type, grantId, now = new Date()) {
+  const demo = candidate?.practiceDemoAccess;
+  return !!(demo?.enabled && demo.grantId && (!grantId || demo.grantId === grantId) &&
+    new Date(demo.expiresAt || 0) > now && demo.allowedTypes?.includes(type));
+}
+
 function access(candidate, now = new Date()) {
   const purchased = candidate.practicePurchased === true;
   const unlimited = purchased && new Date(candidate.practiceUnlimitedUntil || 0) > now;
   const video = purchased ? Math.max(0, candidate.practiceInterviewCount || 0) : 0;
   const coding = purchased ? Math.max(0, candidate.codingPracticeInterviewCount || 0) : 0;
+  const demo = candidate.practiceDemoAccess;
+  const remaining = Math.max(0, demo?.remainingInterviews || 0);
+  const demoVideo = demoValid(candidate, "video", null, now) && remaining > 0;
+  const demoCoding = demoValid(candidate, "coding", null, now) && remaining > 0;
   return { purchased, unlimited, unlimitedUntil: candidate.practiceUnlimitedUntil || null,
-    video, coding, canVideo: unlimited || video > 0, canCoding: unlimited || coding > 0 };
+    demo: { active: demoVideo || demoCoding, remainingInterviews: remaining,
+      expiresAt: demo?.expiresAt || null, allowedTypes: demo?.allowedTypes || [] },
+    video, coding, canVideo: unlimited || video > 0 || demoVideo, canCoding: unlimited || coding > 0 || demoCoding };
 }
 
-module.exports = { plans, nextMonth, access };
+module.exports = { plans, nextMonth, access, demoValid };

@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     swift \
     r-base \
     curl \
+    chromium \
+    fonts-liberation \
     && apt-get clean
 
 # Install additional tools via npm for TypeScript, Kotlin, and Rust
@@ -25,6 +27,10 @@ RUN npm install -g ts-node typescript \
 
 # Add Rust binaries to PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Resume PDF rendering (this image runs as root).
+ENV RESUME_CHROME_PATH=/usr/bin/chromium
+ENV RESUME_CHROME_NO_SANDBOX=true
 
 # Set working directory
 WORKDIR /usr/src/app

@@ -1,0 +1,10 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import axios from 'axios';
+import ResumeBuilder from '../../client/src/Pages/ResumeBuilder/ResumeBuilder';
+import { defaults, sampleContent } from '../../client/src/Pages/ResumeBuilder/resumeTemplate';
+const doc={_id:'aaaaaaaaaaaaaaaaaaaaaaaa',title:'Frontend Developer Resume',revision:1,template:'modern',content:sampleContent(),settings:defaults,updatedAt:'2026-10-27'};
+axios.defaults.adapter=async config=>({data:config.url.endsWith('/resume-builder')?{resumes:[doc,{...doc,_id:'bbbbbbbbbbbbbbbbbbbbbbbb',title:'Technical Resume',template:'technical'}]}:{resume:doc},status:200,statusText:'OK',headers:{},config});
+localStorage.setItem('token','sample-only');
+createRoot(document.getElementById('root')).render(<BrowserRouter><ResumeBuilder/></BrowserRouter>);

@@ -1,12 +1,23 @@
 const { randomUUID } = require("crypto");
 const Candidate = require("../models/candidateModel");
-const { access } = require("./practicePlans");
+const { access, demoValid } = require("./practicePlans");
 const countField = (type) => type === "coding" ? "codingPracticeInterviewCount" : "practiceInterviewCount";
 
 async function cancelPending(candidateId, id) {
   const candidate = await Candidate.findById(candidateId).lean();
   const session = candidate?.practiceSessions?.find((s) => s.id === id && s.state === "pending");
   if (!session) return;
+  if (session.demoGrantId) {
+    // Refund only the grant that reserved this session, never a replacement grant.
+    const refunded = await Candidate.updateOne({ _id: candidateId,
+      "practiceDemoAccess.grantId": session.demoGrantId,
+      practiceSessions: { $elemMatch: { id, state: "pending" } } }, {
+      $pull: { practiceSessions: { id } }, $inc: { "practiceDemoAccess.remainingInterviews": 1 },
+    });
+    if (!refunded.modifiedCount) await Candidate.updateOne({ _id: candidateId,
+      practiceSessions: { $elemMatch: { id, state: "pending" } } }, { $pull: { practiceSessions: { id } } });
+    return;
+  }
   await Candidate.updateOne({ _id: candidateId, practiceSessions: { $elemMatch: { id, state: "pending" } } }, {
     $pull: { practiceSessions: { id } },
     ...(session.charged ? { $inc: { [countField(session.type)]: 1 } } : {}),
@@ -39,6 +50,16 @@ async function begin(candidateId, type, id) {
   if (existing) return existing.type === type && existing.state === "pending"
     ? { sessionId: id } : { status: 409, message: "Start a new practice session" };
   const session = { id, type, state: "pending", charged: false, questionsRemaining: 15, expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) };
+  if (demoValid(current, type)) {
+    const demoResult = await Candidate.updateOne({ _id: candidateId, "practiceSessions.id": { $ne: id },
+      "practiceDemoAccess.enabled": true, "practiceDemoAccess.grantId": current.practiceDemoAccess.grantId,
+      "practiceDemoAccess.expiresAt": { $gt: new Date() }, "practiceDemoAccess.allowedTypes": type,
+      "practiceDemoAccess.remainingInterviews": { $gt: 0 } }, {
+      $inc: { "practiceDemoAccess.remainingInterviews": -1 },
+      $push: { practiceSessions: { ...session, demoGrantId: current.practiceDemoAccess.grantId } },
+    });
+    if (demoResult.modifiedCount) return { sessionId: id };
+  }
   const filter = { _id: candidateId, practicePurchased: true, "practiceSessions.id": { $ne: id } };
   let result = await Candidate.updateOne({ ...filter, practiceUnlimitedUntil: { $gt: new Date() } }, {
     $push: { practiceSessions: session },
@@ -65,6 +86,10 @@ function requireSession(type, action = "use") {
         return res.status(402).json({ message: "Return to Practice Assessment and start a new interview." });
       }
       if (action === "submit" && session.state === "completed") return res.json({ status: true, alreadyCompleted: true });
+      if (session.demoGrantId && !demoValid(candidate, session.type, session.demoGrantId)) {
+        await cancelPending(req.user._id, id);
+        return res.status(402).json({ message: "Demo access expired or was revoked. Return to Practice Assessment to start a new interview." });
+      }
       if (action === "start" && session.state === "active" && session.startResponse) return res.json(session.startResponse);
       if (action === "submit") {
         const lockId = randomUUID();
@@ -82,7 +107,7 @@ function requireSession(type, action = "use") {
       } else {
         if (!["pending", "active"].includes(session.state)) return res.status(409).json({ message: "This interview is no longer active." });
         if (action === "start") {
-          if (!session.charged && !access(candidate).unlimited) {
+          if (!session.demoGrantId && !session.charged && !access(candidate).unlimited) {
             await cancelPending(req.user._id, id);
             return res.status(402).json({ message: "Your unlimited pass has expired. Please purchase a plan." });
           }
@@ -126,7 +151,8 @@ function requireSession(type, action = "use") {
 async function complete(candidateId, session, lockId, record) {
   const result = await Candidate.updateOne({ _id: candidateId, practiceSessions: { $elemMatch: { id: session.id, state: "submitting", lockId } } }, {
     $set: { "practiceSessions.$.state": "completed" },
-    $push: { [session.type === "coding" ? "codingPracticeInterview" : "practiceInterview"]: record },
+    $push: { [session.type === "coding" ? "codingPracticeInterview" : "practiceInterview"]:
+      { ...record, ...(session.demoGrantId ? { accessSource: "demo", demoGrantId: session.demoGrantId } : {}) } },
   });
   if (!result.modifiedCount) throw new Error("Interview submission no longer owns the session");
 }

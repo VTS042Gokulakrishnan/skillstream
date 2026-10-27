@@ -1,3 +1,4 @@
+import "./JobSingle.css";
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
@@ -254,8 +255,9 @@ const JobSingle = () => {
   };
   console.log(selectedCandidateId);
   return (
-    <div>
-      <section class="job-detail-section">
+    <div className="jd-page">
+      <section className="job-detail-section">
+        <button className="jd-back" onClick={() => navigate("/find-jobs")}>← Back to jobs</button>
         {status === "Fetching" && <Skeleton />}
         {status === "Not-FOund" && (
           <Result
@@ -283,9 +285,7 @@ const JobSingle = () => {
                           <span class="company-logo">
                             <img src={jobData[0]?.image} alt="" />
                           </span>
-                          <h4>
-                            <a href="#">{jobData[0]?.JobTitle}</a>
-                          </h4>
+                          <p className="jd-company">{jobData[0]?.companyName}</p><h1>{jobData[0]?.JobTitle}</h1>
                           <ul class="job-info">
                             {jobData[0]?.Industry ? (
                               <li>
@@ -403,7 +403,7 @@ const JobSingle = () => {
                 <div class="sidebar-column col-lg-4 col-md-12 col-sm-12">
                   <aside class="sidebar">
                     {role === "Employer" ? null : (
-                      <div className="btn-box">
+                      <div className="btn-box"><h2 className="jd-action-title">Interested in this role?</h2>
                         {/* If token not present (unauthenticated user) */}
                         {!token && (
                           <>
@@ -431,7 +431,7 @@ const JobSingle = () => {
 
                             <button
                               onClick={showJobModal}
-                              className="theme-btn btn-style-one"
+                              className="theme-btn btn-style-one jd-easy"
                               style={{ marginLeft: "10px" }}
                             >
                               Easy Apply
@@ -529,6 +529,7 @@ const JobSingle = () => {
                           setJobModalOpen={setJobModalOpen}
                           showJobModal={showJobModal}
                           jobData={jobData[0]}
+                          onSignIn={() => { setJobModalOpen(false); showModal("login"); }}
                         />
                       </div>
                     )}
@@ -616,7 +617,7 @@ const JobSingle = () => {
                           {jobData[0]?.jobSkills?.length ? (
                             jobData[0]?.jobSkills.map((e, idx) => (
                               <li key={idx}>
-                                <a href="#">{e}</a>
+                                <span>{e}</span>
                               </li>
                             ))
                           ) : (

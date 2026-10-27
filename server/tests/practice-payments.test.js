@@ -54,6 +54,100 @@ const paidSession = (plan = "pack3", id = randomUUID()) => ({ id: `cs_test_${id}
   currency: "usd", amount_total: plan === "pack3" ? 1999 : plan === "pack5" ? 2949 : 9900,
   metadata: { purpose: "candidate-practice-v1", candidateId: String(candidate._id), practicePlan: plan } });
 
+async function grantDemo(count = 10) {
+  await Candidate.updateOne({ _id: candidate._id }, { $set: { practiceDemoAccess: {
+    enabled: true, grantId: randomUUID(), grantedAt: new Date(),
+    expiresAt: new Date(Date.now() + 86400000), allowedTypes: ["video", "coding"], remainingInterviews: count,
+  } } });
+}
+
+test("interactive email script grants, cancels and revokes only the matching candidate", async () => {
+  candidate.email = `demo-${randomUUID()}@example.test`;
+  await candidate.save();
+  const { spawn } = require("node:child_process");
+  const path = require("node:path");
+  const run = (answers) => new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.resolve(__dirname, "../scripts/manage-practice-demo.js")], {
+      cwd: path.resolve(__dirname, ".."), env: { ...process.env, MONGODB_URI: process.env.PRACTICE_TEST_MONGODB_URI },
+    });
+    let output = "", index = 0;
+    const timeout = setTimeout(() => { child.kill(); reject(new Error("Demo prompt script timed out")); }, 15000);
+    child.stdout.on("data", (chunk) => {
+      output += chunk;
+      if (index < answers.length && output.includes(answers[index][0])) {
+        child.stdin.write(answers[index++][1] + "\n");
+      }
+    });
+    child.stderr.on("data", (chunk) => { output += chunk; });
+    child.on("error", reject);
+    child.on("close", (code) => { clearTimeout(timeout); code ? reject(new Error(output)) : resolve(output); });
+  });
+  const prompts = [["Candidate email:", candidate.email.toUpperCase()], ["Action [grant/revoke]", "grant"],
+    ["allowance (10):", ""], ["days (7):", ""], ["Type UPDATE", "UPDATE"]];
+  await run(prompts);
+  assert.equal((await read()).practiceDemoAccess.remainingInterviews, 10);
+  assert.equal((await read()).practicePurchased, false);
+  const oldGrant = (await read()).practiceDemoAccess.grantId;
+  await run(prompts.map((entry, i) => i === 4 ? [entry[0], "cancel"] : entry));
+  assert.equal((await read()).practiceDemoAccess.grantId, oldGrant);
+  await run([["Candidate email:", candidate.email], ["Action [grant/revoke]", "revoke"], ["Type UPDATE", "UPDATE"]]);
+  assert.equal((await read()).practiceDemoAccess.enabled, false);
+});
+
+test("demo grants both types without a purchase, sharing a concurrency-safe allowance", async () => {
+  await grantDemo(1);
+  assert.equal(access(await read()).canVideo, true);
+  assert.equal(access(await read()).canCoding, true);
+  const results = await Promise.all(Array.from({ length: 10 }, (_, i) => sessions.begin(candidate._id, i % 2 ? "video" : "coding", randomUUID())));
+  assert.equal(results.filter((r) => r.sessionId).length, 1);
+  assert.equal((await read()).practiceDemoAccess.remainingInterviews, 0);
+  assert.equal((await read()).practicePurchased, false);
+  const session = (await read()).practiceSessions[0];
+  assert.equal((await post(session.type === "video" ? "/start" : "/coding-start", session.id)).status, 200);
+});
+
+test("demo setup refunds once and cannot inflate a replacement grant", async () => {
+  await grantDemo(2);
+  const id = randomUUID();
+  await sessions.begin(candidate._id, "video", id);
+  assert.equal((await post("/start", id, { fail: true })).status, 502);
+  await Promise.all([sessions.cancelPending(candidate._id, id), sessions.cancelPending(candidate._id, id)]);
+  assert.equal((await read()).practiceDemoAccess.remainingInterviews, 2);
+  const old = randomUUID();
+  await sessions.begin(candidate._id, "video", old);
+  await grantDemo(5);
+  await sessions.cancelPending(candidate._id, old);
+  assert.equal((await read()).practiceDemoAccess.remainingInterviews, 5);
+});
+
+test("expired or revoked demo is denied and new sessions fall back to paid credits", async () => {
+  await grantDemo();
+  const id = randomUUID();
+  await sessions.begin(candidate._id, "video", id);
+  await Candidate.updateOne({ _id: candidate._id }, { $set: { "practiceDemoAccess.enabled": false } });
+  assert.equal((await post("/start", id)).status, 402);
+  assert.equal((await sessions.begin(candidate._id, "coding", randomUUID())).status, 402);
+  await grantDemo();
+  await Candidate.updateOne({ _id: candidate._id }, { $set: { "practiceDemoAccess.expiresAt": new Date(0) } });
+  assert.equal(access(await read()).canVideo, false);
+  await billing.fulfill(paidSession());
+  assert.ok((await sessions.begin(candidate._id, "video", randomUUID())).sessionId);
+  assert.equal((await read()).practiceInterviewCount, 2);
+});
+
+test("demo submission preserves paid credits and records grant on the session", async () => {
+  await billing.fulfill(paidSession());
+  await grantDemo(1);
+  const id = randomUUID();
+  await sessions.begin(candidate._id, "video", id);
+  assert.equal((await post("/start", id)).status, 200);
+  assert.equal((await post("/submit", id)).status, 200);
+  assert.equal((await read()).practiceInterviewCount, 3);
+  assert.equal((await read()).practiceInterview.length, 1);
+  assert.ok((await read()).practiceSessions[0].demoGrantId);
+  assert.equal((await read()).practiceInterview[0].accessSource, "demo");
+});
+
 test("new and legacy free balances do not grant access", async () => {
   assert.equal(candidate.practiceInterviewCount, 0);
   assert.equal(access(candidate).purchased, false);

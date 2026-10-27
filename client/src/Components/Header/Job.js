@@ -1,3 +1,4 @@
+import "./EasyApply.css";
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { Button, Modal, Spin, ConfigProvider } from "antd";
@@ -55,15 +56,15 @@ const Job = (jobModalOpen) => {
         setResume(info?.fileList[0]?.response?.location);
         setResumeData(info?.fileList[0]?.response?.data);
         setExperience(
-          info?.fileList[0]?.response?.data?.basic_info?.Experience_in_Years
+          String(info?.fileList[0]?.response?.data?.basic_info?.Experience_in_Years ?? "")
         );
-        setjobTitle(info?.fileList[0]?.response?.data?.basic_info?.Job_Title);
-        setEmail(info?.fileList[0]?.response?.data?.basic_info?.email);
+        setjobTitle((info?.fileList[0]?.response?.data?.basic_info?.Job_Title || ""));
+        setEmail((info?.fileList[0]?.response?.data?.basic_info?.email || ""));
         // setPhoneNumber(Number(info?.fileList[0]?.response?.data?.basic_info.phone_number));
-        SetCountry(info?.fileList[0]?.response?.data?.basic_info?.Country);
-        SetCity(info?.fileList[0]?.response?.data?.basic_info?.City);
-        setState?.basic_info?.(
-          info?.fileList[0]?.response?.data?.basic_info?.Province
+        SetCountry((info?.fileList[0]?.response?.data?.basic_info?.Country || ""));
+        SetCity((info?.fileList[0]?.response?.data?.basic_info?.City || ""));
+        setState(
+          info?.fileList[0]?.response?.data?.basic_info?.Province || ""
         );
         // console.log(info?.fileList[0]?.response?.data?.basic_info);
         message.success(`${info.file.name} file uploaded successfully.`);
@@ -71,6 +72,7 @@ const Job = (jobModalOpen) => {
         message.error(`${info.file.name} file upload failed.`);
       }
     },
+    onRemove() { setResume(""); setResumeData([]); },
     onDrop(e) {
       // console.log("Dropped files", e.dataTransfer.files);
     },
@@ -160,6 +162,7 @@ const Job = (jobModalOpen) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (loading) return;
     try {
       if (resume.length === 0) {
         toast.error("Upload Resume");
@@ -267,254 +270,43 @@ const Job = (jobModalOpen) => {
   ];
   // console.log(phoneNumber);
   return (
-    <div>
-      <Modal
-        centered
-        open={jobModalOpen.jobModalOpen}
-        // onOk={handleOk}
-        onCancel={handleCancel}
-        footer={null}
-      >
-        {" "}
-        <Toaster position="top-center" reverseOrder={false} />
-        <div class="model">
-          <div className="resume-modal">
-            <h2>Job Apply</h2>
-            <form className="form-resume">
-              <div>
-                <Dragger {...props}>
-                  <p className="ant-upload-drag-icon">
-                    <InboxOutlined />
-                  </p>
-                  <p className="ant-upload-text">
-                    Click or drag file to this area to upload
-                  </p>
-                  <p className="ant-upload-hint">
-                    Support for a single or bulk upload. Strictly prohibited
-                    from uploading company data or other banned files.
-                  </p>
-                </Dragger>
-                {/* <div class="uploading-resume" {...props}>
-                  <div class="uploadButton">
-                    <input
-                      class="uploadButton-input"
-                      type="file"
-                      name="attachments[]"
-                      accept="image/*, application/pdf"
-                      id="upload"
-                      // onChange={InputChange}
-                      multiple
-                    />
-                    <label class="cv-uploadButton" for="upload">
-                      <span class="title">Drop files here to upload</span>
-                      <span class="text">
-                        To upload file size is (Max 5Mb) and allowed file types
-                        are (.doc, .docx, .pdf)
-                      </span>
-                    </label>
-                  </div>
-                </div> */}
-              </div>
-              <div
-                className="mob-order"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  rowGap: "20px",
-                }}
-              >
-                <div
-                  style={{ display: "flex", gap: "20px" }}
-                  className="mob-order1"
-                >
-                  <div class="">
-                    <label className="head-nav">First Name</label>
-                    <input
-                      type="text"
-                      name="text"
-                      placeholder="First Name"
-                      className="form-group1"
-                      onChange={(e) => setFirstName(e.target.value)}
-                      value={firstName}
-                      // required
-                    />
-                  </div>
-
-                  <div class="">
-                    <label className="head-nav">Last Name</label>
-                    <input
-                      type="text"
-                      name="text"
-                      placeholder="Last Name"
-                      className="form-group1"
-                      onChange={(e) => setLastName(e.target.value)}
-                      value={lastName}
-                      //   // required
-                    />
-                  </div>
-                </div>
-                <div class="">
-                  <label className="head-nav">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    className="form-group1"
-                    onChange={(e) => setEmail(e.target.value)}
-                    value={email}
-                    // required
-                  />
-                </div>
-
-                {/* <div class="">
-                  <label className="head-nav">Applied For</label>
-                  <input
-                    type="applied"
-                    name="applied"
-                    placeholder="Which role applied for"
-                    className="form-group1"
-                    onChange={(e) => setApplied(e.target.value)}
-                    value={applied}
-                    // required
-                  />
-                </div> */}
-
-                <div class="">
-                  <label className="head-nav">Job Title</label>
-                  <input
-                    type="jobTitle"
-                    name="jobTitle"
-                    placeholder="Job Title"
-                    className="form-group1"
-                    onChange={(e) => setjobTitle(e.target.value)}
-                    value={jobTitle}
-                    // required
-                  />
-                </div>
-
-                <div class="">
-                  <label className="head-nav">Total Experience</label>
-                  <input
-                    type="experience"
-                    name="experience"
-                    placeholder="Total Years of Experience (eg. 1yr 2months)"
-                    className="form-group1"
-                    onChange={(e) => setExperience(e.target.value)}
-                    value={experience}
-                    // required
-                  />
-                </div>
-
-                <div class="">
-                  <label className="head-nav">Phone Number</label>
-                  <input
-                    type="number"
-                    name="phoneNumber"
-                    placeholder="Phone Number"
-                    className="form-group1"
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    value={phoneNumber}
-                    // required
-                  />
-                </div>
-                <div className="">
-                  <label className="head-nav">Work Authorization</label>
-                  <Select
-                    showSearch
-                    className="custom-select"
-                    placeholder="Select Work Authorization"
-                    style={{ width: "100%" }}
-                    options={workAuthorizationOptions.map((option) => ({
-                      label: option,
-                      value: option,
-                    }))}
-                    value={workAuthorization}
-                    onChange={(value) => setWorkAuthorization(value)}
-                  />
-                </div>
-                <div
-                  style={{ display: "flex", gap: "10px" }}
-                  className="mob-order1"
-                >
-                  <div class="form-group col-lg-4 col-md-12">
-                    <label>Country</label>
-                    <Select
-                      showSearch
-                      optionFilterProp="children"
-                      virtual={false}
-                      filterOption={filterOption}
-                      style={{ width: "100%" }}
-                      className="custom-select"
-                      placeholder="Select Country"
-                      options={countryOptions}
-                      value={country}
-                      // value={primaryIndustry}
-                      onChange={(e) => SetCountry(e)}
-                    />
-                  </div>
-                  <div class="form-group col-lg-4 col-md-12">
-                    <label>State</label>
-                    <Select
-                      showSearch
-                      style={{ width: "100%" }}
-                      optionFilterProp="children"
-                      filterOption={filterOption}
-                      virtual={false}
-                      className="custom-select"
-                      placeholder="Select State"
-                      options={stateOptions}
-                      value={state}
-                      onChange={(e) => setState(e)}
-                    />
-                  </div>
-                  <div class="form-group col-lg-4 col-md-12">
-                    <label>City</label>
-                    <Select
-                      showSearch
-                      style={{ width: "100%" }}
-                      optionFilterProp="children"
-                      virtual={false}
-                      filterOption={filterOption}
-                      className="custom-select"
-                      placeholder="Select City"
-                      options={cityOptions}
-                      value={city}
-                      // value={primaryIndustry}
-                      onChange={(e) => SetCity(e)}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div>
-                <button
-                  className="theme-btn btn-style-two"
-                  type="submit"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                >
-                  <span className="submit-resume">
-                    {loading ? (
-                      <ConfigProvider
-                        theme={{
-                          token: {
-                            colorPrimary: "#ffff",
-                          },
-                        }}
-                      >
-                        <Spin />
-                      </ConfigProvider>
-                    ) : (
-                      "Apply"
-                    )}
-                  </span>
-                </button>
-              </div>
-            </form>
-          </div>
+    <Modal className="easy-apply-modal" width={780} centered open={jobModalOpen.jobModalOpen}
+      onCancel={() => !loading && handleCancel()} footer={null} closable={!loading} maskClosable={!loading}>
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="ea-heading"><h2>Easy Apply</h2><p>Apply without signing in</p></div>
+      <div className="ea-job"><strong>{jobModalOpen.jobData?.JobTitle}</strong><span>{[jobModalOpen.jobData?.companyName, jobModalOpen.jobData?.City, jobModalOpen.jobData?.employmentType].filter(Boolean).join(" · ")}</span></div>
+      <form className="ea-form" onSubmit={handleSubmit}>
+        <h3>Your resume</h3>
+        <Dragger {...props} maxCount={1} multiple={false} disabled={loading} accept=".pdf,.docx">
+          <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+          <p className="ant-upload-text">Drop your resume here or browse files</p>
+          <p className="ant-upload-hint">PDF or DOCX</p>
+        </Dragger>
+        <p className="ea-note">We’ll fill in available details from your resume. Please review them.</p>
+        <h3>Personal details</h3>
+        <div className="ea-grid">
+          <label>First name *<input required autoComplete="given-name" placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)} /></label>
+          <label>Last name *<input required autoComplete="family-name" placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)} /></label>
+          <label>Email address *<input required type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} /></label>
+          <label>Phone number *<input required type="tel" autoComplete="tel" placeholder="Phone number" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} /></label>
         </div>
-      </Modal>
-    </div>
+        <h3>Location &amp; experience</h3>
+        <div className="ea-grid ea-location">
+          <label>Country *<Select aria-label="Country" showSearch filterOption={filterOption} placeholder="Choose country" options={countryOptions} value={country || undefined} onChange={value => { SetCountry(value); setState(""); SetCity(""); }} /></label>
+          <label>State *<Select aria-label="State" showSearch disabled={!country} filterOption={filterOption} placeholder="Choose state" options={stateOptions} value={state || undefined} onChange={value => { setState(value); SetCity(""); }} /></label>
+          <label>City *<Select aria-label="City" showSearch disabled={!state} filterOption={filterOption} placeholder="Choose city" options={cityOptions} value={city || undefined} onChange={SetCity} /></label>
+        </div>
+        <div className="ea-grid">
+          <label>Current job title *<input required placeholder="e.g. Java Developer" value={jobTitle} onChange={e => setjobTitle(e.target.value)} /></label>
+          <label>Experience (years) *<input required placeholder="e.g. 5" value={experience} onChange={e => setExperience(e.target.value)} /></label>
+        </div>
+        <label>Work authorization *<Select aria-label="Work authorization" showSearch placeholder="Select work authorization" options={workAuthorizationOptions.map(value => ({value, label:value}))} value={workAuthorization || undefined} onChange={setWorkAuthorization} /></label>
+        <div className="ea-footer">
+          {jobModalOpen.onSignIn ? <button type="button" className="ea-signin" disabled={loading} onClick={jobModalOpen.onSignIn}>Already have an account? Sign in</button> : <span />}
+          <div><Button disabled={loading} onClick={handleCancel}>Cancel</Button><Button type="primary" htmlType="submit" loading={loading}>Submit application →</Button></div>
+        </div>
+      </form>
+    </Modal>
   );
 };
-
 export default Job;

@@ -39,6 +39,7 @@ const Messages = () => {
     if (currentUser) {
       socket.current = io(Server);
       socket.current.emit("add-user", currentUser);
+      return () => socket.current?.disconnect();
     }
   }, [currentUser]);
   const handleChatChange = (chat) => {
@@ -92,7 +93,7 @@ const Messages = () => {
         <div class="dashboard-outer">
           <div class="upper-title-box">
             <h3>Messages</h3>
-            <div class="text">Ready to jump back in?</div>
+            <div class="text">Keep your conversations with employers in one place.</div>
           </div>
 
           <div class="row">
@@ -107,7 +108,7 @@ const Messages = () => {
                       setContacts={setContacts}
                       getUser={getUser}
                     />
-                    {currentChat === undefined ? null : (
+                    {currentChat === undefined ? <div className="ss-chat-empty"><div className="ss-empty"><span className="ss-empty-icon">✉</span><h3>Your conversations</h3><p>Select a company to read and send messages.</p></div></div> : (
                       <ChatContainer
                         currentChat={currentChat}
                         socket={socket}
@@ -124,76 +125,10 @@ const Messages = () => {
       </section>
 
       <div class="copyright-text">
-        <p>© 2024 Skill Stream. All Right Reserved.</p>
+        <p>© {new Date().getFullYear()} SkillStream. All rights reserved.</p>
       </div>
     </div>
   );
 };
 
 export default Messages;
-
-{
-  /**const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [recipientDetails, setRecipientDetails] = useState(null);
-
-  let userId = localStorage.getItem("UserId");
-  useEffect(() => {
-    fetchMessages();
-    console.log(userId);
-  }, []);
-
-  const fetchMessages = async () => {
-    try {
-      const response = await axios.get(
-        `${Server}/api/v1/messages/get/${userId}`
-      ); // Replace 'currentUserId' with the actual user ID
-      setMessages(response.data.messages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-  };
-
-  const fetchRecipientDetails = async (recipientId) => {
-    try {
-      const response = await axios.get(`${Server}/${recipientId}`); // Assuming you have an endpoint to fetch user details by ID
-      setRecipientDetails(response.data.user);
-    } catch (error) {
-      console.error("Error fetching recipient details:", error);
-    }
-  };
-
-  const sendMessage = async () => {
-    try {
-      await axios.post(`${Server}`, {
-        sender: "currentUserId", // Replace 'currentUserId' with the actual user ID
-        recipient: "recipientUserId", // Replace 'recipientUserId' with the recipient's user ID
-        message: newMessage,
-      });
-      setNewMessage(""); // Clear the input field after sending the message
-      // Optionally, you can fetch messages again to update the UI with the new message
-      fetchMessages();
-    } catch (error) {
-      console.error("Error sending message:", error);
-    }
-  };
-
-  const renderMessages = () => {
-    return messages.map((message) => (
-      <div key={message._id} className="message">
-        <div className="sender">
-          {message.sender === "currentUserId"
-            ? "You"
-            : recipientDetails
-            ? recipientDetails.name
-            : "Unknown User"}
-        </div>
-        <div className="content">{message.message}</div>
-      </div>
-    ));
-  };
-
-  const unreadMessagesCount = messages.filter(
-    (message) => !message.read
-  ).length; */
-}

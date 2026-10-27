@@ -3,13 +3,19 @@ import Editor from "@monaco-editor/react";
 // import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import practiceApi from "../practiceApi";
+import {
+  PracticeHeader,
+  PracticeLoading,
+  PracticeResult,
+  PracticeRetry,
+} from "../PracticeStates";
+import { Button } from "antd";
 import logo2 from "../../../assets/logo-white-new.png";
 import logo from "../../../assets/images/loader.png";
 import "../../VideoAssessment/codeEditor.css";
 import NewLogo from "../../../assets/logo-twos.png";
 import { Server } from "App";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { use } from "react";
 import jsPDF from "jspdf";
 import { Tooltip } from "antd";
 import { jwtDecode } from "jwt-decode";
@@ -19,9 +25,19 @@ export default function CodingPractice() {
   const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!location.state?.practiceSessionId) navigate("/practiceInterview", { replace: true });
+    if (!location.state?.practiceSessionId)
+      navigate("/practiceInterview", { replace: true });
   }, [location.state, navigate]);
-  const { jobTitle, resume_text, job_description_text, level, practiceSessionId } = location.state || {};
+  const {
+    jobTitle,
+    resume_text,
+    job_description_text,
+    level,
+    practiceSessionId,
+  } = location.state || {};
+  const [submissionError, setSubmissionError] = useState(false);
+  const finalAnswersRef = useRef(null);
+  const screenStreamRef = useRef(null);
   const [step, setStep] = useState(0); // 0=Instruction,1=Camera Access,2=Recording,3=Coding,4=Finish
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
@@ -53,6 +69,7 @@ export default function CodingPractice() {
 
   useEffect(() => {
     let token = localStorage.getItem("token");
+    if (!token) return;
     const { email } = jwtDecode(token);
     console.log(email);
 
@@ -80,6 +97,7 @@ export default function CodingPractice() {
 
   useEffect(() => {
     return () => {
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach((t) => t.stop());
       }
@@ -90,7 +108,7 @@ export default function CodingPractice() {
     if (webcamRef.current && cameraStreamRef.current) {
       webcamRef.current.srcObject = cameraStreamRef.current;
     }
-  }, [step]);
+  }, [step, qLoader]);
   // ----- SCREEN RECORDING -----
   const startRecording = async () => {
     let screenStream;
@@ -102,6 +120,7 @@ export default function CodingPractice() {
         audio: true,
       });
 
+      screenStreamRef.current = screenStream;
       // Mix mic audio into screen recording if needed
       let combinedStream = screenStream;
       if (cameraStreamRef.current) {
@@ -126,12 +145,15 @@ export default function CodingPractice() {
         instructions: [],
       };
 
-      const { data } = await practiceApi.post(`/genrate/coding/question`, payload, { headers: { "X-Practice-Session": practiceSessionId } });
+      const { data } = await practiceApi.post(
+        `/genrate/coding/question`,
+        payload,
+        { headers: { "X-Practice-Session": practiceSessionId } }
+      );
       // console.log(data);
       // console.log(data.data);
-      if (data.data.status === "error") {
-        alert("Error in loading the question");
-        setStep(0); // success page
+      if (data.data.status === "error" || !data.data.questions?.length) {
+        throw new Error("Questions could not be prepared. Please try again.");
       } else {
         setQuestions(data.data.questions);
         // mediaRecorderRef.current.onstop = saveRecording;
@@ -139,10 +161,14 @@ export default function CodingPractice() {
       }
       setStep(3); // move to coding step
     } catch (err) {
-      if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+      if (mediaRecorderRef.current?.state === "recording")
+        mediaRecorderRef.current.stop();
       screenStream?.getTracks().forEach((track) => track.stop());
       setQloader(false);
-      alert(err.response?.data?.message || "Unable to start your interview. Please return to Practice Assessment and try again.");
+      alert(
+        err.response?.data?.message ||
+          "Unable to start your interview. Please return to Practice Assessment and try again."
+      );
       if (err.response) navigate("/practiceInterview");
     }
   };
@@ -177,8 +203,11 @@ export default function CodingPractice() {
     }
   };
   const submitInterview = async (finalAnswers) => {
+    finalAnswersRef.current = finalAnswers;
+    setSubmissionError(false);
+    setQloader(true);
     // stopRecording();
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current?.state === "recording") {
       // Wrap in a Promise to wait until onstop is done
       await new Promise((resolve) => {
         mediaRecorderRef.current.onstop = () => {
@@ -243,21 +272,29 @@ export default function CodingPractice() {
     // userId, candidateId: id, jobId
     try {
       console.log("submitting details");
-      await practiceApi.post(`/coding/update/details/${userId}`, formData, { headers: { "X-Practice-Session": practiceSessionId } });
+      const response = await practiceApi.post(
+        `/coding/update/details/${userId}`,
+        formData,
+        { headers: { "X-Practice-Session": practiceSessionId } }
+      );
+      if (response.data?.status === false)
+        throw new Error("Submission not confirmed");
       setQloader(false);
-      setStep(5); // success page
+      setStep(5); // Only show success after the server confirms submission.
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+      cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
       // setTimeout(() => {
       //   window.location.reload();
       // }, 150000);
     } catch (err) {
       setQloader(false);
-      alert("Submit failed: " + err.message);
+      setSubmissionError(true);
     }
   };
 
   // ----- NEXT QUESTION -----
   const nextQuestion = async () => {
-    if (code.trim() === "") return; // Do nothing if code is empty
+    if (isSubmitting || isRunning || code.trim() === "") return; // Do nothing if code is empty
 
     setIsSubmitting(true);
 
@@ -294,328 +331,246 @@ export default function CodingPractice() {
   };
 
   return (
-    <div className="vh-100 d-flex flex-column bg-dark text-light">
-      {/* ✅ Persistent Header */}
-      <header className="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
-        <img src={logo2} alt="Company Logo" style={{ height: "40px" }} />
-        {step === 0 && (
-          <button className="btn btn-primary px-4" onClick={() => setStep(1)}>
-            {step === 0 ? "Start" : "Next"}
-          </button>
+    <main className="ss-coding-session">
+      <PracticeHeader type="Coding" title={jobTitle}>
+        {step === 4 && (
+          <span className="ss-recording">
+            ● Recording · Screen sharing active
+          </span>
         )}
-      </header>
+      </PracticeHeader>
       {qLoader ? (
-        <div className="logo-container">
-          <img src={logo} alt="S Logo Loader" className="heartbeat w-24 h-24" />
-          <div className="text-white mt-4">
-            {step === 0
-              ? "Uploading..."
-              : step === 2
-              ? "Fetching Questions"
-              : step === 3
-              ? "Submitting"
-              : "Loading..."}
+        <PracticeLoading
+          title={
+            finalAnswersRef.current
+              ? "Submitting your responses"
+              : "Preparing your interview"
+          }
+          description={
+            finalAnswersRef.current
+              ? "Your recording and code are uploading. Keep this tab open until submission is confirmed."
+              : "Preparing coding questions based on your role and resume. Keep this tab open."
+          }
+        />
+      ) : submissionError ? (
+        <PracticeRetry
+          onRetry={() => submitInterview(finalAnswersRef.current)}
+        />
+      ) : step === 5 ? (
+        <PracticeResult
+          type="coding"
+          sessionId={practiceSessionId}
+          jobTitle={jobTitle}
+        />
+      ) : step === 4 ? (
+        <>
+          <div className="ss-session-toolbar">
+            <strong>
+              Question {currentQ + 1} of {questions.length}
+            </strong>
+            <div className="ss-question-progress">
+              {questions.map((_, i) => (
+                <span key={i} className={i === currentQ ? "active" : ""}>
+                  {i + 1}
+                </span>
+              ))}
+            </div>
+            <span>{level}</span>
           </div>
-        </div>
-      ) : (
-        <div className="flex-fill d-flex flex-column">
-          {/* Step 0 – Instructions */}
-          {step === "Completed" && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold text-success mb-3">
-                Interview Already Completed
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                You have already completed this interview. Your responses have
-                been recorded successfully.
-              </p>
-              <button
-                className="btn btn-outline-light px-4"
-                onClick={() => (window.location.href = "/")}
-              >
-                Return to Home
-              </button>
-            </div>
-          )}
-
-          {/* Step - Expired Link */}
-          {step === "expired" && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold text-danger mb-3">
-                Interview Link Expired
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                This interview link has expired. Please contact your recruiter
-                if you need a new link.
-              </p>
-              <button className="btn btn-outline-light px-4" disabled>
-                Employer Email: {empemail || "Not available"}
-              </button>
-            </div>
-          )}
-          {step === 0 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h1 className="fw-bold mb-3 text-white">Coding Interview Test</h1>
-              <p className="text-secondary mb-4 w-75 text-white">
-                You will solve 3 programming questions while your screen, audio,
-                and camera are recorded. Make sure you have a stable internet
-                connection and a working webcam/microphone.
-              </p>
-            </div>
-          )}
-
-          {/* Step 1 – Camera/Mic Permission */}
-          {step === 1 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">
-                Allow Camera & Microphone
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                Please allow access to your camera and microphone to proceed.
-              </p>
-              <button
-                className="btn btn-primary px-4"
-                onClick={requestCameraAccess}
-              >
-                Allow & Continue
-              </button>
-            </div>
-          )}
-
-          {/* Step 2 – Start Recording */}
-          {step === 2 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">Start Recording</h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                Your camera preview is below. Click Start to share your screen
-                and begin recording.
-              </p>
-              <div
-                className="border mb-4"
-                style={{ width: "320px", height: "240px" }}
-              >
+          <div className="ss-code-grid">
+            <aside>
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">CODING QUESTION</span>
+                <h1 className="ss-code-question">
+                  {questions[currentQ]?.question}
+                </h1>
+                <div className="ss-info">
+                  Write your solution in the editor. Run your code to review the
+                  output before submitting.
+                </div>
+              </section>
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">YOUR CAMERA</span>
                 <video
                   ref={webcamRef}
                   autoPlay
                   muted
                   playsInline
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  className="ss-camera-preview"
                 />
-              </div>
-              <button
-                className="btn btn-primary px-4"
-                onClick={() => startRecording()}
-              >
-                Start Recording & Begin Test
-              </button>
-            </div>
-          )}
-          {/* Step 3 – Coding Instructions */}
-          {step === 3 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">
-                Coding Round Instructions
-              </h3>
-              <div
-                className="bg-dark border border-secondary rounded p-4 text-start text-white w-75"
-                style={{ maxWidth: "800px" }}
-              >
-                <ul
-                  className="text-start d-inline-block mx-auto text-white mb-3"
-                  style={{ lineHeight: "1.8" }}
-                >
-                  <li>
-                    1. You will solve multiple coding questions one after
-                    another.
-                  </li>
-                  <li>
-                    2. Each question must be solved inside the built-in code
-                    editor.
-                  </li>
-                  <li>
-                    3. You must click <b>Run</b> to execute and verify your code
-                    output before submitting.
-                  </li>
-                  <li>
-                    4. Once the output looks correct, click <b>Submit</b> to
-                    move to the next question.
-                  </li>
-                  <li>
-                    5. After the last question, your answers and recording will
-                    be automatically submitted.
-                  </li>
-                </ul>
-                <p className="text-warning">
-                  ⚠️ Once you begin, the recording continues until all questions
-                  are completed. Do not close or refresh the page.
-                </p>
-              </div>
-
-              <button
-                className="btn btn-primary mt-4 px-5"
-                onClick={() => setStep(4)} // move to coding interface
-              >
-                Accept & Begin Coding
-              </button>
-            </div>
-          )}
-          {/* Step 4 – Coding Round */}
-          {step === 4 && (
-            <div className="d-flex flex-fill">
-              {/* LEFT PANEL – Question + Camera */}
-              <div className="col-4 border-end border-secondary p-4 overflow-auto d-flex flex-column">
-                <h4 className="fw-bold mb-3 text-blue-400">
-                  Question {currentQ + 1}
-                </h4>
-                <p className="text-white mb-4">
-                  {questions[currentQ].question}
-                </p>
-
-                {/* ✅ Camera Feed */}
-                <div
-                  className="mt-4 border"
-                  style={{ width: "100%", height: "240px" }}
-                >
-                  <video
-                    ref={webcamRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
+              </section>
+            </aside>
+            <section className="ss-code-workspace">
+              <div className="ss-editor-toolbar">
+                <label htmlFor="practice-language">
+                  Language{" "}
+                  <select
+                    id="practice-language"
+                    value={language}
+                    onChange={(e) => {
+                      setLanguage(e.target.value);
+                      setOutput("");
                     }}
-                  />
-                </div>
-              </div>
-
-              {/* RIGHT PANEL – Editor + Output */}
-              <div className="col-8 d-flex flex-column">
-                <div className="d-flex justify-content-between align-items-center bg-secondary p-2">
-                  <div className="d-flex align-items-center">
-                    <label htmlFor="language" className="me-2 fw-semibold">
-                      Language:
-                    </label>
-                    <select
-                      id="language"
-                      className="form-select form-select-sm bg-dark text-light border-light"
-                      style={{ width: "150px" }}
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                    >
-                      {" "}
-                      <option value="javascript">JavaScript</option>
-                      <option value="ts">TypeScript</option>
-                      <option value="python">Python</option>
-                      <option value="cpp">C++</option>
-                      <option value="c">C</option>
-                      <option value="java">Java</option>
-                      {/* Extra popular languages */}
-                      <option value="go">Go</option>
-                      <option value="php">PHP</option>
-                      <option value="ruby">Ruby</option>
-                      <option value="cs">C#</option>
-                      <option value="kotlin">Kotlin</option>
-                      <option value="rust">Rust</option>
-                      <option value="swift">Swift</option>
-                      <option value="r">R</option>
-                    </select>
-                  </div>
-                  <Tooltip
-                    title={
-                      isCodeEmpty
-                        ? "Enter valid code"
-                        : isRunning
-                        ? "Loading"
-                        : "Run code"
-                    }
                   >
-                    {" "}
-                    <button
-                      className="btn btn-primary btn-sm run-btn"
-                      onClick={() => runCode()}
-                      disabled={isCodeEmpty || isRunning || isSubmitting}
-                      title={isCodeEmpty ? "Enter valid code" : ""}
-                    >
-                      {isRunning ? "Running…" : "Run ▶"}
-                    </button>
-                  </Tooltip>
-                </div>
-
-                <div className="flex-fill border-bottom border-secondary">
-                  <Editor
-                    height="100%"
-                    theme="vs-dark"
-                    language={language}
-                    value={code}
-                    onChange={(v) => setCode(v ?? "")}
-                    options={{
-                      fontSize: 14,
-                      minimap: { enabled: false },
-                      automaticLayout: true,
-                    }}
-                  />
-                </div>
-
-                <div
-                  className="bg-secondary p-3 d-flex flex-column"
-                  style={{
-                    height: "200px",
-                    overflowY: "auto",
-                    overflowX: "auto",
-                  }}
+                    {[
+                      ["javascript", "JavaScript"],
+                      ["ts", "TypeScript"],
+                      ["python", "Python"],
+                      ["cpp", "C++"],
+                      ["c", "C"],
+                      ["java", "Java"],
+                      ["go", "Go"],
+                      ["php", "PHP"],
+                      ["ruby", "Ruby"],
+                      ["cs", "C#"],
+                      ["kotlin", "Kotlin"],
+                      ["rust", "Rust"],
+                      ["swift", "Swift"],
+                      ["r", "R"],
+                    ].map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button
+                  type="primary"
+                  disabled={isCodeEmpty || isRunning || isSubmitting}
+                  loading={isRunning}
+                  onClick={runCode}
                 >
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="fw-semibold text-white m-0">Output</h6>
-                    <Tooltip
-                      title={
-                        isCodeEmpty
-                          ? "Enter valid code"
-                          : isSubmitting
-                          ? "Submitting"
-                          : "Submit code"
-                      }
-                    >
-                      {" "}
-                      <button
-                        className="btn btn-success btn-sm"
-                        onClick={() => nextQuestion()}
-                      >
-                        {currentQ === questions.length - 1
-                          ? "Finish"
-                          : isSubmitting
-                          ? "Submitting"
-                          : "Submit"}
-                      </button>
-                    </Tooltip>
-                  </div>
-                  <pre
-                    className="text-success m-0 text-white"
-                    style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-                  >
-                    {output}
-                  </pre>
-                </div>
+                  Run code ▷
+                </Button>
               </div>
-            </div>
-          )}
-
-          {/* Step 5 – Completion */}
-          {step === 5 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill">
-              <h3 className="fw-bold">Interview Completed</h3>
-              <p className="text-secondary">
-                Your answers have been submitted successfully. Thank you!
-              </p>
-            </div>
-          )}
+              <Editor
+                height="460px"
+                theme="vs-dark"
+                language={
+                  { ts: "typescript", cs: "csharp" }[language] || language
+                }
+                value={code}
+                onChange={(v) => {
+                  setCode(v ?? "");
+                  setOutput("");
+                }}
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  scrollBeyondLastLine: false,
+                }}
+              />
+              <div className="ss-code-output">
+                <h2>Output</h2>
+                <pre>{output || "Run your code to see the output here."}</pre>
+              </div>
+            </section>
+          </div>
+          <footer className="ss-session-bottom">
+            <span>ⓘ Keep this tab open while your recording is active.</span>
+            <Button
+              type="primary"
+              size="large"
+              disabled={isCodeEmpty || isRunning || isSubmitting}
+              loading={isSubmitting}
+              onClick={nextQuestion}
+            >
+              {currentQ === questions.length - 1
+                ? "Finish & submit"
+                : "Submit & next question →"}
+            </Button>
+          </footer>
+        </>
+      ) : (
+        <div className="ss-device-page">
+          <h1>Let’s check your devices</h1>
+          <p>
+            Your microphone and shared screen are recorded during coding
+            practice.
+          </p>
+          <div className="ss-grid">
+            <section className="ss-card ss-card-padding">
+              <h2>Camera preview</h2>
+              {step >= 2 ? (
+                <video
+                  ref={webcamRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="ss-camera-preview"
+                />
+              ) : (
+                <div className="ss-camera-placeholder">
+                  <i className="la la-video" />
+                  <p>Enable your camera to see your preview.</p>
+                </div>
+              )}
+              <div className="ss-info">
+                {step >= 2
+                  ? "Camera and microphone access granted."
+                  : "We’ll ask for camera and microphone access."}
+              </div>
+            </section>
+            <section className="ss-card ss-card-padding">
+              <h2>Ready to begin</h2>
+              <dl className="ss-device-status">
+                <div>
+                  <dt>Camera & microphone</dt>
+                  <dd className={step >= 2 ? "ready" : ""}>
+                    {step >= 2 ? "● Ready" : "Not started"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Screen sharing</dt>
+                  <dd className={step >= 3 ? "ready" : ""}>
+                    {step >= 3 ? "● Active" : "Not started"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="ss-info">
+                Keep this tab open throughout your practice. Your recording
+                starts when you share your screen.
+              </div>
+              {step < 2 ? (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={requestCameraAccess}
+                >
+                  Allow camera & microphone
+                </Button>
+              ) : step === 2 ? (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={startRecording}
+                >
+                  Share screen & prepare questions
+                </Button>
+              ) : (
+                <>
+                  <p>
+                    Answer each question in the editor. Run your code, then
+                    submit to continue. Your responses are uploaded after the
+                    final question.
+                  </p>
+                  <Button
+                    type="primary"
+                    block
+                    size="large"
+                    onClick={() => setStep(4)}
+                  >
+                    Start coding interview →
+                  </Button>
+                </>
+              )}
+            </section>
+          </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

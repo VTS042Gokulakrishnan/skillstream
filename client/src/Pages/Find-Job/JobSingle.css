@@ -1,0 +1,50 @@
+.jd-page { background:#f5f7fc; color:#172b4d; min-height:80vh; font-family:Arial, Helvetica, sans-serif; font-size:14px; }
+.jd-page .job-detail-section { padding:32px 24px 64px; }
+.jd-page .auto-container { max-width:1320px; padding:0; }
+.jd-back { display:block; width:100%; max-width:1320px; text-align:left; font-size:14px; margin:0 auto 18px; color:#1967d2; background:none; border:0; padding:0; font-weight:500; }
+.jd-page .job-detail-outer { padding:0; }
+.jd-page .job-detail-outer > .auto-container > .row { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; margin:0; }
+.jd-page .content-column,.jd-page .sidebar-column { width:100%; max-width:none; padding:0; min-width:0; }
+.jd-page .job-block-outer { margin:0 0 24px; }
+.jd-page .job-block-seven { margin:0; }
+.jd-page .job-block-seven .inner-box { padding:24px; border:1px solid #c5dcfa; border-radius:16px; background:linear-gradient(120deg,#f4f9ff,#e2efff); }
+.jd-page .job-block-seven .content { padding:0; min-height:0; }
+.jd-page .job-block-seven .company-logo { position:static; display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; overflow:hidden; background:#fff; margin-bottom:12px; }
+.jd-page .company-logo img { width:100%; height:100%; object-fit:contain; }
+.jd-page .jd-company { font-size:14px; margin:0 0 10px; font-weight:600; color:#52627a; }
+.jd-page .job-block-seven h1 { font-size:clamp(23px,2vw,30px); line-height:1.2; font-weight:700; color:#172b4d; margin:0 0 16px; overflow-wrap:anywhere; }
+.jd-page .job-info { display:flex; flex-wrap:wrap; gap:10px 20px; margin-bottom:18px; }
+.jd-page .job-info li { font-size:13px; line-height:1.6; margin:0; color:#52627a; }
+.jd-page .job-other-info { display:flex; flex-wrap:wrap; gap:8px; margin:0; }
+.jd-page .job-other-info li { font-size:12px; line-height:1.5; margin:0; border-radius:8px; padding:5px 12px; }
+.jd-page .job-detail { background:#fff; border:1px solid #e1e8f2; border-radius:16px; padding:22px!important; margin:0 0 20px; }
+.jd-page .job-detail:empty { display:none; }
+.jd-page .job-detail h4 { font-size:18px; font-weight:600; margin:0 0 18px; color:#172b4d; }
+.jd-page .job-detail li { font-size:14px; line-height:1.7; color:#52627a; margin-bottom:8px; overflow-wrap:anywhere; }
+.jd-page .sidebar { padding:0; }
+.jd-page .btn-box { display:flex; flex-direction:column; gap:12px; background:#fff; border:1px solid #e1e8f2; border-radius:16px; padding:24px; margin:0 0 20px; }
+.jd-page .jd-action-title { font-size:18px; font-weight:600; margin:0 0 6px; color:#172b4d; }
+.jd-page .btn-box .theme-btn { margin:0!important; width:100%; border-radius:9px; padding:11px 16px; font-size:14px; line-height:1.5; font-weight:600; }
+.jd-page .btn-box .jd-easy { background:#eef5ff; color:#1967d2; border:1px solid #bcd5f6; }
+.jd-page .sidebar-widget { background:#fff; border:1px solid #e1e8f2; border-radius:16px; padding:24px; margin-bottom:20px; }
+.jd-page .widget-title { font-size:18px; font-weight:600; margin-bottom:20px; }
+.jd-page .job-overview li { padding-left:34px; margin-bottom:16px; }
+.jd-page .job-overview h5 { font-size:13px; color:#64748b; margin:0 0 5px; }
+.jd-page .job-overview span { color:#172b4d; font-size:14px; overflow-wrap:anywhere; }
+.jd-page .job-skills { display:flex; flex-wrap:wrap; gap:8px; }
+.jd-page .job-skills li { margin:0; }
+.jd-page .job-skills li span { display:block; font-size:12px; line-height:1.5; padding:5px 10px; background:#edf4ff; color:#1967d2; border-radius:16px; }
+.jd-page .company-widget .profile-link { color:#1967d2; border:1px solid #bcd5f6; background:#fff; padding:10px 16px; border-radius:8px; margin-top:12px; }
+@media(max-width:1000px){.jd-page .job-detail-outer > .auto-container > .row{grid-template-columns:minmax(0,1fr) 300px;gap:18px}}
+@media(max-width:760px){.jd-page .job-detail-section{padding:24px 16px 40px}.jd-page .job-detail-outer > .auto-container > .row{display:flex;flex-direction:column}.jd-page .content-column{display:contents}.jd-page .job-block-outer{order:0;margin:0}.jd-page .sidebar-column{order:1}.jd-page .job-detail{order:2;margin:0}.jd-page .other-options{order:3}.jd-page .job-block-seven .inner-box{padding:24px}.jd-page .job-detail{padding:22px!important}}
+
+/* Keep legacy theme heading fonts and widget spacing out of this page. */
+.jd-page h1,.jd-page h2,.jd-page h4,.jd-page h5,.jd-page button { font-family:Arial, Helvetica, sans-serif; }
+.jd-page .job-detail ul { margin-bottom:0; }
+.jd-page .job-detail li:last-child { margin-bottom:0; }
+.jd-page .job-detail p { font-size:14px; line-height:1.7; }
+.jd-page .sidebar-widget .widget-title { padding:0 0 14px; margin:0 0 16px; line-height:1.4; }
+.jd-page .job-overview .icon { font-size:20px!important; margin-left:0!important; }
+.jd-page .job-info .icon { font-size:16px; }
+.jd-page .company-widget .company-name { font-size:16px; }
+.jd-page .company-widget .profile-link { font-size:13px; }

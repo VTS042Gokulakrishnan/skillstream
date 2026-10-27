@@ -1,6 +1,7 @@
 // CVManagerFull.jsx
 import React, { useState, useEffect, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { PageHeading } from "../../../Components/CandidateUI/PortalUI";
 import uniqid from "uniqid";
 import axios from "axios";
 import { Server } from "../../../App";
@@ -41,11 +42,9 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const CVManager = () => {
   // uploaded files stored locally before upload
-  const [uploadedFiles, setUploadedFiles] = useState(() => {
-    const s = localStorage.getItem("selectedFiles");
-    return s ? JSON.parse(s) : [];
-  });
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  const [previewResume, setPreviewResume] = useState("");
   const [resume, setResume] = useState("");
   const [allResume, setAllResume] = useState(null); // candidate current stored resume (S3 URL)
   // candidate current stored resume (S3 URL)
@@ -527,7 +526,9 @@ const CVManager = () => {
             <div className="upper-title-box">
               <Toaster />
               <h3>CV Manager</h3>
-              <div className="text">Manage Resumes Here !</div>
+              <div className="text">
+                Keep your saved resume ready for your next opportunity.
+              </div>
             </div>
 
             {/* AI loader screen     AI_STEPS[aiStepIndex] */}
@@ -722,216 +723,121 @@ const CVManager = () => {
                 </div>
               )}
 
-            {/* ORIGINAL UI (hidden when aiMode true) */}
-            {!aiMode && !showUpload && (
-              <div style={{ padding: 16 }}>
-                <div style={{ marginBottom: 16 }}>
-                  <h4>CV Manager</h4>
+            {!aiMode &&
+              !showUpload &&
+              (loader ? (
+                <div className="ss-card ss-card-padding">
+                  <Skeleton active />
                 </div>
-
-                {loader ? (
-                  <div style={{ textAlign: "center", padding: 36 }}>
-                    <Spin />
-                    <div style={{ marginTop: 12 }}>Loading your resume...</div>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 8 }}>
-                    <Row gutter={[16, 16]}>
-                      {/* If resume present, show it as a card in grid */}
-                      {resume ? (
-                        resumeDataType === "Array" ? (
-                          resume
-                            ?.slice() // prevent mutating original array
-                            .sort((a, b) => {
-                              if (a.type === "Primary") return -1;
-                              if (b.type === "Primary") return 1;
-                              return 0;
-                            })
-                            ?.map((res, idx) => (
-                              <Col xs={24} sm={24} md={24} lg={24}>
-                                <Card
-                                  className="card-hover"
-                                  hoverable
-                                  style={{
-                                    borderRadius: 12,
-                                    padding: 16,
-                                    // display: "flex",
-                                    // alignItems: "center",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "row",
-                                      gap: 12,
-                                      alignItems: "center",
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <FileIcon
-                                      ext={res.resumeUrl
-                                        .split(".")
-                                        .pop()
-                                        .toLowerCase()}
-                                      style={{ marginRight: 12 }}
-                                    />
-
-                                    {/* FILENAME */}
-                                    <div
-                                      style={{
-                                        flex: 1,
-                                        fontWeight: 600,
-                                        fontSize: 15,
-                                      }}
-                                    >
-                                      {decodeURIComponent(
-                                        res.resumeUrl.split("/").pop()
-                                      )}
-                                      {res.type === "Primary" && (
-                                        <Tag
-                                          color="geekblue"
-                                          style={{ marginLeft: 8 }}
-                                        >
-                                          {res.type}
-                                        </Tag>
-                                      )}
-                                    </div>
-
-                                    {/* BUTTONS IN SAME LINE */}
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        flexDirection: "row",
-                                        justifyContent: "space-between",
-                                        gap: 8,
-                                      }}
-                                    >
-                                      <Button
-                                        icon={<EyeOutlined />}
-                                        onClick={() =>
-                                          openDrawerWith(res.resumeUrl)
-                                        }
-                                      >
-                                        View
-                                      </Button>
-
-                                      <Button
-                                        type="primary"
-                                        onClick={() =>
-                                          handleTryWithAI(res.resumeUrl)
-                                        }
-                                      >
-                                        Enhance with AI
-                                      </Button>
-                                      {res.type !== "Primary" && (
-                                        <Button
-                                          loading={primaryLoader}
-                                          onClick={() =>
-                                            handleMakePrimary(res._id)
-                                          }
-                                        >
-                                          Make primary
-                                        </Button>
-                                      )}
-
-                                      <Button
-                                        danger
-                                        onClick={() => deleteResume(res._id)}
-                                        icon={<DeleteOutlined />}
-                                      >
-                                        Delete
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </Card>
-                              </Col>
-                            ))
-                        ) : (
-                          <Col xs={24} sm={24} md={24} lg={24}>
-                            <Card
-                              className="card-hover"
-                              hoverable
-                              style={{
-                                borderRadius: 12,
-                                padding: 16,
-                                // display: "flex",
-                                // alignItems: "center",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "row",
-                                  gap: 12,
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                }}
-                              >
-                                <FileIcon
-                                  ext={resume.split(".").pop().toLowerCase()}
-                                  style={{ marginRight: 12 }}
-                                />
-
-                                {/* FILENAME */}
-                                <div
-                                  style={{
-                                    flex: 1,
-                                    fontWeight: 600,
-                                    fontSize: 15,
-                                  }}
-                                >
-                                  {decodeURIComponent(resume.split("/").pop())}
-                                </div>
-
-                                {/* BUTTONS IN SAME LINE */}
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    flexDirection: "row",
-                                    justifyContent: "space-between",
-                                    gap: 8,
-                                  }}
-                                >
-                                  <Button
-                                    icon={<EyeOutlined />}
-                                    onClick={() => openDrawerWith(resume)}
-                                  >
-                                    View
-                                  </Button>
-
-                                  <Button
-                                    type="primary"
-                                    onClick={() => handleTryWithAI(resume)}
-                                  >
-                                    Try with AI
-                                  </Button>
-
-                                  <Button onClick={() => setShowUpload(true)}>
-                                    Update
-                                  </Button>
-                                </div>
-                              </div>
-                            </Card>
-                          </Col>
+              ) : (
+                <div className="ss-resume-grid">
+                  <section className="ss-card ss-card-padding">
+                    <div
+                      className="ss-toolbar"
+                      style={{ padding: 0, marginBottom: 20 }}
+                    >
+                      <h2>My resumes</h2>
+                      <Button onClick={() => setShowUpload(true)}>
+                        {resume ? "Change resume" : "Upload resume"}
+                      </Button>
+                    </div>
+                    {(Array.isArray(resume)
+                      ? [...resume].sort(
+                          (a, b) =>
+                            (b.type === "Primary") - (a.type === "Primary")
                         )
-                      ) : (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ color: "#999" }}>
-                            No resume uploaded yet.
+                      : resume
+                      ? [{ resumeUrl: resume, type: "Primary" }]
+                      : []
+                    ).map((res, idx) => (
+                      <article className="ss-resume-row" key={res._id || idx}>
+                        <div className="ss-job-identity">
+                          <FilePdfOutlined
+                            style={{ fontSize: 30, color: "#1478ed" }}
+                          />
+                          <div style={{ overflowWrap: "anywhere" }}>
+                            <strong>
+                              {res.resumeUrl?.split("/").pop()?.split("?")[0] ||
+                                "Saved resume"}
+                            </strong>
+                            {res.type === "Primary" && (
+                              <Tag color="blue">Primary</Tag>
+                            )}
                           </div>
-                          <Button
-                            onClick={() => setShowUpload(true)}
-                            style={{ marginTop: 8 }}
-                          >
-                            Upload
-                          </Button>
                         </div>
-                      )}
-                    </Row>
-                  </div>
-                )}
-              </div>
-            )}
+                        <div className="ss-actions">
+                          <Button
+                            onClick={() => setPreviewResume(res.resumeUrl)}
+                          >
+                            Preview
+                          </Button>
+                          <Button
+                            type="primary"
+                            onClick={() => handleTryWithAI(res.resumeUrl)}
+                          >
+                            Try with AI
+                          </Button>
+                          {res._id && res.type !== "Primary" && (
+                            <Button
+                              loading={primaryLoader}
+                              onClick={() => handleMakePrimary(res._id)}
+                            >
+                              Make primary
+                            </Button>
+                          )}
+                          {res._id && (
+                            <Button
+                              danger
+                              aria-label="Delete resume"
+                              icon={<DeleteOutlined />}
+                              onClick={() => deleteResume(res._id)}
+                            />
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                    <p
+                      style={{ color: "#6c7e96", fontSize: 13, marginTop: 20 }}
+                    >
+                      Your primary resume is used for practice interviews.
+                      Choose Change resume when you want to upload an updated
+                      file.
+                    </p>
+                  </section>
+                  <section className="ss-card ss-card-padding">
+                    <h2>Resume preview</h2>
+                    {(() => {
+                      const url =
+                        previewResume ||
+                        (Array.isArray(resume)
+                          ? (
+                              resume.find((r) => r.type === "Primary") ||
+                              resume[0]
+                            )?.resumeUrl
+                          : resume);
+                      return url ? (
+                        <>
+                          <iframe
+                            title="Saved resume preview"
+                            className="ss-resume-preview"
+                            src={
+                              /\.pdf(?:[?#]|$)/i.test(url)
+                                ? url
+                                : "https://docs.google.com/gview?embedded=true&url=" +
+                                  encodeURIComponent(url)
+                            }
+                          />
+                          <a className="ss-button ss-resume-open" href={url} target="_blank" rel="noreferrer">
+                            Open resume in a new tab ↗
+                          </a>
+                        </>
+                      ) : (
+                        <p>Select a resume to preview it here.</p>
+                      );
+                    })()}
+                  </section>
+                </div>
+              ))}
             {/* upload dropzone + grid of uploaded files */}
             {showUpload && (
               <div style={{ marginBottom: 18 }}>
@@ -1112,1010 +1018,3 @@ const CVManager = () => {
 };
 
 export default CVManager;
-
-// AI generate flow (single-file)
-// const handleTryWithAI = async () => {
-//   if (!resume) {
-//     toast.error("Upload a resume first to generate AI version");
-//     return;
-//   }
-
-//   // start AI mode
-//   setAiMode(true);
-//   setAiLoading(true);
-//   setAiStepIndex(0);
-//   setAiPreviewUrl(null);
-
-//   // animate stepper messages while awaiting backend:
-//   // we'll advance steps every ~2s until response arrives
-//   const stepInterval = 1800;
-//   let intervalId = null;
-
-//   try {
-//     intervalId = setInterval(() => {
-//       setAiStepIndex((prev) =>
-//         prev < AI_STEPS.length - 1 ? prev + 1 : prev
-//       );
-//     }, stepInterval);
-
-//     // call backend -> returns PDF bytes (arraybuffer)
-//     const resp = await axios.post(
-//       `${Server}/api/v1/contact/email/resume/writting`,
-//       { resumeUrl: resume },
-//       { responseType: "arraybuffer", timeout: 120000 }
-//     );
-
-//     // stop stepper
-//     if (intervalId) {
-//       clearInterval(intervalId);
-//       intervalId = null;
-//     }
-
-//     // convert buffer to blob URL
-//     const blob = new Blob([resp.data], {
-//       type: resp.headers["content-type"] || "application/pdf",
-//     });
-//     const url = URL.createObjectURL(blob);
-
-//     // finalize step
-//     setAiStepIndex(AI_STEPS.length - 1);
-//     // small delay to let the final message show
-//     await new Promise((r) => setTimeout(r, 600));
-
-//     setAiPreviewUrl(url);
-//     setAiLoading(false);
-//     setAiStepIndex(0);
-//   } catch (err) {
-//     console.error("AI generation error", err);
-//     if (intervalId) clearInterval(intervalId);
-//     setAiLoading(false);
-//     setAiMode(false);
-//     setAiStepIndex(0);
-//     toast.error("AI generation failed");
-//   }
-// };
-// const handleTryWithAI = async (resumeUrl) => {
-//   if (!resume) {
-//     toast.error("Upload a resume first to generate AI version");
-//     return;
-//   }
-
-//   setAiMode(true);
-//   setAiLoading(true);
-//   setAiStepIndex(0);
-//   setAiBasicPreview(null);
-//   setAiTraditionalPreview(null);
-//   setAiProgress(5);
-
-//   let progressInterval, stepInterval;
-//   setStepText("Extracting resume content...");
-//   try {
-//     stepInterval = setInterval(() => {
-//       setAiStepIndex((prev) =>
-//         prev < AI_STEPS.length - 1 ? prev + 1 : prev
-//       );
-//     }, 1800);
-//     progressInterval = setInterval(() => {
-//       setAiProgress((prev) => {
-//         if (prev >= 95) return prev;
-//         return prev + Math.floor(Math.random() * 5) + 3;
-//       });
-//     }, 600);
-//     setStepText("Generating improved format...");
-//     // ⬇⬇ NEW API CALL EXPECTING JSON ⬇⬇
-//     const resp = await axios.post(
-//       `${Server}/api/v1/contact/email/resume/writting`,
-//       { resumeUrl }
-//       // { timeout: 120000 }
-//     );
-
-//     clearInterval(progressInterval);
-//     clearInterval(stepInterval);
-
-//     setStepText("Finalizing your AI resume...");
-//     await new Promise((r) => setTimeout(r, 1000));
-
-//     // Convert base64 to Blob URL
-//     const makeUrl = (base64, mime) => {
-//       const byteChars = atob(base64);
-//       const byteNumbers = Array.from(byteChars).map((c) => c.charCodeAt(0));
-//       const byteArray = new Uint8Array(byteNumbers);
-//       return URL.createObjectURL(new Blob([byteArray], { type: mime }));
-//     };
-
-//     const { basicResume, traditionalResume } = resp.data;
-//     setAiProgress(100);
-//     setStepText("Finalizing your AI resume...");
-
-//     if (basicResume)
-//       setAiBasicPreview(makeUrl(basicResume.base64, basicResume.mimeType));
-
-//     if (traditionalResume)
-//       setAiTraditionalPreview(
-//         makeUrl(traditionalResume.base64, traditionalResume.mimeType)
-//       );
-
-//     setAiLoading(false);
-
-//     setTimeout(() => {
-//       setAiStepIndex(0);
-//       setAiProgress(0);
-//     }, 600);
-//   } catch (err) {
-//     console.error("AI generation failed", err);
-
-//     clearInterval(progressInterval);
-//     clearInterval(stepInterval);
-
-//     setAiLoading(false);
-//     setAiMode(false);
-//     setAiStepIndex(0);
-//     setAiProgress(0);
-
-//     toast.error("AI generation failed");
-//   }
-// };
-
-{
-  /*
-import React, { useState, useEffect } from "react";
-import toast, { Toaster } from "react-hot-toast";
-import uniqid from "uniqid";
-import axios from "axios";
-import { Server } from "../../../App";
-import { useNavigate } from "react-router-dom";
-import { Button, Modal, Spin } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
-
-// Keep your original styles or add CSS to match your app
-const CVManager = () => {
-  // existing states
-  const [selectedfile, setSelectedFile] = useState(() => {
-    const storedFiles = localStorage.getItem("selectedFiles");
-    return storedFiles ? JSON.parse(storedFiles) : [];
-  });
-  const [filesUploaded, setFilesUploaded] = useState(false);
-  const [resume, setResume] = useState("");
-  const [loader, setLoader] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
-
-  // AI states
-  const [aiLoading, setAiLoading] = useState(false); // generating
-  const [aiResumes, setAiResumes] = useState([]); // [{ fileBase64, fileName, contentType, blobUrl }]
-  const [expandedIndex, setExpandedIndex] = useState(null); // which card is expanded
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [selectedAiIndex, setSelectedAiIndex] = useState(null);
-
-  const navigate = useNavigate();
-  let profileCompleted = localStorage.getItem("ProfileCompleted");
-  let role = localStorage.getItem("Role");
-  let userId = localStorage.getItem("UserId");
-
-  useEffect(() => {
-    if (profileCompleted === "false") {
-      if (role === "Candidate") {
-        navigate("/my-profile");
-      } else {
-        navigate("/company-profile");
-      }
-    }
-  }, []); // eslint-disable-line
-
-  useEffect(() => {
-    getallEmployers();
-  }, []); // eslint-disable-line
-
-  // fetch candidate data / resume URL
-  const getallEmployers = async () => {
-    setLoader(true);
-    try {
-      const { data } = await axios.get(`${Server}/api/v1/candidate/${userId}`);
-      if (data?.Candidate && data.Candidate[0]?.resume) {
-        setResume(data.Candidate[0].resume);
-        setShowUpload(false);
-      } else {
-        setResume("");
-        setShowUpload(true);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoader(false);
-    }
-  };
-
-  // helper: pretty file size
-  const filesizes = (bytes, decimals = 2) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
-  };
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("selectedFiles", JSON.stringify(selectedfile));
-  }, [selectedfile]);
-
-  // file input change
-  const InputChange = (e) => {
-    let documents = [];
-    let unsupportedFiles = [];
-
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
-      const extension = file.name.split(".").pop().toLowerCase();
-      if (["docx", "pdf", "doc"].includes(extension)) {
-        documents.push(file);
-        let reader = new FileReader();
-        reader.onloadend = () => {
-          setSelectedFile((prevFiles) => {
-            return [
-              ...prevFiles,
-              {
-                id: uniqid(),
-                file: file,
-                filename: file.name,
-                fileimage: reader.result,
-                datetime: file.lastModifiedDate
-                  ? file.lastModifiedDate.toLocaleString("en-IN")
-                  : new Date().toLocaleString(),
-                filesize: filesizes(file.size),
-              },
-            ];
-          });
-        };
-        reader.readAsDataURL(file);
-      } else {
-        unsupportedFiles.push(file);
-      }
-    }
-
-    if (unsupportedFiles.length > 0) {
-      alert(
-        "The following files are not supported: " +
-          unsupportedFiles.map((file) => file.name).join(", ")
-      );
-    }
-  };
-
-  const DeleteSelectFile = (id) => {
-    if (window.confirm("Are you sure you want to delete this file?")) {
-      const result = selectedfile.filter((data) => data.id !== id);
-      setSelectedFile(result);
-      setFilesUploaded(false);
-    }
-  };
-
-  // existing handleUpload (upload original resume files to your server)
-  const handleUpload = async (e) => {
-    try {
-      const formData = new FormData();
-      selectedfile.forEach((fileData) => {
-        formData.append("file", fileData.file);
-      });
-      const { data } = await axios.post(
-        `${Server}/api/v1/upload/resume/candidate/${userId}`,
-        formData
-      );
-      if (data.message === "Successfully updated profile") {
-        toast.success("Uploaded Successfully");
-        setFilesUploaded(true);
-        getallEmployers();
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error in Uploading Resume");
-    }
-  };
-
-  const getFileTypeIcon = (filename) => {
-    const extension = filename.split(".").pop().toLowerCase();
-    const fileTypes = {
-      doc: "fa fa-file-word-o",
-      docx: "fa fa-file-word-o",
-      pdf: "fa fa-file-pdf-o",
-    };
-    return fileTypes[extension] || "fa fa-file-o";
-  };
-
-  // ---------- AI Flow ----------
-  // helper: convert base64 string to blob url
-  const base64ToBlobUrl = (base64, contentType = "application/pdf") => {
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: contentType });
-    return URL.createObjectURL(blob);
-  };
-
-  // When user clicks Try with AI
-  const handleTryWithAI = async () => {
-    if (!resume) {
-      toast.error("No resume found to use as input. Please upload one first.");
-      return;
-    }
-
-    try {
-      setAiLoading(true);
-      setAiResumes([]);
-      setExpandedIndex(null);
-      setSelectedAiIndex(null);
-
-      // send S3 URL to your backend
-      const { data } = await axios.post(`${Server}/api/v1/ai/generate-resume`, {
-        resumeUrl: resume,
-        userId,
-      }, {
-        // server may take time; long timeout
-        timeout: 120000,
-      });
-
-      // expecting data.files = [{ fileBase64, fileName, contentType }]
-      if (!data || !Array.isArray(data.files) || data.files.length === 0) {
-        toast.error("No AI resumes returned");
-        setAiLoading(false);
-        return;
-      }
-
-      // convert to blob URLs for preview
-      const processed = data.files.map((f, idx) => {
-        const contentType = f.contentType || "application/pdf";
-        const blobUrl = base64ToBlobUrl(f.fileBase64, contentType);
-        return {
-          id: idx,
-          fileBase64: f.fileBase64,
-          fileName: f.fileName || `resume_ai_${idx + 1}.pdf`,
-          contentType,
-          blobUrl,
-        };
-      });
-
-      setAiResumes(processed);
-    } catch (err) {
-      console.error("AI generate error", err);
-      toast.error("AI resume generation failed. Try again.");
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  // Select -> open confirm modal
-  const handleSelectAi = (index) => {
-    setSelectedAiIndex(index);
-    setConfirmModalOpen(true);
-  };
-
-  // Confirm & save to server
-  const handleConfirmSave = async () => {
-    if (selectedAiIndex === null) return;
-    const file = aiResumes[selectedAiIndex];
-
-    try {
-      setLoader(true);
-      // send base64 to server to save (backend should decode & upload to S3 & update candidate resume)
-      const { data } = await axios.post(`${Server}/api/v1/ai/save-resume`, {
-        userId,
-        fileBase64: file.fileBase64,
-        fileName: file.fileName,
-        contentType: file.contentType,
-      });
-
-      if (data?.success) {
-        toast.success("Resume saved successfully");
-        setAiResumes([]);
-        setSelectedAiIndex(null);
-        setConfirmModalOpen(false);
-        // refresh profile/resume
-        await getallEmployers();
-      } else {
-        toast.error("Failed to save resume");
-      }
-    } catch (err) {
-      console.error("Save AI resume error", err);
-      toast.error("Failed to save resume");
-    } finally {
-      setLoader(false);
-    }
-  };
-
-  // download chosen AI file
-  const handleDownloadAi = (file) => {
-    const a = document.createElement("a");
-    a.href = file.blobUrl;
-    a.download = file.fileName;
-    a.click();
-  };
-
-  // ---------- Render ----------
-  return (
-    <div>
-      <section className="user-dashboard">
-        <div className="dashboard-outer">
-          <div className="upper-title-box">
-            <Toaster position="top-center" reverseOrder={false} />
-            <h3>Cv Manager</h3>
-            <div className="text">Ready to jump back in?</div>
-          </div>
-
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="cv-manager-widget ls-widget">
-                <div className="widget-title">
-                  <h4>Cv Manager</h4>
-                </div>
-
-                {loader ? (
-                  <div className="text-center py-5">
-                    <h5>Loading your resume...</h5>
-                  </div>
-                ) : (
-                  <div className="widget-content">
-              
-                    {resume && !showUpload && (
-                      <div className="existing-resume d-flex align-items-center justify-content-between border p-3 rounded bg-light">
-                        <div className="d-flex align-items-center gap-2">
-                          <i
-                            className={getFileTypeIcon(resume)}
-                            style={{ fontSize: "20px" }}
-                          />
-                          <span className="fw-semibold text-dark">
-                            {resume.split("/").pop()}
-                          </span>
-                        </div>
-
-                        <div className="d-flex gap-2">
-                          <a
-                            href={resume}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button>View</Button>
-                          </a>
-
-                          <Button
-                            type="primary"
-                            onClick={() => setShowUpload(true)}
-                          >
-                            Update
-                          </Button>
-
-                      
-                          <Button
-                            onClick={handleTryWithAI}
-                            style={{
-                              background: "#722ed1",
-                              color: "#fff",
-                              border: "none",
-                            }}
-                          >
-                            Try with AI
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                 
-                    {showUpload && (
-                      <div className="uploading-resume">
-                        <div className="uploadButton">
-                          <input
-                            className="uploadButton-input"
-                            type="file"
-                            name="attachments[]"
-                            accept=".doc,.docx,application/pdf"
-                            id="upload"
-                            onChange={InputChange}
-                            multiple
-                          />
-                          <label className="cv-uploadButton" htmlFor="upload">
-                            <span className="title">Drop files here to upload</span>
-                            <span className="text">
-                              To upload file size is (Max 5Mb) and allowed file
-                              types are (.doc, .docx, .pdf)
-                            </span>
-                            {selectedfile.length !== 0 && (
-                              <button
-                                className="theme-btn btn-style-one"
-                                onClick={() => handleUpload()}
-                              >
-                                Upload Resume
-                              </button>
-                            )}
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-            
-                    <div className="files-outer">
-                      {selectedfile?.map((data) => {
-                        const {
-                          id,
-                          filename,
-                          filetype,
-                          fileimage,
-                          datetime,
-                          filesize,
-                        } = data;
-                        return (
-                          <div className="file-edit-box" key={id}>
-                            <span className="title">{filename}</span>
-                            <span className="file-icon">
-                              <i className={getFileTypeIcon(filename)} />
-                            </span>
-                            <div className="edit-btns">
-                              <button onClick={() => DeleteSelectFile(id)}>
-                                <span className="la la-trash" />
-                              </button>
-                              <button>
-                                <span className="la la-edit" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                 
-                    {aiLoading && (
-                      <div className="my-4 text-center">
-                        <Spin size="large" />
-                        <h5 className="mt-3">Generating ATS-friendly resumes...</h5>
-                        <p>Please wait — this may take a few moments.</p>
-                      </div>
-                    )}
-
-                    {aiResumes.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="mb-3">AI Generated Resumes</h4>
-
-                        <div className="row">
-                          {aiResumes.map((file, idx) => {
-                            const isExpanded = expandedIndex === idx;
-                            const isSelected = selectedAiIndex === idx;
-                            return (
-                              <div className="col-md-4 mb-3" key={file.id || idx}>
-                                <div
-                                  className="card p-2 shadow-sm"
-                                  style={{
-                                    border: isSelected
-                                      ? "2px solid #722ed1"
-                                      : "1px solid #ddd",
-                                    cursor: "pointer",
-                                    borderRadius: 10,
-                                    minHeight: 380,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "space-between",
-                                  }}
-                                  onClick={() => {
-                                    // toggle expand
-                                    setExpandedIndex(isExpanded ? null : idx);
-                                  }}
-                                >
-                                  <div>
-                                    <h6 className="text-center">Resume {idx + 1}</h6>
-
-                                  
-                                    <div
-                                      style={{
-                                        width: "100%",
-                                        height: isExpanded ? 380 : 240,
-                                        overflow: "hidden",
-                                        border: "1px solid #eee",
-                                        borderRadius: 8,
-                                        background: "#fff",
-                                      }}
-                                    >
-                                      {file.contentType?.includes("pdf") ? (
-                                        <iframe
-                                          title={`ai-resume-${idx}`}
-                                          src={file.blobUrl}
-                                          style={{
-                                            width: "100%",
-                                            height: "100%",
-                                            border: "none",
-                                          }}
-                                        />
-                                      ) : file.contentType?.includes("word")
-                                        ? (
-                                          <div
-                                            style={{
-                                              padding: 12,
-                                              display: "flex",
-                                              flexDirection: "column",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                              height: "100%",
-                                            }}
-                                          >
-                                            <p>
-                                              Preview for DOCX is not available inline.
-                                            </p>
-                                            <Button
-                                              icon={<DownloadOutlined />}
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDownloadAi(file);
-                                              }}
-                                            >
-                                              Download
-                                            </Button>
-                                          </div>
-                                        ) : (
-                                          <div
-                                            style={{
-                                              padding: 12,
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                              height: "100%",
-                                            }}
-                                          >
-                                            <p>Cannot preview this file type.</p>
-                                          </div>
-                                        )}
-                                    </div>
-                                  </div>
-
-                                  <div style={{ marginTop: 12 }}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                      <small>{file.fileName}</small>
-                                      <div style={{ display: "flex", gap: 8 }}>
-                                        <Button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDownloadAi(file);
-                                          }}
-                                        >
-                                          Download
-                                        </Button>
-
-                                        <Button
-                                          type="primary"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedAiIndex(idx);
-                                            setConfirmModalOpen(true);
-                                          }}
-                                        >
-                                          Select Resume
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div className="copyright-text">
-        <p>© 2024 Skill Stream. All Right Reserved.</p>
-      </div>
-
-
-      <Modal
-        title="Confirm Selection"
-        open={confirmModalOpen}
-        onCancel={() => setConfirmModalOpen(false)}
-        onOk={handleConfirmSave}
-        okText="Use this Resume"
-        okButtonProps={{ style: { background: "#722ed1", border: "none" } }}
-      >
-        <p>Are you sure you want to use this AI generated resume as your profile resume?</p>
-      </Modal>
-    </div>
-  );
-};
-
-export default CVManager;*/
-}
-
-{
-  /*import React, { useState, useEffect } from "react";
-import toast, { Toaster } from "react-hot-toast";
-import uniqid from "uniqid";
-import axios from "axios";
-import { Server } from "../../../App";
-import { useNavigate } from "react-router-dom";
-import { Button } from "antd";
-// import "./CVManager.css"; // Import your CSS file for styling
-
-const CVManager = () => {
-  const [selectedfile, setSelectedFile] = useState(() => {
-    const storedFiles = localStorage.getItem("selectedFiles");
-    return storedFiles ? JSON.parse(storedFiles) : [];
-  });
-  const [filesUploaded, setFilesUploaded] = useState(false);
-  const [resume, setResume] = useState("");
-  const [loader, setLoader] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
-  const navigate = useNavigate();
-  let profileCompleted = localStorage.getItem("ProfileCompleted");
-  let role = localStorage.getItem("Role");
-  let userId = localStorage.getItem("UserId");
-
-  useEffect(() => {
-    if (profileCompleted === "false") {
-      // console.log(typeof profileCompleted);
-      if (role === "Candidate") {
-        navigate("/my-profile");
-      } else {
-        navigate("/company-profile");
-      }
-    }
-  }, []);
-  useEffect(() => {
-    getallEmployers();
-  }, []);
-  const getallEmployers = async () => {
-    setLoader(true);
-    try {
-      const { data } = await axios.get(`${Server}/api/v1/candidate/${userId}`);
-      if (data?.Candidate[0].resume) {
-        console.log(data?.Candidate[0].resume);
-        setResume(data?.Candidate[0].resume);
-        setShowUpload(false);
-      } else {
-        setResume("");
-        setShowUpload(true);
-      }
-      setLoader(false);
-    } catch (error) {
-      console.log(error);
-      setLoader(false);
-    }
-  };
-  const filesizes = (bytes, decimals = 2) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
-  };
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("selectedFiles", JSON.stringify(selectedfile));
-  }, [selectedfile]);
-
-  const InputChange = (e) => {
-    let documents = [];
-    let unsupportedFiles = [];
-
-    for (let i = 0; i < e.target.files.length; i++) {
-      const file = e.target.files[i];
-      const extension = file.name.split(".").pop().toLowerCase();
-      if (["docx", "pdf"].includes(extension)) {
-        documents.push(file);
-        let reader = new FileReader();
-        reader.onloadend = () => {
-          setSelectedFile((prevFiles) => {
-            return [
-              ...prevFiles,
-              {
-                id: uniqid(),
-                file: file,
-                filename: file.name,
-                fileimage: reader.result,
-                datetime: file.lastModifiedDate.toLocaleString("en-IN"),
-                filesize: filesizes(file.size),
-              },
-            ];
-          });
-        };
-        reader.readAsDataURL(file);
-      } else {
-        unsupportedFiles.push(file);
-      }
-    }
-
-    if (unsupportedFiles.length > 0) {
-      // console.log("Unsupported files:", unsupportedFiles);
-      alert(
-        "The following files are not supported: " +
-          unsupportedFiles.map((file) => file.name).join(", ")
-      );
-    }
-  };
-
-  const DeleteSelectFile = (id) => {
-    if (window.confirm("Are you sure you want to delete this file?")) {
-      const result = selectedfile.filter((data) => data.id !== id);
-      setSelectedFile(result);
-      setFilesUploaded(false);
-    }
-  };
-
-  // console.log(selectedfile);
-  // console.log(userId);
-
-  const handleUpload = async (e) => {
-    try {
-      const formData = new FormData();
-      selectedfile.forEach((fileData) => {
-        formData.append("file", fileData.file);
-      });
-      const { data } = await axios.post(
-        `${Server}/api/v1/upload/resume/candidate/${userId}`,
-        formData
-      );
-      // console.log(data);
-      if (data.message === "Successfully updated profile") {
-        toast.success("Uploaded Successfully");
-        setFilesUploaded(true);
-      }
-    } catch (error) {
-      // console.log(error);
-      toast.error("Error in Uploading Resume");
-    }
-  };
-
-  const getFileTypeIcon = (filename) => {
-    const extension = filename.split(".").pop().toLowerCase();
-    const fileTypes = {
-      doc: "fa fa-file-word-o",
-      docx: "fa fa-file-word-o",
-      pdf: "fa fa-file-pdf-o",
-    };
-    return fileTypes[extension] || "fa fa-file-o";
-  };
-
-  return (
-    <div>
-      <section class="user-dashboard">
-        <div class="dashboard-outer">
-          <div class="upper-title-box">
-            <Toaster position="top-center" reverseOrder={false} />
-            <h3>Cv Manager</h3>
-            <div class="text">Ready to jump back in?</div>
-          </div>
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="cv-manager-widget ls-widget">
-                <div class="widget-title">
-                  <h4>Cv Manager</h4>
-                </div>
-                {loader ? (
-                  <div className="text-center py-5">
-                    <h5>Loading your resume...</h5>
-                  </div>
-                ) : (
-                  <div class="widget-content">
-                    {resume && !showUpload && (
-                      <div className="existing-resume d-flex align-items-center justify-content-between border p-3 rounded bg-light">
-                        <div className="d-flex align-items-center gap-2">
-                          <i
-                            className={getFileTypeIcon(resume)}
-                            style={{ fontSize: "20px" }}
-                          ></i>
-                          <span className="fw-semibold text-dark">
-                            {resume.split("/").pop()}{" "}
-                            
-                          </span>
-                        </div>
-
-                        <div className="d-flex gap-2">
-                          <a
-                            href={resume}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            // className="theme-btn btn-style-one btn-sm"
-                          >
-                            <Button color="purple" variant="solid">
-                              View
-                            </Button>
-                          </a>
-                          <Button
-                            type="primary"
-                            // className="theme-btn btn-style-two btn-sm"
-                            onClick={() => setShowUpload(true)}
-                          >
-                            Update
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {showUpload && (
-                      <div class="uploading-resume">
-                        <div class="uploadButton">
-                          <input
-                            class="uploadButton-input"
-                            type="file"
-                            name="attachments[]"
-                            accept="image/*, application/pdf"
-                            id="upload"
-                            onChange={InputChange}
-                            multiple
-                          />
-                          <label class="cv-uploadButton" for="upload">
-                            <span class="title">Drop files here to upload</span>
-                            <span class="text">
-                              To upload file size is (Max 5Mb) and allowed file
-                              types are (.doc, .docx, .pdf)
-                            </span>
-                            {selectedfile.length !== 0 && (
-                              <button
-                                class="theme-btn btn-style-one"
-                                onClick={() => handleUpload()}
-                              >
-                                Upload Resume
-                              </button>
-                            )}
-                          </label>
-                          <span class="uploadButton-file-name"></span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div class="files-outer">
-                      {selectedfile?.map((data, index) => {
-                        const {
-                          id,
-                          filename,
-                          filetype,
-                          fileimage,
-                          datetime,
-                          filesize,
-                        } = data;
-
-                        return (
-                          <div class="file-edit-box" key={id}>
-                            <span class="title">{filename}</span>
-                            <span class="file-icon">
-                              <i className={getFileTypeIcon(filename)}></i>
-                            </span>
-                            <div class="edit-btns">
-                              <button onClick={() => DeleteSelectFile(id)}>
-                                <span class="la la-trash"></span>
-                              </button>
-                              <button>
-                                <span class="la la-edit"></span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="copyright-text">
-        <p>© 2024 Skill Stream. All Right Reserved.</p>
-      </div>
-    </div>
-  );
-};
-
-export default CVManager;
-*/
-}

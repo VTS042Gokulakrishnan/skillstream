@@ -13,6 +13,10 @@ const s3 = new Aws.S3({
 const controller = {
   async updateProfile(req, res) {
     try {
+      // Practice entitlements and sessions are written only by server services/scripts.
+      if (Object.keys(req.body || {}).some((key) => /^(practice|codingPractice)/i.test(key))) {
+        return res.status(400).json({ message: "Practice access cannot be changed through profile updates." });
+      }
       const { userId } = req.params;
       const isUserCheck = await candidateModel.findOne({ userId });
       if (isUserCheck) {

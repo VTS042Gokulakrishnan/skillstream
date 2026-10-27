@@ -1,5 +1,7 @@
+import ResumeBuilder from "./Pages/ResumeBuilder/ResumeBuilder";
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import PortalTheme from "./Components/CandidateUI/PortalTheme";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "./assets/images/SS_Pulse_animation.json";
@@ -325,14 +327,14 @@ function App() {
     useAutoLogout();
     return (
       <Routes>
+        <Route element={<ProtectedRoute allowedRole="Candidate" />}><Route path="/create-resume" element={<ResumeBuilder />} /></Route>
         <Route
           path="/"
           element={
             <div>
               {" "}
-              <Header />
+              <Header1 />
               <HomeNew />
-              <Footer />
             </div>
           }
         />
@@ -783,7 +785,7 @@ function App() {
       <Toaster position="top-center" reverseOrder={false} />
       <ScrollProvider>
         {" "}
-        <BrowserRouter>
+        <BrowserRouter><PortalTheme />
           <AppLayout />
         </BrowserRouter>
       </ScrollProvider>

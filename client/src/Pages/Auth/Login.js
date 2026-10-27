@@ -57,7 +57,7 @@ const Login = (isModalOpen) => {
       setShowCandidate(true);
       setShowEmployer(true);
     }
-  }, [location.pathname]);
+  }, [location.pathname, isModalOpen.isVendor]);
 
   // const [confirmModal, setConfirmModal] = useState(false);
   // const [signUpModalOpen, setsignUpModalOpen] = useState(false);

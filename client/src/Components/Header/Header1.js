@@ -31,6 +31,7 @@ const Header3 = () => {
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("login");
+  const [isVendor, setIsVendor] = useState(false);
   const [activePage, setActivePage] = useState("");
   const [confirmModal, setConfirmModal] = useState(false);
   const [forgotModal, setForgotModal] = useState(false);
@@ -387,7 +388,7 @@ const Header3 = () => {
   // }, []);
 
   const accountMenu = (
-    <Menu className="user-sidebar navigation">
+    <Menu className="ss-account-menu">
       <Menu.Item key="1">
         <Link className="link-option" to="/candidate-dashboard">
           {" "}
@@ -463,7 +464,7 @@ const Header3 = () => {
     </Menu>
   );
   const VendorMenu = (
-    <Menu className="user-sidebar navigation">
+    <Menu className="ss-account-menu">
       <Menu.Item key="1">
         <Link className="link-option" to="/vendor/dashboard">
           {" "}
@@ -478,7 +479,7 @@ const Header3 = () => {
     </Menu>
   );
   const employerMenu = (
-    <Menu className="user-sidebar navigation">
+    <Menu className="ss-account-menu">
       {/* style={{ maxHeight: '400px', overflowY: 'auto' }} */}
       <Menu.Item key="1">
         <Link className="link-option" to="/employer-dashboard">
@@ -662,282 +663,13 @@ const Header3 = () => {
                 {/* <div className="skills-logo3">{text}</div> */}
               </div>
               {token === null ? (
-                <div>
-                  <nav className="nav main-menu">
-                    <ul className="navigation" id="navbar">
-                      <div className="header-navigation">
-                        <li
-                          className={`dropdown ${
-                            currentPath === "/" ? "current" : ""
-                          }`}
-                        >
-                          <div ref={dropdownRef} className="custom-dropdown">
-                            <Dropdown overlay={menu}>
-                              <div className="custom-dropdown-header">
-                                <span>Blogs</span>
-                                <DownOutlined className="dropdown-icon" />
-                              </div>
-                            </Dropdown>
-                          </div>
-                        </li>
-
-                        {/*   <li
-                          className={`dropdown ${
-                            currentPath === "/pricing" ? "current" : ""
-                          }`}
-                        >
-                          <Link to="/pricing">
-                            <span
-                              style={{
-                                display:
-                                  "inline-block" ,
-                                marginTop:
-                                  "1rem" ,
-                                marginBottom:
-                                  "1rem" ,
-                                fontSize:
-                                  "0.875rem"  ,
-                                borderRadius:
-                                  "9999px"  ,
-                                padding:
-                                  "0.5rem 1rem" ,
-                                boxShadow:
-                                  "0 4px 15px rgba(66, 153, 225, 0.5)"  ,
-                                transition:
-                                  "all 0.3s ease-in-out" ,
-                                borderRadius: "10px" ,
-                                background:
-                                  "linear-gradient(to right, #4299e1, #0070f3)"  Custom Gradient,
-                                color: "#fff" ,
-                                cursor: "pointer"  ,
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0056a1)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 6px 20px rgba(66, 153, 225, 0.7)";
-                                e.currentTarget.style.transform =
-                                  "translateY(-2px)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0070f3)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 4px 15px rgba(66, 153, 225, 0.5)";
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                              }}
-                            >
-                              Pricing
-                            </span>
-                          </Link>
-                        </li>*/}
-                        <li
-                          className={`dropdown ${
-                            currentPath === "/about" ? "current" : ""
-                          }`}
-                        >
-                          <Link to="/about">
-                            <span
-                              style={{
-                                display:
-                                  "inline-block" /* Ensures proper spacing and hover effects */,
-                                marginTop:
-                                  "1.7rem" /* Equivalent to Tailwind's mt-6 */,
-                                marginBottom:
-                                  "1rem" /* Equivalent to Tailwind's mb-4 */,
-                                fontSize:
-                                  "0.875rem" /* Equivalent to Tailwind's text-sm */,
-                                borderRadius:
-                                  "9999px" /* Equivalent to Tailwind's rounded-full */,
-                                padding:
-                                  "0.5rem 1rem" /* Adding padding for better clickability */,
-                                boxShadow:
-                                  "0 4px 15px rgba(66, 153, 225, 0.5)" /* Custom Shadow */,
-                                transition:
-                                  "all 0.3s ease-in-out" /* Smooth transition for hover effects */,
-                                borderRadius: "10px" /* Custom border radius */,
-                                background:
-                                  "linear-gradient(to right, #4299e1, #0070f3)" /* Custom Gradient */,
-                                color: "#fff" /* Text color */,
-                                cursor: "pointer" /* Change cursor on hover */,
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0056a1)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 6px 20px rgba(66, 153, 225, 0.7)";
-                                e.currentTarget.style.transform =
-                                  "translateY(-2px)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0070f3)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 4px 15px rgba(66, 153, 225, 0.5)";
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                              }}
-                            >
-                              About
-                            </span>
-                          </Link>
-                        </li>
-
-                        <li
-                          className={`dropdown ${
-                            currentPath === "/contact" ? "current" : ""
-                          }`}
-                        >
-                          <Link to="/contact">
-                            <span
-                              style={{
-                                display: "inline-block",
-                                marginTop: "1.7rem",
-                                marginBottom: "1rem",
-                                fontSize: "0.875rem",
-                                padding: "0.5rem 1rem",
-                                boxShadow: "0 4px 15px rgba(66, 153, 225, 0.5)",
-                                transition: "all 0.3s ease-in-out",
-                                borderRadius: "10px",
-                                background:
-                                  "linear-gradient(to right, #4299e1, #0070f3)",
-                                color: "#fff",
-                                cursor: "pointer",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0056a1)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 6px 20px rgba(66, 153, 225, 0.7)";
-                                e.currentTarget.style.transform =
-                                  "translateY(-2px)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background =
-                                  "linear-gradient(to right, #4299e1, #0070f3)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 4px 15px rgba(66, 153, 225, 0.5)";
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                              }}
-                            >
-                              Contact
-                            </span>
-                          </Link>
-                        </li>
-                      </div>
-                      {/*  <div className="resume-button">
-                        <button
-                          onClick={() => navigate("/")}
-                          // className="theme-btn btn-style-two1"
-                        >
-                          <span
-                            className="submit-resume"
-                            style={{
-                              display:
-                                "inline-block" ,
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              marginTop:
-                                "1.5rem" ,
-                              marginBottom:
-                                "1rem" ,
-                              fontSize:
-                                "0.875rem" ,
-                              borderRadius:
-                                "9999px" ,
-                              padding:
-                                "0.5rem 1rem" ,
-                              boxShadow:
-                                "0 4px 15px rgba(66, 153, 225, 0.5)",
-                              transition:
-                                "all 0.3s ease-in-out",
-                              borderRadius: "10px,
-                              background:
-                                "linear-gradient(to right, #4299e1, #0070f3)",
-                              color: "#fff" /* Text color ,
-                              cursor: "pointer" /* Change cursor on hover ,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #4299e1, #0056a1)";
-                              e.currentTarget.style.boxShadow =
-                                "0 6px 20px rgba(66, 153, 225, 0.7)";
-                              e.currentTarget.style.transform =
-                                "translateY(-2px)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #4299e1, #0070f3)";
-                              e.currentTarget.style.boxShadow =
-                                "0 4px 15px rgba(66, 153, 225, 0.5)";
-                              e.currentTarget.style.transform = "translateY(0)";
-                            }}
-                          >
-                            For Job Seekers
-                          </span>
-                        </button>
-                      </div>*/}
-                      <li className="mm-add-listing">
-                        <a href="job-post" className="theme-btn btn-style-one">
-                          Job Post
-                        </a>
-                        <span>
-                          <span className="contact-info">
-                            <span className="phone-num">
-                              <span>Call us</span>
-                              <a href="tel:1234567890">123 456 7890</a>
-                            </span>
-                            <span className="address">
-                              329 Queensberry Street, North Melbourne VIC <br />
-                              3051, Australia.
-                            </span>
-                            <a
-                              href="mailto:support@Skill Stream.com"
-                              className="email"
-                            >
-                              support@Skill Stream.com
-                            </a>
-                          </span>
-                          <span className="social-links">
-                            <a
-                              href="https://www.facebook.com/profile.php?id=61563887762159"
-                              target="_blank"
-                            >
-                              <span className="fab fa-facebook-f"></span>
-                            </a>
-                            {/*<a href="#">
-                            <span className="fab fa-twitter"></span>
-                          </a>*/}
-                            <a
-                              href="https://www.instagram.com/skillstream_jobs/"
-                              target="_blank"
-                            >
-                              <span className="fab fa-instagram"></span>
-                            </a>
-                            <a
-                              href="https://www.linkedin.com/company/104131262/admin/dashboard/"
-                              target="_blank"
-                            >
-                              <span className="fab fa-linkedin-in"></span>
-                            </a>
-                          </span>
-                        </span>
-                      </li>
-                    </ul>
-                  </nav>
-                  {/* {modalOpen && (
-                    <div>
-                      
-                      <Resume
-                        modalOpen={modalOpen}
-                        setModalOpen={setModalOpen}
-                        showResumeModal={showResumeModal}
-                      />
-                    </div>
-                  )} */}
-                </div>
+                <nav className="nav main-menu ss-public-nav" aria-label="Main navigation">
+                  <Link to="/find-jobs">Find Jobs</Link><Link to="/employers-list">Companies</Link>
+                  <Dropdown overlay={menu}><button type="button">Blogs <DownOutlined /></button></Dropdown>
+                  <Link to="/about">About</Link><Link to="/contact">Contact</Link>
+                  <Link to="/employers">Employers Page</Link>
+                  <button type="button" onClick={() => { setIsVendor(true); showModal("login"); }}>Login as Vendor</button>
+                </nav>
               ) : (
                 <nav className="nav main-menu">
                   {role === "Candidate" ? (
@@ -995,8 +727,7 @@ const Header3 = () => {
                         </li>
                         <li className="dropdown">
                           <a
-                            href="https://resume.careeriq.ai/builder"
-                            target="_blank"
+                            href="/create-resume"
                           >
                             <span className="nav-link1">Create Resume</span>
                           </a>
@@ -1186,7 +917,7 @@ const Header3 = () => {
                     className="theme-btn 
                     btn-style-ffive call-modal"
                     // href="/login"
-                    onClick={() => showModal("login")}
+                    onClick={() => { setIsVendor(false); showModal("login"); }}
                   >
                     Login / Register
                   </button>
@@ -1210,6 +941,7 @@ const Header3 = () => {
                       {modalType === "login" ? (
                         <div>
                           <Login
+                            isVendor={isVendor}
                             isModalOpen={isModalOpen}
                             modalType={modalType}
                             setIsModalOpen={setIsModalOpen}
@@ -1263,10 +995,11 @@ const Header3 = () => {
 
                     {/* Account Menu */}
                     <div className="dropdown dashboard-option">
-                      <Dropdown overlay={accountMenu} trigger={["click"]}>
+                      <Dropdown overlay={accountMenu} overlayClassName="ss-account-popup" trigger={["click"]}>
                         <a className="dropdown-toggle" role="button">
                           <img
-                            src={data[0]?.image}
+                            src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }}
                             alt="avatar"
                             className="thumb"
                           />
@@ -1365,7 +1098,8 @@ const Header3 = () => {
                       <Dropdown overlay={employerMenu} trigger={["click"]}>
                         <a className="dropdown-toggle" role="button">
                           <img
-                            src={data[0]?.image}
+                            src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }}
                             alt="avatar"
                             className="thumb"
                           />
@@ -1397,7 +1131,8 @@ const Header3 = () => {
                       <Dropdown overlay={VendorMenu} trigger={["click"]}>
                         <a className="dropdown-toggle" role="button">
                           <img
-                            src={data[0]?.image}
+                            src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }}
                             alt="avatar"
                             className="thumb"
                           />
@@ -1449,7 +1184,7 @@ const Header3 = () => {
                     <button
                       className="call-modal"
                       // href="/login"
-                      onClick={() => showModal("login")}
+                      onClick={() => { setIsVendor(false); showModal("login"); }}
                     >
                       <span class="icon-user"></span>
                     </button>
@@ -1473,6 +1208,7 @@ const Header3 = () => {
                         {modalType === "login" ? (
                           <div>
                             <Login
+                            isVendor={isVendor}
                               isModalOpen={isModalOpen}
                               modalType={modalType}
                               setIsModalOpen={setIsModalOpen}
@@ -1585,7 +1321,8 @@ const Header3 = () => {
                         </ul>
                       </Drawer>
                       <button id="toggle-user-sidebar" onClick={showDrawer}>
-                        <img src={data[0]?.image} alt="avatar" class="thumb" />
+                        <img src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }} alt="avatar" class="thumb" />
                       </button>
                     </div>
                   ) : role === "Employer" ? (
@@ -1723,7 +1460,8 @@ const Header3 = () => {
                         </ul>
                       </Drawer>
                       <button id="toggle-user-sidebar" onClick={showDrawer}>
-                        <img src={data[0]?.image} alt="avatar" class="thumb" />
+                        <img src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }} alt="avatar" class="thumb" />
                       </button>
                     </div>
                   ) : role === "Vendor" ? (
@@ -1792,7 +1530,8 @@ const Header3 = () => {
                         </ul>
                       </Drawer>
                       <button id="toggle-user-sidebar" onClick={showDrawer}>
-                        <img src={data[0]?.image} alt="avatar" class="thumb" />
+                        <img src={data[0]?.image || avatar}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = avatar; }} alt="avatar" class="thumb" />
                       </button>
                     </div>
                   ) : null}
@@ -2312,8 +2051,7 @@ const Header3 = () => {
                       </div>
                       <div className="dropdown">
                         <a
-                          href="https://resume.careeriq.ai/builder"
-                          target="_blank"
+                          href="/create-resume"
                         >
                           <span className="mob-nav">Create Resume</span>
                         </a>
@@ -2376,7 +2114,9 @@ const Header3 = () => {
           <Toaster position="top-center" reverseOrder={false} />
           {token === null && (
             <div className="login-register-button">
-              <button className="btn-login" onClick={() => showModal("login")}>
+              <a href="/employers">Employers Page</a>
+              <button className="btn-login" onClick={() => { setIsMobileMenuOpen(false); setIsVendor(true); showModal("login"); }}>Login as Vendor</button>
+              <button className="btn-login" onClick={() => { setIsVendor(false); showModal("login"); }}>
                 Login / Register
               </button>
             </div>

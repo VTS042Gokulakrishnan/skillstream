@@ -1,0 +1,34 @@
+.easy-apply-modal .ant-modal-content { border-radius:14px; padding:22px; color:#172b4d; max-height:calc(100dvh - 32px); overflow-y:auto; }
+.easy-apply-modal .ant-modal-body { font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.5; }
+.easy-apply-modal .ea-heading h2 { font-family:inherit; margin:0 32px 4px 0; font-size:22px; line-height:1.3; font-weight:700; }
+.easy-apply-modal .ea-heading p { font-family:inherit; font-size:13px; line-height:1.5; font-weight:400; color:#64748b; margin:0 0 14px; }
+.easy-apply-modal .ea-job { padding:12px 14px; background:#eef5ff; border-radius:9px; display:flex; flex-direction:column; gap:3px; margin:0 0 16px; }
+.easy-apply-modal .ea-job strong { font-size:14px; line-height:1.5; font-weight:600; }
+.easy-apply-modal .ea-job span { font-size:12px; line-height:1.5; color:#64748b; }
+.easy-apply-modal .ea-form h3 { font-family:inherit; font-size:15px; line-height:1.4; font-weight:600; margin:18px 0 10px; }
+.easy-apply-modal .ea-form h3:first-child { margin-top:0; }
+.easy-apply-modal .ea-form label { display:flex; flex-direction:column; gap:5px; font-size:12px; line-height:1.5; font-weight:400; color:#172b4d; margin:0; min-width:0; }
+.easy-apply-modal .ea-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px; margin-bottom:12px; }
+.easy-apply-modal .ea-location { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.easy-apply-modal .ea-form input { box-sizing:border-box; width:100%; height:38px; padding:8px 10px; border:1px solid #ccd7e5; border-radius:7px; background:#fff; color:#172b4d; font-family:inherit; font-size:13px; line-height:20px; font-weight:400; margin:0; }
+.easy-apply-modal .ea-form input:focus { outline:2px solid #bcd5f6; border-color:#1967d2; }
+.easy-apply-modal .ea-form .ant-select { width:100%; height:38px; font-family:inherit; font-size:13px; }
+.easy-apply-modal .ea-form .ant-upload-drag { background:#f6faff; border-color:#bcd5f6; border-radius:9px; }
+.easy-apply-modal .ea-form .ant-upload-drag .ant-upload-btn { padding:12px!important; }
+.easy-apply-modal .ea-form .ant-upload-drag p { margin:0; font-family:inherit; font-weight:400; line-height:1.5; }
+.easy-apply-modal .ea-form .ant-upload-drag-icon { margin:0 0 4px!important; }
+.easy-apply-modal .ea-form .ant-upload-drag-icon .anticon { font-size:24px!important; }
+.easy-apply-modal .ea-form .ant-upload-text { font-size:13px!important; margin:0 0 3px!important; }
+.easy-apply-modal .ea-form .ant-upload-hint { font-size:12px!important; }
+.easy-apply-modal .ea-note { font-size:11px; line-height:1.5; font-weight:400; color:#64748b; margin:6px 0 0; }
+.easy-apply-modal .ea-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid #e1e8f2; padding:14px 0 0; margin-top:18px; }
+.easy-apply-modal .ea-footer>div { display:flex; gap:8px; }
+.easy-apply-modal .ea-footer .ant-btn { height:36px; font-family:inherit; font-size:13px; }
+.easy-apply-modal .ea-footer .ant-btn-primary { background:#1967d2; }
+.easy-apply-modal .ea-signin { border:0; background:none; color:#1967d2; padding:0; font-family:inherit; font-size:12px; line-height:1.5; text-align:left; }
+@media(max-width:600px) {
+  .easy-apply-modal .ant-modal-content { padding:20px 16px; }
+  .easy-apply-modal .ea-grid,.easy-apply-modal .ea-location { grid-template-columns:1fr; }
+  .easy-apply-modal .ea-footer { align-items:stretch; flex-direction:column; }
+  .easy-apply-modal .ea-footer>div { justify-content:flex-end; }
+}

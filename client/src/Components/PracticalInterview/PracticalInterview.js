@@ -11,6 +11,12 @@ import user from "../../assets/Animation - 1725482128206.gif"; //changes
 import { Server } from "App";
 import axios from "axios";
 import practiceApi from "./practiceApi";
+import {
+  PracticeHeader,
+  PracticeLoading,
+  PracticeRetry,
+  PracticeResult,
+} from "./PracticeStates";
 import { set } from "date-fns";
 import { Button, Tooltip, Result, Modal, Switch, Steps } from "antd";
 import toast, { Toaster } from "react-hot-toast";
@@ -68,9 +74,11 @@ const VideoAssessment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   useEffect(() => {
-    if (!location.state?.practiceSessionId) navigate("/practiceInterview", { replace: true });
+    if (!location.state?.practiceSessionId)
+      navigate("/practiceInterview", { replace: true });
   }, [location.state, navigate]);
-  const { jobTitle, resume_text, job_description_text, practiceSessionId } = location.state || {};
+  const { jobTitle, resume_text, job_description_text, practiceSessionId } =
+    location.state || {};
   const { Step } = Steps;
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -100,6 +108,18 @@ const VideoAssessment = () => {
   const [audioURL, setAudioURL] = useState("");
   const [speech, setSpeech] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState([]);
+  const [submissionState, setSubmissionState] = useState("");
+  const retryAnswer = useRef(null);
+  const retryPayload = useRef(null);
+  const ownedStreams = useRef([]);
+  useEffect(
+    () => () => {
+      ownedStreams.current.forEach((stream) =>
+        stream?.getTracks().forEach((track) => track.stop())
+      );
+    },
+    []
+  );
   const [spinner, setSpinner] = useState(false);
   const [initialised, setInitialised] = useState(false);
   const [thankYouMessage, setThankYouMessage] = useState("");
@@ -192,6 +212,9 @@ const VideoAssessment = () => {
   const handleToggleCameraMic = async (checked) => {
     if (!checked) {
       setIsAllowed(false);
+      setCameraAllowed(false);
+      setMicAllowed(false);
+      micStream?.getTracks().forEach((track) => track.stop());
       if (videoRef.current) videoRef.current.srcObject = null;
       return;
     }
@@ -236,6 +259,10 @@ const VideoAssessment = () => {
         videoRef.current.srcObject = stream;
       }
       setIsAllowed(true);
+      setCameraAllowed(true);
+      setMicAllowed(true);
+      if (webcamRef.current) webcamRef.current.srcObject = stream;
+      ownedStreams.current.push(stream);
       setMicStream(stream); // store mic/camera stream
     } catch (err) {
       console.error("getUserMedia error:", err);
@@ -281,7 +308,9 @@ const VideoAssessment = () => {
       };
 
       setLoader(true);
-      const { data } = await practiceApi.post(`/startInterview`, formData, { headers: { "X-Practice-Session": practiceSessionId } });
+      const { data } = await practiceApi.post(`/startInterview`, formData, {
+        headers: { "X-Practice-Session": practiceSessionId },
+      });
       // console.log(screenStream);
       // console.log(micStream);
       const mixedAudioStream = mixAudioStreams(micStream, screenStream);
@@ -311,8 +340,11 @@ const VideoAssessment = () => {
       // Optionally: Start interval screenshot capture
       // startFrameCapture(screenStream);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to start interview.");
-      if ([402, 409].includes(error.response?.status)) navigate("/practiceInterview");
+      toast.error(
+        error.response?.data?.message || "Failed to start interview."
+      );
+      if ([402, 409].includes(error.response?.status))
+        navigate("/practiceInterview");
       console.error(error);
       setLoader(false);
     }
@@ -353,48 +385,17 @@ const VideoAssessment = () => {
       localStorage.setItem("resume_text", resume_text);
       localStorage.setItem("job_description_text", job_description_text);
       setInitialised(false);
-      const startVideo = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-          if (webcamRef.current) {
-            webcamRef.current.srcObject = stream;
-
-            // Add event listener to check when video metadata is loaded
-            webcamRef.current.addEventListener("loadedmetadata", () => {
-              // setVideoReady(true);
-              webcamRef.current.play().catch((error) => {
-                console.error("Error playing video:", error);
-              });
-            });
-          }
-        } catch (error) {
-          console.error("Error accessing webcam:", error);
-        }
-      };
-
-      startVideo();
-
-      // Clean up function to stop video stream
-      return () => {
-        if (webcamRef.current && webcamRef.current.srcObject) {
-          const stream = webcamRef.current.srcObject;
-          const tracks = stream.getTracks();
-          tracks.forEach((track) => track.stop());
-          webcamRef.current.srcObject = null;
-        }
-      };
     } catch (error) {
       // console.log(error);
       setInitialised(false);
       toast.error("Please try again");
     }
   };
-  const handleNextQuestion = async () => {
+  const handleNextQuestion = async (finishEarly = false) => {
     stopSpeaking(); // Ensure speech synthesis stops
     setSpeech(false);
     setShowNext(false);
+    setTranscription("");
     setNext(true);
     setShowNextButton(false);
     try {
@@ -434,7 +435,9 @@ const VideoAssessment = () => {
         // console.log("Payload to be sent:", payload);
 
         // Call the API to fetch the next question
-        const response = await practiceApi.post(`/genrate/question`, payload, { headers: { "X-Practice-Session": practiceSessionId } });
+        const response = await practiceApi.post(`/genrate/question`, payload, {
+          headers: { "X-Practice-Session": practiceSessionId },
+        });
 
         // Process the response and set the next question
         if (response.data.status) {
@@ -451,7 +454,7 @@ const VideoAssessment = () => {
             setNextText("Submit Answer");
             setNextFetch("Submitting Answer ....");
           }
-          if (!isCoding && questionCount >= 9) {
+          if (finishEarly === true || (!isCoding && questionCount >= 9)) {
             // setNextText(""); // Clear any "Submit Answer"
             // setNextFetch("");
             if (mediaRecorderRef.current) {
@@ -463,9 +466,10 @@ const VideoAssessment = () => {
                 mediaRecorderRef.current.stop();
               });
             }
-          
+
             try {
-              await closeFeedbackModal(currentQuestion, currentAnswer);
+              if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                return;
             } catch (e) {
               console.error("Silent interview close failed:", e);
             }
@@ -479,7 +483,6 @@ const VideoAssessment = () => {
             setIsRecording(false);
 
             setInterviewCompleted(true);
-           
           } else if (isCoding && questionCount >= 11) {
             // setNextText(""); // Clear any "Submit Answer"
             // setNextFetch("");
@@ -492,9 +495,10 @@ const VideoAssessment = () => {
                 mediaRecorderRef.current.stop();
               });
             }
-           
+
             try {
-              await closeFeedbackModal(currentQuestion, currentAnswer);
+              if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                return;
             } catch (e) {
               console.error("Silent interview close failed:", e);
             }
@@ -508,7 +512,6 @@ const VideoAssessment = () => {
             setIsRecording(false);
 
             setInterviewCompleted(true);
-         
           } else {
             setNext(false); // Enable the 'Next' button for the next question
             setDisplayedQuestion(nextQuestion); // Set the new question for display
@@ -578,7 +581,11 @@ const VideoAssessment = () => {
           // console.log("Payload to be sent:", payload);
 
           // Call the API to fetch the next question
-          const response = await practiceApi.post(`/genrate/question`, payload, { headers: { "X-Practice-Session": practiceSessionId } });
+          const response = await practiceApi.post(
+            `/genrate/question`,
+            payload,
+            { headers: { "X-Practice-Session": practiceSessionId } }
+          );
 
           // Process the response and set the next question
           if (response.data.status) {
@@ -595,7 +602,7 @@ const VideoAssessment = () => {
               setNextText("Submit Answer");
               setNextFetch("Submitting Answer ....");
             }
-            if (!isCoding && questionCount >= 9) {
+            if (finishEarly === true || (!isCoding && questionCount >= 9)) {
               // setNextText(""); // Clear any "Submit Answer"
               // setNextFetch("");
               if (mediaRecorderRef.current) {
@@ -607,9 +614,10 @@ const VideoAssessment = () => {
                   mediaRecorderRef.current.stop();
                 });
               }
-             
+
               try {
-                await closeFeedbackModal(currentQuestion, currentAnswer);
+                if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                  return;
               } catch (e) {
                 console.error("Silent interview close failed:", e);
               }
@@ -623,7 +631,6 @@ const VideoAssessment = () => {
               setIsRecording(false);
 
               setInterviewCompleted(true);
-             
             } else if (isCoding && questionCount >= 11) {
               // setNextText(""); // Clear any "Submit Answer"
               // setNextFetch("");
@@ -636,9 +643,10 @@ const VideoAssessment = () => {
                   mediaRecorderRef.current.stop();
                 });
               }
-            
+
               try {
-                await closeFeedbackModal(currentQuestion, currentAnswer);
+                if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                  return;
               } catch (e) {
                 console.error("Silent interview close failed:", e);
               }
@@ -652,7 +660,6 @@ const VideoAssessment = () => {
               setIsRecording(false);
 
               setInterviewCompleted(true);
-             
             } else {
               setNext(false); // Enable the 'Next' button for the next question
               setDisplayedQuestion(nextQuestion); // Set the new question for display
@@ -715,6 +722,8 @@ const VideoAssessment = () => {
     currentAnswer,
     options = { silent: false }
   ) => {
+    retryAnswer.current = { currentQuestion, currentAnswer };
+    setSubmissionState("submitting");
     // if (!options.silent) {
     //   setIsRecording(false);
     //   setSpinner(true);
@@ -754,21 +763,32 @@ const VideoAssessment = () => {
       formData.append("jobTitle", jobTitle);
       formData.append("region", "United States");
 
+      if (!retryPayload.current) retryPayload.current = formData;
       const response = await practiceApi.post(
         `/update/details/${userId}`,
-        formData,
+        retryPayload.current,
         {
           headers: {
             "X-Practice-Session": practiceSessionId,
           },
         }
       );
-      // console.log(response.data);
-
+      if (response.data?.status === false)
+        throw new Error("Submission not confirmed");
       // const getResults = await axios.get("http://54.227.240.212:5001/results");
       // console.log(getResults.data);
 
-      toast.success("Data Submitted for Review");
+      setSubmissionState("success");
+      setIsRecording(false);
+      [
+        screenStream,
+        micStream,
+        SpeechStream,
+        webcamRef.current?.srcObject,
+      ].forEach((stream) =>
+        stream?.getTracks().forEach((track) => track.stop())
+      );
+      toast.success("Interview submitted");
       // if (!options.silent) {
       //   toast.success("Data Submitted for Review");
       //   setSpinner(false);
@@ -778,9 +798,11 @@ const VideoAssessment = () => {
       // }
       localStorage.removeItem("job_description_text");
       localStorage.removeItem("resume_text");
+      return true;
     } catch (error) {
       // console.log(error);
-      toast.error("Internal Sevrer Error");
+      setSubmissionState("error");
+      return false;
     } // Show thank you message
   };
   const stopSpeaking = () => {
@@ -797,6 +819,7 @@ const VideoAssessment = () => {
     // Speech Recognition Setup
     window.SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!window.SpeechRecognition) return;
     recognitionRef.current = new window.SpeechRecognition();
     recognitionRef.current.continuous = true;
     recognitionRef.current.lang = "en-US";
@@ -809,7 +832,7 @@ const VideoAssessment = () => {
         .join("");
       // console.log(interimTranscript);
 
-      // setDisplayedAnswer(interimTranscript);
+      setTranscription(interimTranscript);
     });
 
     recognitionRef.current.addEventListener("speechend", async () => {
@@ -828,6 +851,7 @@ const VideoAssessment = () => {
       const audioStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
+      ownedStreams.current.push(audioStream);
       setSpeechSStream(audioStream);
       setIsRecording(true);
       speechRecorderRef.current = new MediaRecorder(audioStream);
@@ -844,7 +868,7 @@ const VideoAssessment = () => {
   const stopSpeechRecording = async () => {
     try {
       // console.log("Stopping speech recognition...");
-      recognitionRef.current.stop();
+      recognitionRef.current?.stop();
       if (speechRecorderRef.current) {
         speechRecorderRef.current.stop();
       }
@@ -856,10 +880,10 @@ const VideoAssessment = () => {
   useEffect(() => {
     if (speech) {
       // console.log("speech started");
-      recognitionRef.current.start();
+      recognitionRef.current?.start();
       startSpeechRecording();
     } else {
-      recognitionRef.current.stop();
+      recognitionRef.current?.stop();
       // console.log("speech stopped");
     }
   }, [speech]);
@@ -925,9 +949,14 @@ const VideoAssessment = () => {
     }
   }, [displayedQuestion, showThankYouMessage]);
   // console.log(audioRef);
-  window.addEventListener("beforeunload", () => {
-    window.speechSynthesis.cancel();
-  });
+  useEffect(() => {
+    const cancel = () => window.speechSynthesis?.cancel();
+    window.addEventListener("beforeunload", cancel);
+    return () => {
+      window.removeEventListener("beforeunload", cancel);
+      cancel();
+    };
+  }, []);
   // console.log(new Date(expireIn));
   const handleStartInterviewClick = () => {
     if (lastCompletedStep === 0) {
@@ -939,507 +968,360 @@ const VideoAssessment = () => {
     }
   };
   return (
-    <div className="empty">
-      {initialised ? (
-        <div className="logo-container">
-          <img src={logo} alt="S Logo Loader" className="heartbeat w-24 h-24" />
-          <div>Loading...</div>
-        </div>
+    <main className="ss-video-session">
+      <Toaster position="top-center" />
+      <PracticeHeader type="Video" title={jobTitle}>
+        {isRecording && !submissionState && (
+          <div className="ss-actions">
+            <span className="ss-recording">● Recording</span>
+            <Button
+              danger
+              disabled={!showNextButton || next}
+              onClick={() =>
+                Modal.confirm({
+                  title: "Submit your interview?",
+                  content:
+                    "This will end your interview and submit your responses, including your current answer.",
+                  okText: "End & submit",
+                  cancelText: "Continue interview",
+                  onOk: () => handleNextQuestion(true),
+                })
+              }
+            >
+              End interview
+            </Button>
+          </div>
+        )}
+      </PracticeHeader>
+      {submissionState === "success" ? (
+        <PracticeResult
+          type="video"
+          sessionId={practiceSessionId}
+          jobTitle={jobTitle}
+        />
+      ) : submissionState === "submitting" ? (
+        <PracticeLoading
+          title="Submitting your responses"
+          description="Your recording and answers are uploading. Keep this tab open until submission is confirmed."
+        />
+      ) : submissionState === "error" ? (
+        <PracticeRetry
+          onRetry={() =>
+            closeFeedbackModal(
+              retryAnswer.current.currentQuestion,
+              retryAnswer.current.currentAnswer
+            )
+          }
+        />
       ) : (
         <>
-          {" "}
-          {currentTime > expireIn ? (
-            <Result
-              status="warning"
-              style={{ paddingTop: "180px" }}
-              title={
-                <div>
-                  {" "}
-                  <p style={{ color: "white", fontSize: "30px" }}>
-                    Interview Link Expired .
-                  </p>
-                  <p
-                    style={{
-                      color: "white",
-                      fontSize: "25px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {`Please reach out to ${interviewerEmail} to reschedule the interview `}
-                  </p>
-                  {/* <p
-                    style={{
-                      color: "white",
-                      fontSize: "20px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {` Email : ${interviewerEmail}`}
-                  </p>*/}
-                </div>
-              }
-              extra={
-                <a href="/">
-                  <Button type="primary" key="console">
-                    Back to home
-                  </Button>
-                </a>
-              }
-            />
-          ) : (
-            <>
-              {interviewStatus === "Completed" ? (
-                <Result
-                  status="success"
-                  style={{ paddingTop: "180px" }}
-                  title={
-                    <div>
-                      {" "}
-                      <p style={{ color: "white", fontSize: "30px" }}>
-                        Your interview has been completed.You will get notified
-                        once the review process is completed
-                      </p>
-                    </div>
-                  }
-                  extra={
-                    <a href="/">
-                      <Button type="primary" key="console">
-                        Back to home
-                      </Button>
-                    </a>
-                  }
-                />
-              ) : (
-                <div className="video-assessment-container flex flex-col lg:flex-row w-full min-h-screen">
-                  {/* Video Section */}
-                  <div className="video-section w-full h-auto lg:w-1/2 lg:h-full relative mb-6 lg:mb-0">
-                    <Toaster position="top-center" reverseOrder={false} />
-                    {!interviewCompleted && (
-                      <video
-                        ref={webcamRef}
-                        className="w-full h-auto object-cover rounded-none"
-                        muted
-                        id="video"
-                      />
-                    )}
-                  </div>
-
-                  {/* QA Section */}
-                  <div className="qa-section w-full lg:w-1/2 bg-[#111] p-4 sm:p-6 flex flex-col justify-center text-white">
-                    <h1 className="text-2xl sm:text-3xl mb-4 text-center  text-white ">
-                      {!next ? "AI Video Assessment" : null}
-                    </h1>
-
-                    {isRecording && !showThankYouMessage && (
-                      <div>
-                        {next ? (
-                          <div className="">
-                            <div className="flipping text-center">
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                            </div>
-                            <h1
-                              style={{
-                                fontSize: "25px",
-                                color: "#fff",
-                                paddingTop: "20px",
-                              }}
-                            >
-                              {nextFetch}
-                            </h1>
+          <div className="ss-session-toolbar">
+            <strong>
+              {isRecording ? "Question " + questionCount : "Device check"}
+            </strong>
+            <span>
+              {isRecording
+                ? "Keep your camera, microphone and screen sharing active."
+                : "Check your devices before starting your interview."}
+            </span>
+          </div>
+          <div className="ss-video-grid">
+            <section className="ss-card ss-interviewer">
+              {initialised || loader ? (
+                <PracticeLoading />
+              ) : isRecording ? (
+                <>
+                  <span className="ss-eyebrow">AI INTERVIEWER</span>
+                  {next ? (
+                    <PracticeLoading
+                      title={nextFetch}
+                      description="Please keep this tab open."
+                    />
+                  ) : (
+                    <>
+                      {isCodingRound ? (
+                        <CodeEditor
+                          setShowEditor={setShowEditor}
+                          setCollapsedQuestion={setCollapsedQuestion}
+                          question={displayedQuestion}
+                          showEditor={showEditor}
+                          setShowNextButton={setShowNextButton}
+                          setCodingAnswer={setCodingAnswer}
+                        />
+                      ) : (
+                        <>
+                          <div className="ss-ai-orb" aria-hidden="true">
+                            ✧
                           </div>
-                        ) : (
-                          <div className="current-question">
-                            {isCodingRound ? (
-                              <div className="coding-question">
-                                <div className="question-box bg-[#1c1c1c] p-4 rounded-md shadow-lg mb-4">
-                                  <CodeEditor
-                                    setShowEditor={setShowEditor}
-                                    setCollapsedQuestion={setCollapsedQuestion}
-                                    question={displayedQuestion}
-                                    showEditor={showEditor}
-                                    setShowNextButton={setShowNextButton}
-                                    setCodingAnswer={setCodingAnswer}
-                                  />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="question-box bg-[#1c1c1c] p-4 rounded-md shadow-lg">
-                                <div className="ai-icon mb-3">
-                                  <img
-                                    src={robot}
-                                    alt="Animated Robot"
-                                    className="h-12 mx-auto"
-                                  />
-                                </div>
-                                <div className="question-text text-center  text-sm  lg:text-lg  sm:text-lg text-white">
-                                  {displayedQuestion}
-                                </div>
-                                <audio
-                                  ref={audioRef}
-                                  style={{ display: "none" }}
-                                />
-                              </div>
-                            )}
-
-                            {speech && (
-                              <div className="answer-box">
-                                <div className="user-icon">
-                                  <img
-                                    src={user}
-                                    alt="Animated Robot"
-                                    style={{ height: "30px", width: "30px" }}
-                                  />
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="controls-btn mt-6 text-center">
-                              {/* {isCodingRound && !collapsedQuestion ? (
-                                <button
-                                  onClick={() => {
-                                    setCollapsedQuestion(true);
-                                    setShowEditor(true);
-                                  }}
-                                  className={`px-4 py-2 rounded-md text-white transition duration-300 ${
-                                    showNextButton
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : "bg-gray-500 cursor-not-allowed"
-                                  }`}
-                                >
-                                  Start Coding
-                                </button>
-                              ) : (*/}
-                              <Tooltip
-                                title={
-                                  !showNextButton
-                                    ? "You can't click now"
-                                    : "Click to move to next question"
-                                }
-                              >
-                                <button
-                                  onClick={handleNextQuestion}
-                                  disabled={!showNextButton}
-                                  className={`px-4 py-2 rounded-md text-white transition duration-300 ${
-                                    showNextButton
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : "bg-gray-500 cursor-not-allowed"
-                                  }`}
-                                >
-                                  {nextText}
-                                </button>
-                              </Tooltip>
-                              {/*)}*/}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {!isRecording &&
-                      !isFeedbackModalOpen &&
-                      !feedbackCompleted && (
-                        <div className="controls mt-6 text-center">
-                          <button
-                            className="controls-btn bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-md text-lg"
-                            // onClick={handleStartRecording}
-                            onClick={() => handleStartInterviewClick()}
-                          >
-                            <FaPlay className="inline-block mr-2" /> Start
-                            Interview
-                          </button>
-
-                          {isInstructionsModalOpen && (
-                            <InstructionsModal
-                              onAgree={handleInstructionsAgree}
-                              onCancel={handleCancelAgree}
-                              loader={loader}
-                            />
-                          )}
-                        </div>
+                          <h1 className="ss-interview-question">
+                            {displayedQuestion}
+                          </h1>
+                        </>
                       )}
-
-                    {isFeedbackModalOpen && (
-                      <FeedbackModal onClose={closeFeedbackModal} />
-                    )}
-
-                    {showThankYouMessage && (
-                      <>
-                        {spinner ? (
-                          <div className="final-message text-center mt-8">
-                            <h2 className="text-lg">
-                              Please Don't Close the Window.
-                            </h2>
-                            <h2 className="text-lg">
-                              Please Don't Stop sharing
-                            </h2>
-                            <h2 className="text-lg mb-4">
-                              Submitting your Answers...
-                            </h2>
-                            <div className="spinner mx-auto"></div>
-                          </div>
-                        ) : (
-                          <div className="thank-you-message text-center mt-8">
-                            <h2
-                              className="text-2xl"
-                              style={{
-                                fontSize: "20px",
-                                color: "#fff",
-                              }}
-                            >
-                              {thankYouMessage}
-                            </h2>
-                            <audio ref={audioRef} style={{ display: "none" }} />
-                          </div>
-                        )}
-                      </>
-                    )}
+                      <div className="ss-voice-state">
+                        <span className={speech ? "ss-listening" : ""}>
+                          ▂ ▅ ▃ ▇ ▄ ▆ ▂ ▅ ▃ ▇ ▄ ▆ ▂
+                        </span>
+                        <p>
+                          {speech
+                            ? "Listening to your answer…"
+                            : "Listen to the question, then answer aloud."}
+                        </p>
+                      </div>
+                      <div className="ss-response">
+                        <span className="ss-eyebrow">YOUR RESPONSE</span>
+                        <p>
+                          {transcription ||
+                            displayedAnswer ||
+                            "Your response will appear here when speech recognition is available."}
+                        </p>
+                      </div>
+                      <div className="ss-interview-controls">
+                        <small>Finish your answer before continuing.</small>
+                        <Button
+                          type="primary"
+                          size="large"
+                          disabled={!showNextButton}
+                          onClick={() => handleNextQuestion()}
+                        >
+                          {nextText} →
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="ss-device-intro">
+                  <span className="ss-ai-orb">◉</span>
+                  <h1>Let’s check your devices</h1>
+                  <p>
+                    Your camera, microphone and screen will be recorded during
+                    the interview.
+                  </p>
+                  <div className="ss-info">
+                    Choose a quiet space and keep this tab open throughout your
+                    practice.
                   </div>
-                  {/* <Modal
-                    title="Step 1: Allow Camera & Microphone"
-                    open={currentStep === 1}
-                    onCancel={() => setCurrentStep(0)}
-                    footer={[
-                      <Button
-                        key="allow"
-                        type="primary"
-                        onClick={async () => {
-                          try {
-                            const stream =
-                              await navigator.mediaDevices.getUserMedia({
-                                video: true,
-                                audio: true,
-                              });
-                            setMicAllowed(true);
-                            setCameraAllowed(true);
-                            webcamRef.current.srcObject = stream;
-                            setCurrentStep(2);
-                          } catch (err) {
-                            toast.error(
-                              "Please allow camera and mic permissions."
-                            );
-                          }
-                        }}
-                      >
-                        Allow Camera & Mic
-                      </Button>,
-                    ]}
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={handleStartInterviewClick}
                   >
-                    <p>
-                      Click the button below to enable camera and microphone for
-                      the interview.
-                    </p>
-                  </Modal>*/}
-                  <Modal
-                    open={currentStep === 1}
-                    title="Step 1: Allow Camera & Microphone"
-                    onCancel={() => setCurrentStep(0)}
-                    footer={[
-                      <Button
-                        key="next"
-                        type="primary"
-                        disabled={!isAllowed}
-                        onClick={() => {
-                          setCurrentStep(2);
-                          setLastCompletedStep(1);
-                        }}
-                      >
-                        Next
-                      </Button>,
-                    ]}
-                    centered
-                  >
-                    <Steps
-                      current={currentStep - 1}
-                      items={stepItems}
-                      style={{ marginBottom: 20 }}
-                    />
-                    <p>Turn on camera and microphone to continue.</p>
-                    <Switch
-                      checked={isAllowed}
-                      loading={loading}
-                      onChange={handleToggleCameraMic}
-                    />
-                    <div style={{ marginTop: 20 }}>
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        style={{
-                          width: "100%",
-                          height: "200px",
-                          background: "#000",
-                          borderRadius: "8px",
-                        }}
-                      />
+                    Check devices →
+                  </Button>
+                </div>
+              )}
+              <audio ref={audioRef} style={{ display: "none" }} />
+            </section>
+            <aside className="ss-video-side">
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">YOUR CAMERA</span>
+                <video
+                  ref={webcamRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  id="video"
+                  className="ss-camera-preview"
+                />
+              </section>
+              <section className="ss-card ss-card-padding">
+                <h2>Session status</h2>
+                <dl className="ss-device-status">
+                  {[
+                    ["Camera", cameraAllowed],
+                    ["Microphone", micAllowed],
+                    ["Screen sharing", screenStream?.active],
+                  ].map(([name, ready]) => (
+                    <div key={name}>
+                      <dt>{name}</dt>
+                      <dd className={ready ? "ready" : ""}>
+                        {ready ? "● Active" : "Not started"}
+                      </dd>
                     </div>
-                  </Modal>
-                  <Modal
-                    title="Step 2: Share Your Screen"
-                    open={currentStep === 2}
-                    onCancel={() => {
-                      setCurrentStep(0);
-                    }}
-                    centered
-                    footer={[
-                      <Button
-                        key="share"
-                        type="primary"
-                        onClick={async () => {
-                          try {
-                            const stream =
-                              await navigator.mediaDevices.getDisplayMedia({
-                                video: {
-                                  displaySurface: "monitor", // Prefer entire screen
-                                },
-                                audio: true, // System audio
-                                // video: true,
-                                // audio: true, // important: system audio
-                              });
-                            setScreenStream(stream);
-                            setCurrentStep(3);
-                            setLastCompletedStep(2);
-                          } catch (err) {
-                            toast.error(
-                              "Please share your screen to continue."
-                            );
-                          }
-                        }}
-                      >
-                        Share Screen
-                      </Button>,
-                    ]}
-                  >
-                    <Steps
-                      current={currentStep - 1}
-                      items={stepItems}
-                      style={{ marginBottom: 20 }}
-                    />
-                    <p>
-                      Select 'Entire Screen' and check 'Share System Audio' to
-                      proceed.
-                    </p>
-                    <p>
-                      <strong>Important:</strong>
-                    </p>
-                    <ul>
-                      <li>
-                        1. Select <b>Entire Screen</b> (not just a tab or
-                        window)
-                      </li>
-                      <li>2. Click on the Screen to share</li>
-                      <li>
-                        3.Check <b>"Share system audio"</b> (bottom left corner)
-                      </li>
-                    </ul>
-                  </Modal>
-                  <Modal
-                    title="Step 3: Instructions"
-                    open={currentStep === 3}
-                    onCancel={() => setCurrentStep(0)}
-                    centered
-                    footer={[
-                      <Button
-                        key="start"
-                        type="primary"
-                        onClick={handleInstructionsAgree}
-                        disabled={loader}
-                        loading={loader}
-                        // onClick={handleStartRecording}
-                      >
-                        {loader ? "Starting..." : "Start Interview"}
-                      </Button>,
-                    ]}
-                  >
-                    <Steps
-                      current={currentStep - 1}
-                      items={stepItems}
-                      style={{ marginBottom: 20 }}
-                    />
-                    {/*<p>Instructions for the interview go here...</p>*/}
-                    <main className="modal-body-one">
-                      <p>
-                        Welcome to the video assessment. Please review and agree
-                        to the following instructions:
-                      </p>
-                      <ul>
-                        <h2>Interview Instructions</h2>
-                        <p>1. Ensure your webcam and microphone are working.</p>
-                        {/*<p>
+                  ))}
+                </dl>
+                <div className="ss-info">
+                  Keep this tab open and continue sharing your screen.
+                </div>
+              </section>
+            </aside>
+          </div>
+          <Modal
+            className="ss-device-modal"
+            width={700}
+            open={currentStep === 1}
+            title="Step 1: Allow Camera & Microphone"
+            onCancel={() => setCurrentStep(0)}
+            footer={[
+              <Button
+                key="next"
+                type="primary"
+                disabled={!isAllowed}
+                onClick={() => {
+                  setCurrentStep(2);
+                  setLastCompletedStep(1);
+                }}
+              >
+                Next
+              </Button>,
+            ]}
+            centered
+          >
+            <Steps
+              current={currentStep - 1}
+              items={stepItems}
+              style={{ marginBottom: 20 }}
+            />
+            <p>Turn on camera and microphone to continue.</p>
+            <Switch
+              checked={isAllowed}
+              loading={loading}
+              onChange={handleToggleCameraMic}
+            />
+            <div style={{ marginTop: 20 }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  height: "200px",
+                  background: "#000",
+                  borderRadius: "8px",
+                }}
+              />
+            </div>
+          </Modal>
+          <Modal
+            className="ss-device-modal"
+            width={700}
+            title="Step 2: Share Your Screen"
+            open={currentStep === 2}
+            onCancel={() => {
+              setCurrentStep(0);
+            }}
+            centered
+            footer={[
+              <Button
+                key="share"
+                type="primary"
+                onClick={async () => {
+                  try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia(
+                      {
+                        video: {
+                          displaySurface: "monitor", // Prefer entire screen
+                        },
+                        audio: true, // System audio
+                        // video: true,
+                        // audio: true, // important: system audio
+                      }
+                    );
+                    ownedStreams.current.push(stream);
+                    setScreenStream(stream);
+                    setCurrentStep(3);
+                    setLastCompletedStep(2);
+                  } catch (err) {
+                    toast.error("Please share your screen to continue.");
+                  }
+                }}
+              >
+                Share Screen
+              </Button>,
+            ]}
+          >
+            <Steps
+              current={currentStep - 1}
+              items={stepItems}
+              style={{ marginBottom: 20 }}
+            />
+            <p>
+              Select 'Entire Screen' and check 'Share System Audio' to proceed.
+            </p>
+            <p>
+              <strong>Important:</strong>
+            </p>
+            <ul>
+              <li>
+                1. Select <b>Entire Screen</b> (not just a tab or window)
+              </li>
+              <li>2. Click on the Screen to share</li>
+              <li>
+                3.Check <b>"Share system audio"</b> (bottom left corner)
+              </li>
+            </ul>
+          </Modal>
+          <Modal
+            className="ss-device-modal"
+            width={700}
+            title="Step 3: Instructions"
+            open={currentStep === 3}
+            onCancel={() => setCurrentStep(0)}
+            centered
+            footer={[
+              <Button
+                key="start"
+                type="primary"
+                onClick={handleInstructionsAgree}
+                disabled={loader}
+                loading={loader}
+                // onClick={handleStartRecording}
+              >
+                {loader ? "Starting..." : "Start Interview"}
+              </Button>,
+            ]}
+          >
+            <Steps
+              current={currentStep - 1}
+              items={stepItems}
+              style={{ marginBottom: 20 }}
+            />
+            {/*<p>Instructions for the interview go here...</p>*/}
+            <main className="modal-body-one">
+              <p>
+                Welcome to the video assessment. Please review and agree to the
+                following instructions:
+              </p>
+              <ul>
+                <h2>Interview Instructions</h2>
+                <p>1. Ensure your webcam and microphone are working.</p>
+                {/*<p>
                           2. Make sure your screen recording permissions are
                           enabled. You will be prompted to allow screen
                           recording/ at the beginning of the interview. Please
                           choose entire Window to capture correctly
                         </p>*/}
 
-                        <p>
-                          2. You will have Next Question button for each
-                          question. Please answer each question thoroughly with
-                          your own time.
-                        </p>
-                        <p>
-                          3. The recording will capture both video and audio.
-                          Ensure your environment is quiet and well-lit.
-                        </p>
-                        {/* <p>
+                <p>
+                  2. You will have Next Question button for each question.
+                  Please answer each question thoroughly with your own time.
+                </p>
+                <p>
+                  3. The recording will capture both video and audio. Ensure
+                  your environment is quiet and well-lit.
+                </p>
+                {/* <p>
                           5. At the end of the interview, Please wait for the
                           Answers to be Submitted .The recording will be
                           automatically stopped and redirect to feedback page
                         </p>*/}
-                        <p>
-                          4.Please do not click the 'Stop Sharing' button during
-                          the interview.
-                        </p>
-                        <p>
-                          5.Make sure to enable system audio when sharing your
-                          entire screen. You will find a toggle button labeled
-                          "Share System Audio" at the bottom.
-                        </p>
-                      </ul>
-                    </main>
-                  </Modal>
-                </div>
-              )}
-            </>
-          )}
+                <p>
+                  4.Please do not click the 'Stop Sharing' button during the
+                  interview.
+                </p>
+                <p>
+                  5.Make sure to enable system audio when sharing your entire
+                  screen. You will find a toggle button labeled "Share System
+                  Audio" at the bottom.
+                </p>
+              </ul>
+            </main>
+          </Modal>
         </>
       )}
-    </div>
+    </main>
   );
 };
-
 export default VideoAssessment;
