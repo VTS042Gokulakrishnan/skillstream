@@ -8,6 +8,7 @@
 .ss-site-links a,.ss-site-actions button,.ss-site-actions a { font:600 13px/1.4 Inter,system-ui,sans-serif; text-decoration:none; white-space:nowrap; }
 .ss-site-links a { color:#102347; padding:12px 0; }
 .ss-site-actions { gap:16px; }
+.ss-site-actions .ss-site-audience { color:#102347; padding:10px 16px 10px 0; border-right:1px solid #dce5ef; }
 .ss-site-actions button { cursor:pointer; }
 .ss-site-signin,.ss-site-vendor { background:none; border:0; padding:10px 0; color:#086bd1; }
 .ss-site-vendor { color:#52637b; }
@@ -27,6 +28,7 @@
   .ss-site-links { gap:4px; }
   .ss-site-actions { border-top:1px solid #e0e8f3; padding-top:16px; gap:12px; }
   .ss-site-actions button { text-align:left; }
+  .ss-site-actions .ss-site-audience { border-right:0; padding:10px 0; }
   .ss-site-actions .ss-site-primary { text-align:center; }
 }
 @media(max-width:520px) { .ss-site-header-inner { padding-inline:20px; } }

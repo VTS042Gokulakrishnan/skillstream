@@ -42,12 +42,12 @@ export function PublicNavigation({ employer = false, onAuth }) {
       <nav id="public-navigation" className={menu ? "ss-site-nav is-open" : "ss-site-nav"} aria-label="Main navigation" onKeyDown={e => { if (e.key === "Escape") { setMenu(false); document.querySelector(".ss-site-menu-toggle")?.focus(); } }}>
         <div className="ss-site-links">
           {role === "Candidate" && <><Link to="/find-jobs">Find Jobs</Link><Link to="/employers-list">Companies</Link></>}
-          {employer ? <><Link to="/pricing/employer">Pricing</Link></> : <><Link to="/blog">Blogs</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/employers">For employers</Link></>}
+          {employer ? <><Link to="/pricing/employer">Pricing</Link></> : <><Link to="/blog">Blogs</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link></>}
           {employer && <Link to="/blog">Resources</Link>}
-          {!role && pathname === "/employers" && <Link to="/">Job seeker</Link>}
           {!role && ["/", "/employers"].includes(pathname) && <Link to="/community">Community</Link>}
         </div>
         <div className="ss-site-actions">
+          {!role && (!employer || pathname === "/employers") && <Link className="ss-site-audience" to={employer ? "/" : "/employers"}>{employer ? "Job seekers" : "For employers"}</Link>}
           {!role && pathname === "/employers" && <button className="ss-site-vendor" onClick={() => openAuth("vendor")}>Login as Vendor</button>}
           {role ? <Link className="ss-site-primary" to={dashboard}>Dashboard →</Link> : <><button className="ss-site-signin" onClick={() => openAuth("login")}>{employer ? "Employer login" : "Sign in"}</button><button className="ss-site-primary" onClick={() => openAuth("register")}>{employer ? "Get started" : "Register"} <span aria-hidden="true">→</span></button></>}
         </div>

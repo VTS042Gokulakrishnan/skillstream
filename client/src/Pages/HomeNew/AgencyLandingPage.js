@@ -3,10 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Helmet } from "react-helmet";
 import { Server } from "../../App";
-import CareerIcon from "./CareerIcon";
+import { BriefcaseBusiness, Landmark, House, Users, TrendingUp, Calculator, FileText, MessageSquare, BookOpen, Video, Code2, Search, Check, ArrowRight } from "lucide-react";
+const iconMap = {laptop:BriefcaseBusiness,bank:Landmark,home:House,people:Users,chart:TrendingUp,calculator:Calculator,boost:FileText,chat:MessageSquare,learn:BookOpen,video:Video,code:Code2,search:Search};
+const CareerIcon = ({name}) => React.createElement(iconMap[name] || BriefcaseBusiness, {className:"cl-icon",strokeWidth:1.6,"aria-hidden":true});
 import heroPhoto from "../../assets/landing-professional-hero.png";
 import logo from "../../assets/logo-twos.png";
 import "./CandidateLanding.css";
+import "./CandidateLandingPremium.css";
 
 const categories = [["IT", "laptop"], ["Banking", "bank"], ["Work From Home", "home"], ["HR", "people"], ["Sales", "chart"], ["Accounting", "calculator"]];
 const faqs = [
@@ -75,22 +78,22 @@ export default function CandidatePage() {
       if (destination) navigate(destination, { replace: true });
     }
   }, [navigate]);
-  return <div className="cl-page cl-search-first">
+  return <div className="cl-page cl-search-first cl-premium">
     <Helmet><title>Find jobs & prepare for interviews | SkillStream</title><meta name="description" content="Discover job opportunities, build your resume, and prepare with video and coding practice interviews on SkillStream." /></Helmet>
     <main className="cl-container">
       <section className="cl-search-hero" aria-labelledby="landing-heading">
-        <div className="cl-search-hero-copy"><p className="cl-eyebrow">YOUR NEXT OPPORTUNITY</p><h1 id="landing-heading">Find your next<br />opportunity.</h1><p>Explore roles that match your skills and career goals.</p></div>
+        <div className="cl-search-hero-copy"><p className="cl-eyebrow">YOUR NEXT OPPORTUNITY</p><h1 id="landing-heading">Your next chapter.<br /><span>Make it yours.</span></h1><p>Find the right role, tell your story and walk into your next interview prepared.</p><div className="cl-hero-actions"><a className="cl-button" href="#career-search">Find your next role <ArrowRight size={17} /></a><Link className="cl-hero-secondary" to="/practiceInterviewLanding">Prepare for interviews <ArrowRight size={17} /></Link></div><div className="cl-hero-points"><span><Check size={15} /> Discover opportunities</span><span><Check size={15} /> Build confidence</span></div></div>
         <div className="cl-search-hero-photo"><img src={heroPhoto} alt="Professional working at her desk" fetchpriority="high" /></div>
-        <JobSearch />
+        <div className="cl-search-panel" id="career-search"><div className="cl-search-panel-heading"><Search size={20} /><div><h2>Where do you want to go next?</h2><p>Start with a role, a skill or a city.</p></div></div><JobSearch /></div>
       </section>
-      <section className="cl-section" aria-labelledby="support-heading"><h2 id="support-heading" className="cl-visually-hidden">Support for every step</h2>
+      <section className="cl-section" aria-labelledby="support-heading"><div className="cl-section-intro"><p className="cl-eyebrow">MORE THAN A JOB SEARCH</p><h2 id="support-heading">Every next step.<br /><span>A little more confident.</span></h2><p>Tools to help you move from exploring opportunities to preparing for the conversation.</p></div>
         <div className="cl-support-grid">
-          <a className="cl-support-card" href="https://resume.careeriq.ai" target="_blank" rel="noopener noreferrer"><CareerIcon name="boost" /><h3>Boost</h3><strong>Build visibility</strong><p>Showcase your experience with a resume that tells your professional story.</p><span className="cl-round-arrow" aria-hidden="true">↗</span></a>
-          <Link className="cl-support-card" to="/practiceInterviewLanding"><CareerIcon name="chat" /><h3>Prep</h3><strong>Practice interviews</strong><p>Build confidence with video and coding practice before your next interview.</p><span className="cl-round-arrow" aria-hidden="true">→</span></Link>
-          <a className="cl-support-card" href="https://upskillgenius.com/" target="_blank" rel="noopener noreferrer"><CareerIcon name="learn" /><h3>Learn</h3><strong>Explore career resources</strong><p>Explore learning resources to grow your skills and prepare for what comes next.</p><span className="cl-round-arrow" aria-hidden="true">↗</span></a>
+          <a className="cl-support-card" href="https://resume.careeriq.ai" target="_blank" rel="noopener noreferrer"><CareerIcon name="boost" /><h3>Tell your story.</h3><strong>Build visibility</strong><p>Showcase your experience with a resume that tells your professional story.</p><span className="cl-round-arrow" aria-hidden="true">↗</span></a>
+          <Link className="cl-support-card" to="/practiceInterviewLanding"><CareerIcon name="chat" /><h3>Own the interview.</h3><strong>Practice interviews</strong><p>Build confidence with video and coding practice before your next interview.</p><span className="cl-round-arrow" aria-hidden="true">→</span></Link>
+          <a className="cl-support-card" href="https://upskillgenius.com/" target="_blank" rel="noopener noreferrer"><CareerIcon name="learn" /><h3>Keep moving forward.</h3><strong>Explore career resources</strong><p>Explore learning resources to grow your skills and prepare for what comes next.</p><span className="cl-round-arrow" aria-hidden="true">↗</span></a>
         </div>
       </section>
-      <section className="cl-discovery" aria-labelledby="discovery-heading"><div><p className="cl-eyebrow">CAREER DISCOVERY</p><h2 id="discovery-heading">Discover roles<br />that fit your goals.</h2><p>Explore opportunities that match your interests, experience and ambitions.</p><Link className="cl-button" to="/find-jobs">Find jobs →</Link></div><div className="cl-discovery-art" aria-hidden="true"><CareerIcon name="search" /></div></section>
+      <section className="cl-discovery" aria-labelledby="discovery-heading"><div><p className="cl-eyebrow">CAREER DISCOVERY</p><h2 id="discovery-heading">Discover roles<br />that fit your goals.</h2><p>Explore opportunities that match your interests, experience and ambitions.</p><Link className="cl-button" to="/find-jobs">Find jobs →</Link></div><div className="cl-discovery-preview" aria-label="Illustration of job discovery"><div className="cl-preview-header"><span>YOUR NEXT MOVE</span><Search size={20}/></div><div className="cl-discovery-role"><span className="cl-role-icon"><BriefcaseBusiness size={24}/></span><div><h3>A role that fits you.</h3><p>Explore opportunities with your goals in mind.</p></div></div><div className="cl-role-tags"><span>Your skills</span><span>Your location</span><span>Your ambitions</span></div><div className="cl-role-checks"><span><Check size={16}/> Explore role requirements</span><span><Check size={16}/> Discover companies</span><span><Check size={16}/> Save opportunities for later</span></div><Link to="/find-jobs">Start exploring <ArrowRight size={17}/></Link></div></section>
       <section className="cl-practice-first cl-section" aria-labelledby="practice-heading"><div className="cl-practice-intro"><p className="cl-eyebrow">PRACTICE AND PREPARE</p><h2 id="practice-heading">Build your skills with<br />hands-on practice.</h2><p>Sharpen your interview and coding skills before your next opportunity.</p></div>
         <Link className="cl-practice-option" to="/practiceInterviewLanding"><CareerIcon name="video" /><h3>Video practice</h3><p>Practice answering role-specific interview questions aloud.</p><span className="cl-link">Explore practice →</span></Link>
         <Link className="cl-practice-option" to="/practiceInterviewLanding"><CareerIcon name="code" /><h3>Coding practice</h3><p>Solve programming questions and build your problem-solving skills.</p><span className="cl-link">Explore practice →</span></Link>
@@ -98,7 +101,9 @@ export default function CandidatePage() {
       <section className="cl-section" aria-labelledby="categories-heading"><div className="cl-section-heading"><div><h2 id="categories-heading">Popular job categories</h2><p>Explore roles and find the right fit for your skills and goals.</p></div><Link className="cl-link" to="/find-jobs">View all jobs →</Link></div>
         <div className="cl-categories">{categories.map(([label, icon]) => <Link key={label} to="/find-jobs" state={{ job: label === "Work From Home" ? "remote" : label, country: "United States" }}><CareerIcon name={icon} /><strong>{label}</strong><span aria-hidden="true">→</span></Link>)}</div>
       </section>
+      <section className="cl-journey cl-section" aria-label="Your career journey">{[["01","Discover your direction","Explore roles by skill, location and industry."],["02","Make your experience count","Bring your strengths together in your resume."],["03","Prepare for what’s next","Practice before the real conversation."]].map(([n,title,copy])=><div key={n}><span>{n}</span><h3>{title}</h3><p>{copy}</p></div>)}</section>
       <section className="cl-help cl-section"><div><h2>Frequently asked questions</h2><p>Find answers to common questions about SkillStream.</p><div className="cl-faqs">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
+      <section className="cl-final-cta"><div><p className="cl-eyebrow">YOUR FUTURE STARTS WITH A STEP</p><h2>Ready for what’s next?</h2><p>Find your next opportunity and prepare to make it count.</p></div><Link className="cl-button" to="/find-jobs">Explore jobs <ArrowRight size={18}/></Link></section>
     </main>
     <footer className="cl-footer"><div className="cl-container cl-footer-grid">
       <div className="cl-footer-brand"><img src={logo} alt="SkillStream" /><p>Your career journey, one place.</p></div>
