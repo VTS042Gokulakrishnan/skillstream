@@ -1,0 +1,35 @@
+video-device-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Check devices →","top":638.09375,"bottom":678.09375}]}
+video-question-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Next Question →","top":807,"bottom":847}]}
+video-submitting-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[]}
+video-completed-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Back to home","top":560.1875,"bottom":600.1875}]}
+video-expired-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Contact recruiter","top":508.484375,"bottom":548.484375}]}
+coding-device-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Allow camera & microphone","top":827,"bottom":867}]}
+coding-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Submit & next question →","top":838,"bottom":878}]}
+coding-final-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Finish & submit","top":838,"bottom":878}]}
+coding-completed-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Back to home","top":560.1875,"bottom":600.1875}]}
+coding-expired-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Contact recruiter","top":508.484375,"bottom":548.484375}]}
+video-device-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Check devices →","top":541.703125,"bottom":581.703125}]}
+video-question-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Next Question →","top":627,"bottom":667}]}
+video-submitting-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[]}
+video-completed-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Back to home","top":466.1875,"bottom":506.1875}]}
+video-expired-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Contact recruiter","top":414.484375,"bottom":454.484375}]}
+coding-device-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Allow camera & microphone","top":647,"bottom":687}]}
+coding-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Submit & next question →","top":658,"bottom":698}]}
+coding-final-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Finish & submit","top":658,"bottom":698}]}
+coding-completed-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Back to home","top":466.1875,"bottom":506.1875}]}
+coding-expired-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Contact recruiter","top":414.484375,"bottom":454.484375}]}
+video-device-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Check devices →","top":661,"bottom":701}]}
+video-question-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Next Question →","top":761,"bottom":801}]}
+video-submitting-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[]}
+video-completed-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Back to home","top":529.1875,"bottom":569.1875}]}
+video-expired-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Contact recruiter","top":477.484375,"bottom":517.484375}]}
+coding-device-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Allow camera & microphone","top":782.984375,"bottom":822.984375}]}
+coding-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Submit & next question →","top":787,"bottom":827}]}
+coding-final-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Finish & submit","top":787,"bottom":827}]}
+coding-completed-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Back to home","top":529.1875,"bottom":569.1875}]}
+coding-expired-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Contact recruiter","top":477.484375,"bottom":517.484375}]}
+COMPLETE [
+  'NotSupportedError: Failed to load because no supported source was found.',
+  'NotSupportedError: Failed to load because no supported source was found.',
+  'NotSupportedError: Failed to load because no supported source was found.'
+]

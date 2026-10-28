@@ -10,10 +10,14 @@ import { Server } from "App";
 import { useParams } from "react-router-dom";
 import { use } from "react";
 import jsPDF from "jspdf";
-import { Tooltip } from "antd";
+import { Tooltip, Button } from "antd";
+import { PracticeHeader, PracticeLoading, PracticeRetry } from "../PracticalInterview/PracticeStates";
+import AssessmentState from "./AssessmentState";
 export default function CodingRound() {
   const params = useParams();
   const { userId, id, jobId } = params;
+  const [submissionError, setSubmissionError] = useState(false);
+  const finalAnswersRef = useRef(null);
   const [step, setStep] = useState(); // 0=Instruction,1=Camera Access,2=Recording,3=Coding,4=Finish
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
@@ -246,8 +250,10 @@ export default function CodingRound() {
     }
   };
   const submitInterview = async (finalAnswers) => {
+    finalAnswersRef.current = finalAnswers;
+    setSubmissionError(false);
     // stopRecording();
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current?.state === "recording") {
       // Wrap in a Promise to wait until onstop is done
       await new Promise((resolve) => {
         mediaRecorderRef.current.onstop = () => {
@@ -326,7 +332,7 @@ export default function CodingRound() {
       // }, 150000);
     } catch (err) {
       setQloader(false);
-      alert("Submit failed: " + err.message);
+      setSubmissionError(true);
     }
   };
 
@@ -369,795 +375,244 @@ export default function CodingRound() {
   };
 
   return (
-    <div className="vh-100 d-flex flex-column bg-dark text-light">
-      {/* ✅ Persistent Header */}
-      <header className="d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
-        <img src={logo2} alt="Company Logo" style={{ height: "40px" }} />
-        {step === 0 && (
-          <button className="btn btn-primary px-4" onClick={() => setStep(1)}>
-            {step === 0 ? "Start" : "Next"}
-          </button>
+    <main className="ss-coding-session">
+      <PracticeHeader type="Coding" title={jobData?.jobTitle || "Interview"} assessment>
+        {step === 4 && (
+          <span className="ss-recording">
+            ● Recording · Screen sharing active
+          </span>
         )}
-      </header>
+      </PracticeHeader>
       {qLoader ? (
-        <div className="logo-container">
-          <img src={logo} alt="S Logo Loader" className="heartbeat w-24 h-24" />
-          <div className="text-white mt-4">
-            {step === 0
-              ? "Uploading..."
-              : step === 2
-              ? "Fetching Questions"
-              : step === 3
-              ? "Submitting"
-              : "Loading..."}
+        <PracticeLoading
+          title={
+            isSubmitting
+              ? "Submitting your responses"
+              : "Preparing your interview"
+          }
+          description={
+            isSubmitting
+              ? "Your recording and code are uploading. Keep this tab open until submission is confirmed."
+              : "Preparing coding questions based on your role and resume. Keep this tab open."
+          }
+        />
+      ) : submissionError ? (
+        <PracticeRetry
+          onRetry={() => submitInterview(finalAnswersRef.current)}
+        />
+      ) : step === "Maintenance" ? <AssessmentState kind="maintenance" /> : step === "expired" ? <AssessmentState kind="expired" email={empemail} /> : step === "Completed" ? <AssessmentState /> : step === 5 ? (
+        <AssessmentState />
+      ) : step === 4 ? (
+        <>
+          <div className="ss-session-toolbar">
+            <strong>
+              Question {currentQ + 1} of {questions.length}
+            </strong>
+            <div className="ss-question-progress">
+              {questions.map((_, i) => (
+                <span key={i} className={i === currentQ ? "active" : ""}>
+                  {i + 1}
+                </span>
+              ))}
+            </div>
+            <span>{jobData?.level}</span>
           </div>
-        </div>
-      ) : (
-        <div className="flex-fill d-flex flex-column">
-          {/* Step 0 – Instructions */}
-          {step === "Maintenance" && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold text-danger mb-3">
-                Sorry for the Inconvinence
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                ⚠️ We’re currently performing maintenance. This features is
-                temporarily unavailable. Our team is actively working to restore
-                full service soon.
-              </p>
-            </div>
-          )}
-          {step === "Completed" && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold text-success mb-3">
-                Interview Already Completed
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                You have already completed this interview. Your responses have
-                been recorded successfully.
-              </p>
-              <button
-                className="btn btn-outline-light px-4"
-                onClick={() => (window.location.href = "/")}
-              >
-                Return to Home
-              </button>
-            </div>
-          )}
-          {/* Step - Expired Link */}
-          {step === "expired" && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold text-danger mb-3">
-                Interview Link Expired
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                This interview link has expired. Please contact your recruiter
-                if you need a new link.
-              </p>
-              <button className="btn btn-outline-light px-4" disabled>
-                Employer Email: {empemail || "Not available"}
-              </button>
-            </div>
-          )}
-          {step === 0 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h1 className="fw-bold mb-3 text-white">Coding Interview Test</h1>
-              <p className="text-secondary mb-4 w-75 text-white">
-                You will solve 3 programming questions while your screen, audio,
-                and camera are recorded. Make sure you have a stable internet
-                connection and a working webcam/microphone.
-              </p>
-            </div>
-          )}
-          {/* Step 1 – Camera/Mic Permission */}
-          {step === 1 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">
-                Allow Camera & Microphone
-              </h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                Please allow access to your camera and microphone to proceed.
-              </p>
-              <button
-                className="btn btn-primary px-4"
-                onClick={requestCameraAccess}
-              >
-                Allow & Continue
-              </button>
-            </div>
-          )}
-          {/* Step 2 – Start Recording */}
-          {step === 2 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">Start Recording</h3>
-              <p className="text-secondary mb-4 w-75 text-white">
-                Your camera preview is below. Click Start to share your screen
-                and begin recording.
-              </p>
-              <div
-                className="border mb-4"
-                style={{ width: "320px", height: "240px" }}
-              >
+          <div className="ss-code-grid">
+            <aside>
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">CODING QUESTION</span>
+                <h1 className="ss-code-question">
+                  {questions[currentQ]?.question}
+                </h1>
+                <div className="ss-info">
+                  Write your solution in the editor. Run your code to review the
+                  output before submitting.
+                </div>
+              </section>
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">YOUR CAMERA</span>
                 <video
                   ref={webcamRef}
                   autoPlay
                   muted
                   playsInline
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
+                  className="ss-camera-preview"
                 />
-              </div>
-              <button
-                className="btn btn-primary px-4"
-                onClick={() => startRecording()}
-              >
-                Start Recording & Begin Test
-              </button>
-            </div>
-          )}
-          {/* Step 3 – Coding Instructions */}
-          {step === 3 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill text-center px-3">
-              <h3 className="fw-bold mb-3 text-white">
-                Coding Round Instructions
-              </h3>
-              <div
-                className="bg-dark border border-secondary rounded p-4 text-start text-white w-75"
-                style={{ maxWidth: "800px" }}
-              >
-                <ul
-                  className="text-start d-inline-block mx-auto text-white mb-3"
-                  style={{ lineHeight: "1.8" }}
-                >
-                  <li>
-                    1. You will solve multiple coding questions one after
-                    another.
-                  </li>
-                  <li>
-                    2. Each question must be solved inside the built-in code
-                    editor.
-                  </li>
-                  <li>
-                    3. You must click <b>Run</b> to execute and verify your code
-                    output before submitting.
-                  </li>
-                  <li>
-                    4. Once the output looks correct, click <b>Submit</b> to
-                    move to the next question.
-                  </li>
-                  <li>
-                    5. After the last question, your answers and recording will
-                    be automatically submitted.
-                  </li>
-                </ul>
-                <p className="text-warning">
-                  ⚠️ Once you begin, the recording continues until all questions
-                  are completed. Do not close or refresh the page.
-                </p>
-              </div>
-
-              <button
-                className="btn btn-primary mt-4 px-5"
-                onClick={() => setStep(4)} // move to coding interface
-              >
-                Accept & Begin Coding
-              </button>
-            </div>
-          )}
-          {/* Step 4 – Coding Round */}
-          {step === 4 && (
-            <div className="d-flex flex-fill">
-              {/* LEFT PANEL – Question + Camera */}
-              <div className="col-4 border-end border-secondary p-4 overflow-auto d-flex flex-column">
-                <h4 className="fw-bold mb-3 text-blue-400">
-                  Question {currentQ + 1}
-                </h4>
-                <p className="text-white mb-4">
-                  {questions[currentQ].question}
-                </p>
-
-                {/* ✅ Camera Feed */}
-                <div
-                  className="mt-4 border"
-                  style={{ width: "100%", height: "240px" }}
-                >
-                  <video
-                    ref={webcamRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
+              </section>
+            </aside>
+            <section className="ss-code-workspace">
+              <div className="ss-editor-toolbar">
+                <label htmlFor="practice-language">
+                  Language{" "}
+                  <select
+                    id="practice-language"
+                    value={language}
+                    onChange={(e) => {
+                      setLanguage(e.target.value);
+                      setOutput("");
                     }}
-                  />
-                </div>
-              </div>
-
-              {/* RIGHT PANEL – Editor + Output */}
-              <div className="col-8 d-flex flex-column">
-                <div className="d-flex justify-content-between align-items-center bg-secondary p-2">
-                  <div className="d-flex align-items-center">
-                    <label htmlFor="language" className="me-2 fw-semibold">
-                      Language:
-                    </label>
-                    <select
-                      id="language"
-                      className="form-select form-select-sm bg-dark text-light border-light"
-                      style={{ width: "150px" }}
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                    >
-                      {" "}
-                      <option value="javascript">JavaScript</option>
-                      <option value="ts">TypeScript</option>
-                      <option value="python">Python</option>
-                      <option value="cpp">C++</option>
-                      <option value="c">C</option>
-                      <option value="java">Java</option>
-                      {/* Extra popular languages */}
-                      <option value="go">Go</option>
-                      <option value="php">PHP</option>
-                      <option value="ruby">Ruby</option>
-                      <option value="cs">C#</option>
-                      <option value="kotlin">Kotlin</option>
-                      <option value="rust">Rust</option>
-                      <option value="swift">Swift</option>
-                      <option value="r">R</option>
-                    </select>
-                  </div>
-                  <Tooltip
-                    title={
-                      isCodeEmpty
-                        ? "Enter valid code"
-                        : isRunning
-                        ? "Loading"
-                        : "Run code"
-                    }
                   >
-                    {" "}
-                    <button
-                      className="btn btn-primary btn-sm run-btn"
-                      onClick={() => runCode()}
-                      disabled={isCodeEmpty || isRunning || isSubmitting}
-                      title={isCodeEmpty ? "Enter valid code" : ""}
-                    >
-                      {isRunning ? "Running…" : "Run ▶"}
-                    </button>
-                  </Tooltip>
-                </div>
-
-                <div className="flex-fill border-bottom border-secondary">
-                  <Editor
-                    height="100%"
-                    theme="vs-dark"
-                    language={language}
-                    value={code}
-                    onChange={(v) => setCode(v ?? "")}
-                    options={{
-                      fontSize: 14,
-                      minimap: { enabled: false },
-                      automaticLayout: true,
-                    }}
-                  />
-                </div>
-
-                <div
-                  className="bg-secondary p-3 d-flex flex-column"
-                  style={{
-                    height: "200px",
-                    overflowY: "auto",
-                    overflowX: "auto",
-                  }}
+                    {[
+                      ["javascript", "JavaScript"],
+                      ["ts", "TypeScript"],
+                      ["python", "Python"],
+                      ["cpp", "C++"],
+                      ["c", "C"],
+                      ["java", "Java"],
+                      ["go", "Go"],
+                      ["php", "PHP"],
+                      ["ruby", "Ruby"],
+                      ["cs", "C#"],
+                      ["kotlin", "Kotlin"],
+                      ["rust", "Rust"],
+                      ["swift", "Swift"],
+                      ["r", "R"],
+                    ].map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button
+                  type="primary"
+                  disabled={isCodeEmpty || isRunning || isSubmitting}
+                  loading={isRunning}
+                  onClick={runCode}
                 >
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="fw-semibold text-white m-0">Output</h6>
-                    <Tooltip
-                      title={
-                        isCodeEmpty
-                          ? "Enter valid code"
-                          : isSubmitting
-                          ? "Submitting"
-                          : "Submit code"
-                      }
-                    >
-                      {" "}
-                      <button
-                        className="btn btn-success btn-sm"
-                        onClick={() => nextQuestion()}
-                      >
-                        {currentQ === questions.length - 1
-                          ? "Finish"
-                          : isSubmitting
-                          ? "Submitting"
-                          : "Submit"}
-                      </button>
-                    </Tooltip>
-                  </div>
-                  <pre
-                    className="text-success m-0 text-white"
-                    style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-                  >
-                    {output}
-                  </pre>
-                </div>
+                  Run code ▷
+                </Button>
               </div>
-            </div>
-          )}
-          {/* Step 5 – Completion */}
-          {step === 5 && (
-            <div className="d-flex flex-column justify-content-center align-items-center flex-fill">
-              <h3 className="fw-bold">Interview Completed</h3>
-              <p className="text-secondary">
-                Your answers have been submitted successfully. Thank you!
-              </p>
-            </div>
-          )}
+              <div className="ss-editor-surface">
+              <Editor
+                height="100%"
+                theme="vs-dark"
+                language={
+                  { ts: "typescript", cs: "csharp" }[language] || language
+                }
+                value={code}
+                onChange={(v) => {
+                  setCode(v ?? "");
+                  setOutput("");
+                }}
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  automaticLayout: true,
+                  scrollBeyondLastLine: false,
+                }}
+              />
+              </div>
+              <div className="ss-code-output">
+                <h2>Output</h2>
+                <pre>{output || "Run your code to see the output here."}</pre>
+              </div>
+            </section>
+          </div>
+          <footer className="ss-session-bottom">
+            <span>ⓘ Keep this tab open while your recording is active.</span>
+            <Button
+              type="primary"
+              size="large"
+              disabled={isCodeEmpty || isRunning || isSubmitting}
+              loading={isSubmitting}
+              onClick={nextQuestion}
+            >
+              {currentQ === questions.length - 1
+                ? "Finish & submit"
+                : "Submit & next question →"}
+            </Button>
+          </footer>
+        </>
+      ) : (
+        <div className="ss-device-page">
+          <h1>Let’s check your devices</h1>
+          <p>
+            Your microphone and shared screen are recorded during coding
+            assessment.
+          </p>
+          <div className="ss-grid">
+            <section className="ss-card ss-card-padding">
+              <h2>Camera preview</h2>
+              {step >= 2 ? (
+                <video
+                  ref={webcamRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="ss-camera-preview"
+                />
+              ) : (
+                <div className="ss-camera-placeholder">
+                  <i className="la la-video" />
+                  <p>Enable your camera to see your preview.</p>
+                </div>
+              )}
+              <div className="ss-info">
+                {step >= 2
+                  ? "Camera and microphone access granted."
+                  : "We’ll ask for camera and microphone access."}
+              </div>
+            </section>
+            <section className="ss-card ss-card-padding">
+              <h2>Ready to begin</h2>
+              <dl className="ss-device-status">
+                <div>
+                  <dt>Camera & microphone</dt>
+                  <dd className={step >= 2 ? "ready" : ""}>
+                    {step >= 2 ? "● Ready" : "Not started"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Screen sharing</dt>
+                  <dd className={step >= 3 ? "ready" : ""}>
+                    {step >= 3 ? "● Active" : "Not started"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="ss-info">
+                Keep this tab open throughout your assessment. Your recording
+                starts when you share your screen.
+              </div>
+              {step < 2 ? (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={requestCameraAccess}
+                >
+                  Allow camera & microphone
+                </Button>
+              ) : step === 2 ? (
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={startRecording}
+                >
+                  Share screen & prepare questions
+                </Button>
+              ) : (
+                <>
+                  <p>
+                    Answer each question in the editor. Run your code, then
+                    submit to continue. Your responses are uploaded after the
+                    final question.
+                  </p>
+                  <Button
+                    type="primary"
+                    block
+                    size="large"
+                    onClick={() => setStep(4)}
+                  >
+                    Start coding interview →
+                  </Button>
+                </>
+              )}
+            </section>
+          </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }
-
-{
-  /*export default function CodingRound() {
-  // ---------- STATES ----------
-  const [step, setStep] = useState(0); // 0 = start screen, 1 = recording, 2 = questions
-  const [code, setCode] = useState(
-    '// Write JavaScript code\nconsole.log("Hello")'
-  );
-  const [output, setOutput] = useState("");
-  const [language, setLanguage] = useState("javascript");
-  const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState([]); // {question, code, output}[]
-  const [mediaRecorder, setMediaRecorder] = useState(null);
-  const recordedChunks = useRef([]);
-
-  // ---------- SAMPLE QUESTIONS ----------
-  const questions = [
-    "Write a function add(a,b) that returns the sum of two numbers.",
-    "Write a function reverse(str) that reverses a string.",
-    "Write a function isPrime(n) that checks if a number is prime.",
-  ];
-
-  // ---------- RUN CODE ----------
-  const runCode = async () => {
-    try {
-      const payload = { language, code };
-      const { data } = await axios.post(
-        `http://localhost:8000/api/v1/codingInterview/code/execute`,
-        payload
-      );
-      setOutput(String(data?.output ?? "No output"));
-    } catch (err) {
-      setOutput("Error: " + err.message);
-    }
-  };
-
-  // ---------- SCREEN RECORDING ----------
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { mediaSource: "screen" },
-        audio: true,
-      });
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) recordedChunks.current.push(e.data);
-      };
-      recorder.onstop = saveRecording;
-      recorder.start();
-      setMediaRecorder(recorder);
-      setStep(2); // move to questions after recording starts
-    } catch (err) {
-      alert("Screen recording failed: " + err.message);
-    }
-  };
-
-  const saveRecording = () => {
-    const blob = new Blob(recordedChunks.current, { type: "video/webm" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "coding-round.webm";
-    a.click();
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder) mediaRecorder.stop();
-  };
-
-  // ---------- NEXT QUESTION / FINISH ----------
-  const nextQuestion = () => {
-    // store current Q
-    const newAnswer = {
-      question: questions[currentQ],
-      code,
-      output,
-    };
-    setAnswers((prev) => [...prev, newAnswer]);
-
-    if (currentQ < questions.length - 1) {
-      // go to next
-      setCurrentQ((prev) => prev + 1);
-      setCode("// Write JavaScript code\n");
-      setOutput("");
-    } else {
-      // Finish
-      stopRecording();
-      alert("Test finished! Check console for answers.");
-      console.log("All Answers:", answers.concat(newAnswer));
-    }
-  };
-
-  // ---------- UI ----------
-  if (step === 0) {
-    // Start Screen
-    return (
-      <div className="vh-100 d-flex flex-column bg-dark text-light justify-content-center align-items-center">
-        <div className="d-flex w-100 justify-content-between px-4 position-absolute top-0 py-3">
-          <img
-            src={logo2} // ✅ Replace with your logo file
-            alt="Company Logo"
-            className="logo-img"
-            style={{ height: "60px" }}
-          />
-        </div>
-        <h2 className="fw-bold mb-2">Coding Interview Test</h2>
-        <p className="text-secondary text-center w-75">
-          You will be asked to solve 3 programming questions while your screen
-          is recorded.
-        </p>
-        <button
-          className="btn btn-primary px-4 mt-4"
-          onClick={() => setStep(1)}
-        >
-          Start Interview
-        </button>
-      </div>
-    );
-  }
-
-  if (step === 1) {
-    // Screen Recording Step
-    return (
-      <div className="vh-100 d-flex flex-column justify-content-center align-items-center bg-dark text-light">
-        <h3 className="mb-3">Step 1: Allow Screen Recording</h3>
-        <p className="mb-4 text-center px-3">
-          Please share your full screen with system audio so we can monitor your
-          coding process.
-        </p>
-        <button className="btn btn-success px-4" onClick={startRecording}>
-          Start Recording & Begin Test
-        </button>
-      </div>
-    );
-  }
-
-  // Step 2: Questions + Editor
-  return (
-    <div className="d-flex vh-100 bg-dark text-light">
-   
-      <div className="col-4 border-end border-secondary p-4 overflow-auto">
-        <h4 className="fw-bold mb-3">
-          Question {currentQ + 1} of {questions.length}
-        </h4>
-        <p>{questions[currentQ]}</p>
-      </div>
-
-   
-      <div className="col-8 d-flex flex-column">
- 
-        <div className="d-flex justify-content-between align-items-center bg-secondary p-2">
-          <div className="d-flex align-items-center">
-            <label htmlFor="language" className="me-2 fw-semibold">
-              Language:
-            </label>
-            <select
-              id="language"
-              className="form-select form-select-sm bg-dark text-light border-light"
-              style={{ width: "150px" }}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-              <option value="typescript">TypeScript</option>
-              <option value="cpp">C++</option>
-              <option value="java">Java</option>
-            </select>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={runCode}>
-            Run ▶
-          </button>
-        </div>
-
-
-        <div className="flex-fill border-bottom border-secondary">
-          <Editor
-            height="100%"
-            theme="vs-dark"
-            language={language}
-            value={code}
-            onChange={(v) => setCode(v ?? "")}
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              automaticLayout: true,
-            }}
-          />
-        </div>
-
-
-        <div
-          className="bg-secondary p-3 d-flex flex-column"
-          style={{ height: "200px", overflowY: "auto", overflowX: "auto" }}
-        >
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <h6 className="fw-semibold text-white m-0">Output</h6>
-            <button className="btn btn-success btn-sm" onClick={nextQuestion}>
-              {currentQ === questions.length - 1 ? "Finish" : "Submit"}
-            </button>
-          </div>
-          <pre
-            className="text-success m-0 text-white"
-            style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-          >
-            {output}
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-}*/
-}
-
-{
-  /*import React, { useState } from "react";
-import Editor from "@monaco-editor/react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
-export default function CodingRound() {
-  const [code, setCode] = useState(
-    '// Write JavaScript code\nconsole.log("Hello")'
-  );
-  const [output, setOutput] = useState("");
-  const [language, setLanguage] = useState("javascript");
-
-  const runCode = async () => {
-    // ⚠️ This demo only supports JS execution.
-    // if (language !== "javascript") {
-    //   setOutput(`Execution not supported for ${language} in demo`);
-    //   return;
-    // }
-    try {
-      const payload = {
-        language,
-        code,
-      };
-      const { data } = await axios.post(
-        `http://localhost:8000/api/v1/codingInterview/code/execute`,
-        payload
-      );
-      // const result = eval(code); // Demo only; sandbox in production
-      setOutput(String(data?.output ?? "No output"));
-    } catch (err) {
-      setOutput("Error: " + err.message);
-    }
-  };
-
-  return (
-    <div className="d-flex vh-100 bg-dark text-light">
-   
-      <div className="col-4 border-end border-secondary p-4 overflow-auto">
-        <h4 className="fw-bold mb-3">Question</h4>
-        <p>
-          Write a function <code>add(a,b)</code> that returns the sum of two
-          numbers.
-        </p>
-      </div>
-
-
-      <div className="col-8 d-flex flex-column">
-        
-        <div className="d-flex justify-content-between align-items-center bg-secondary p-2">
-          <div className="d-flex align-items-center">
-            <label htmlFor="language" className="me-2 fw-semibold">
-              Language:
-            </label>
-            <select
-              id="language"
-              className="form-select form-select-sm bg-dark text-light border-light"
-              style={{ width: "150px" }}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-              <option value="typescript">TypeScript</option>
-              <option value="cpp">C++</option>
-              <option value="java">Java</option>
-            </select>
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={runCode}>
-            Run ▶
-          </button>
-        </div>
-
-       
-        <div className="flex-fill border-bottom border-secondary">
-          <Editor
-            height="100%"
-            theme="vs-dark"
-            language={language}
-            value={code}
-            onChange={(v) => setCode(v ?? "")}
-            options={{
-              fontSize: 14,
-              minimap: { enabled: false },
-              automaticLayout: true,
-            }}
-          />
-        </div>
-
-   
-        <div
-          className="bg-secondary p-3"
-          style={{
-            height: "200px", // ✅ Fixed height
-            overflowY: "auto", // ✅ Scrollbar when content exceeds
-            overflowX: "auto", // (optional) horizontal scroll for long lines
-          }}
-        >
-          <h6 className="fw-semibold text-white">Output</h6>
-          <pre
-            className="text-success m-0 text-white"
-            style={{
-              whiteSpace: "pre-wrap", // keeps line breaks & wraps text
-              wordWrap: "break-word", // prevents super-long words from spilling
-            }}
-          >
-            {output}
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-}*/
-}
-
-
-
-
-
-
-
-  // ----- SCREEN RECORDING -----
-  // const startRecording = async () => {
-  //   try {
-  //     // 1. Get SCREEN (Safari gives NO audio)
-  //     const screenStream = await navigator.mediaDevices.getDisplayMedia({
-  //       video: true,
-  //     });
-
-  //     // 2. Get CAMERA + MIC
-  //     const camStream = await navigator.mediaDevices.getUserMedia({
-  //       video: false,
-  //       audio: true,
-  //     });
-  //     cameraStreamRef.current = camStream;
-
-  //     // 3. Mix audio tracks (Safari SAFE)
-  //     const audioContext = new AudioContext();
-  //     const destination = audioContext.createMediaStreamDestination();
-
-  //     // microphone
-  //     const micSource = audioContext.createMediaStreamSource(camStream);
-  //     micSource.connect(destination);
-
-  //     // 4. Combine screen video + mixed audio
-  //     const combinedStream = new MediaStream([
-  //       ...screenStream.getVideoTracks(),
-  //       ...destination.stream.getAudioTracks(),
-  //     ]);
-
-  //     // 5. Start Recorder
-  //     const recorder = new MediaRecorder(combinedStream, {
-  //       mimeType: "video/webm",
-  //     });
-
-  //     mediaRecorderRef.current = recorder;
-  //     recordedChunks.current = [];
-
-  //     recorder.ondataavailable = (e) => {
-  //       if (e.data.size > 0) recordedChunks.current.push(e.data);
-  //     };
-
-  //     recorder.start(200); // Safari needs timeslice
-
-  //     // fetch questions
-  //     setQloader(true);
-
-  //     const payload = {
-  //       resume_text: jobData.resume_text,
-  //       job_description_text: jobData.job_description_text,
-  //       level: jobData.level,
-  //       instructions: jobData.instructions,
-  //     };
-
-  //     const { data } = await axios.post(
-  //       `${Server}/api/v1/videoInterview/coding/generate/questions`,
-  //       payload
-  //     );
-
-  //     if (data.data.status === "error") {
-  //       alert("Error in loading the question");
-  //       setStep(0);
-  //     } else {
-  //       setQuestions(data.data.questions);
-  //       setQloader(false);
-  //     }
-
-  //     setStep(3);
-  //   } catch (err) {
-  //     alert("Screen recording failed: " + err.message);
-  //   }
-  // };
-
-  // const startRecording = async () => {
-  //   try {
-  //     const screenStream = await navigator.mediaDevices.getDisplayMedia({
-  //       video: {
-  //         displaySurface: "monitor", // Prefer entire screen
-  //       },
-  //       audio: true,
-  //     });
-
-  //     // Mix mic audio into screen recording if needed
-  //     let combinedStream = screenStream;
-  //     if (cameraStreamRef.current) {
-  //       const audioTrack = cameraStreamRef.current.getAudioTracks()[0];
-  //       if (audioTrack) combinedStream.addTrack(audioTrack);
-  //     }
-
-  //     const recorder = new MediaRecorder(combinedStream, {
-  //       mimeType: "video/webm",
-  //     });
-  //     // setMediaRecorder(recorder);
-  //     mediaRecorderRef.current = recorder;
-  //     mediaRecorderRef.current.ondataavailable = (e) => {
-  //       if (e.data.size > 0) recordedChunks.current.push(e.data);
-  //     };
-  //     mediaRecorderRef.current.start();
-  //     setQloader(true);
-  //     const payload = {
-  //       resume_text: jobData.resume_text,
-  //       job_description_text: jobData.job_description_text,
-  //       level: jobData.level,
-  //       instructions: jobData.instructions,
-  //     };
-
-  //     const { data } = await axios.post(
-  //       `${Server}/api/v1/videoInterview/coding/generate/questions`,
-  //       payload
-  //     );
-  //     // console.log(data);
-  //     // console.log(data.data);
-  //     if (data.data.status === "error") {
-  //       alert("Error in loading the question");
-  //       setStep(0); // success page
-  //     } else {
-  //       setQuestions(data.data.questions);
-  //       // mediaRecorderRef.current.onstop = saveRecording;
-  //       setQloader(false);
-  //     }
-  //     setStep(3); // move to coding step
-  //   } catch (err) {
-  //     alert("Screen recording failed: " + err.message);
-  //   }
-  // };
-

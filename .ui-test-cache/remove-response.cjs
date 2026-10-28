@@ -1,0 +1,1 @@
+const fs=require('fs');let p='client/src/Components/PracticalInterview/PracticalInterview.js',s=fs.readFileSync(p,'utf8');let a=s.indexOf('                      <div className="ss-response">'),b=s.indexOf('                      <div className="ss-interview-controls">',a);if(a<0||b<0)throw Error('response markers');s=s.slice(0,a)+s.slice(b);fs.writeFileSync(p,s);

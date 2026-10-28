@@ -816,36 +816,6 @@ const VideoAssessment = () => {
       audioTracks.forEach((track) => (track.enabled = true));
     }
   };
-  useEffect(() => {
-    // Speech Recognition Setup
-    window.SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!window.SpeechRecognition) return;
-    recognitionRef.current = new window.SpeechRecognition();
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.lang = "en-US";
-    recognitionRef.current.interimResults = true;
-
-    recognitionRef.current.addEventListener("result", (e) => {
-      const interimTranscript = Array.from(e.results)
-        .map((result) => result[0])
-        .map((result) => result.transcript)
-        .join("");
-      // console.log(interimTranscript);
-
-      setTranscription(interimTranscript);
-    });
-
-    recognitionRef.current.addEventListener("speechend", async () => {
-      // setDisplayedAnswer("");
-      setSpeech(false);
-      // console.log("speech ended");
-      // setShowNext(true);
-      // setTimeout(() => {
-      //   handleNextQuestion();
-      // }, 2000);
-    });
-  }, []);
   const startSpeechRecording = async () => {
     try {
       // console.log("Speech Recording started");
@@ -869,7 +839,7 @@ const VideoAssessment = () => {
   const stopSpeechRecording = async () => {
     try {
       // console.log("Stopping speech recognition...");
-      recognitionRef.current?.stop();
+
       if (speechRecorderRef.current) {
         speechRecorderRef.current.stop();
       }
@@ -881,10 +851,10 @@ const VideoAssessment = () => {
   useEffect(() => {
     if (speech) {
       // console.log("speech started");
-      recognitionRef.current?.start();
+
       startSpeechRecording();
     } else {
-      recognitionRef.current?.stop();
+
       // console.log("speech stopped");
     }
   }, [speech]);
@@ -1034,7 +1004,7 @@ const VideoAssessment = () => {
                 <PracticeLoading />
               ) : isRecording ? (
                 <>
-                  <span className="ss-eyebrow">AI INTERVIEWER</span>
+                  <span className="ss-eyebrow">AI INTERVIEWER · AI-GENERATED VOICE</span>
                   {next ? (
                     <PracticeLoading
                       title={nextFetch}
@@ -1071,14 +1041,6 @@ const VideoAssessment = () => {
                           {speech
                             ? "Listening to your answer…"
                             : "Listen to the question, then answer aloud."}
-                        </p>
-                      </div>
-                      <div className="ss-response">
-                        <span className="ss-eyebrow">YOUR RESPONSE</span>
-                        <p>
-                          {transcription ||
-                            displayedAnswer ||
-                            "Your response will appear here when speech recognition is available."}
                         </p>
                       </div>
                       <div className="ss-interview-controls">

@@ -6,8 +6,8 @@
   "buttons": [
     {
       "text": "Continue to device check →",
-      "top": 673.5,
-      "bottom": 713.5
+      "top": 610,
+      "bottom": 650
     }
   ]
 }

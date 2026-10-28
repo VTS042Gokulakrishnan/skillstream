@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { PracticeHeader, PracticeLoading } from "../PracticalInterview/PracticeStates";
+import AssessmentState from "./AssessmentState";
+import { Video, Mic, Monitor } from "lucide-react";
 import { useLocation, useParams } from "react-router-dom";
 import Webcam from "react-webcam";
 import { FaStopCircle, FaPlay, FaClock } from "react-icons/fa";
@@ -91,6 +94,8 @@ const VideoAssessment = () => {
   const [speech, setSpeech] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState([]);
   const [spinner, setSpinner] = useState(false);
+  const [submissionError, setSubmissionError] = useState(false);
+  const retrySubmission = useRef(null);
   const [initialised, setInitialised] = useState(false);
   const [thankYouMessage, setThankYouMessage] = useState("");
   const [showNext, setShowNext] = useState(false);
@@ -803,6 +808,9 @@ const VideoAssessment = () => {
     //   setIsRecording(false);
     //   setSpinner(true);
     // }
+    retrySubmission.current = [currentQuestion, currentAnswer, options];
+    setSpinner(true);
+    setSubmissionError(false);
     try {
       // setSpinner(true);
       // stopVideo();
@@ -876,8 +884,9 @@ const VideoAssessment = () => {
       localStorage.removeItem("resume_text");
     } catch (error) {
       // console.log(error);
-      toast.error("Internal Sevrer Error");
-    } // Show thank you message
+      setSubmissionError(true);
+      toast.error("Unable to confirm submission. Please retry.");
+    } finally { setSpinner(false); } // Show thank you message
   };
   const stopSpeaking = () => {
     window.speechSynthesis.cancel();
@@ -889,35 +898,6 @@ const VideoAssessment = () => {
       audioTracks.forEach((track) => (track.enabled = true));
     }
   };
-  useEffect(() => {
-    // Speech Recognition Setup
-    window.SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognitionRef.current = new window.SpeechRecognition();
-    recognitionRef.current.continuous = true;
-    recognitionRef.current.lang = "en-US";
-    recognitionRef.current.interimResults = true;
-
-    recognitionRef.current.addEventListener("result", (e) => {
-      const interimTranscript = Array.from(e.results)
-        .map((result) => result[0])
-        .map((result) => result.transcript)
-        .join("");
-      // console.log(interimTranscript);
-
-      // setDisplayedAnswer(interimTranscript);
-    });
-
-    recognitionRef.current.addEventListener("speechend", async () => {
-      // setDisplayedAnswer("");
-      setSpeech(false);
-      // console.log("speech ended");
-      // setShowNext(true);
-      // setTimeout(() => {
-      //   handleNextQuestion();
-      // }, 2000);
-    });
-  }, []);
   const startSpeechRecording = async () => {
     try {
       // console.log("Speech Recording started");
@@ -940,7 +920,6 @@ const VideoAssessment = () => {
   const stopSpeechRecording = async () => {
     try {
       // console.log("Stopping speech recognition...");
-      recognitionRef.current.stop();
       if (speechRecorderRef.current) {
         speechRecorderRef.current.stop();
       }
@@ -952,10 +931,8 @@ const VideoAssessment = () => {
   useEffect(() => {
     if (speech) {
       // console.log("speech started");
-      recognitionRef.current.start();
       startSpeechRecording();
     } else {
-      recognitionRef.current.stop();
       // console.log("speech stopped");
     }
   }, [speech]);
@@ -1035,372 +1012,145 @@ const VideoAssessment = () => {
     }
   };
   return (
-    <div className="empty">
-      {initialised ? (
-        <div className="logo-container">
-          <img src={logo} alt="S Logo Loader" className="heartbeat w-24 h-24" />
-          <div>Loading...</div>
-        </div>
-      ) : (
-        <>
-          {maintenanceMode ? (
-            <div>
-              <Result
-                status="warning"
-                style={{ paddingTop: "180px" }}
-                title={
-                  <div>
-                    {" "}
-                    <p style={{ color: "white", fontSize: "30px" }}>
-                      Sorry for the inconvinence!
-                    </p>
-                    <p
-                      style={{
-                        color: "white",
-                        fontSize: "25px",
-                        paddingTop: "20px",
-                      }}
-                    >
-                      ⚠️ We’re currently performing maintenance. This features
-                      is temporarily unavailable. Our team is actively working
-                      to restore full service soon.
-                    </p>
-                    {/* <p
-                    style={{
-                      color: "white",
-                      fontSize: "20px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {` Email : ${interviewerEmail}`}
-                  </p>*/}
-                  </div>
-                }
-                extra={
-                  <a href="/">
-                    <Button type="primary" key="console">
-                      Back to home
-                    </Button>
-                  </a>
-                }
-              />
-            </div>
-          ) : currentTime > expireIn ? (
-            <Result
-              status="warning"
-              style={{ paddingTop: "180px" }}
-              title={
-                <div>
-                  {" "}
-                  <p style={{ color: "white", fontSize: "30px" }}>
-                    Interview Link Expired .
-                  </p>
-                  <p
-                    style={{
-                      color: "white",
-                      fontSize: "25px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {`Please reach out to ${interviewerEmail} to reschedule the interview `}
-                  </p>
-                  {/* <p
-                    style={{
-                      color: "white",
-                      fontSize: "20px",
-                      paddingTop: "20px",
-                    }}
-                  >
-                    {` Email : ${interviewerEmail}`}
-                  </p>*/}
-                </div>
-              }
-              extra={
-                <a href="/">
-                  <Button type="primary" key="console">
-                    Back to home
-                  </Button>
-                </a>
-              }
-            />
-          ) : (
-            <>
-              {interviewStatus === "Completed" ? (
-                <Result
-                  status="success"
-                  style={{ paddingTop: "180px" }}
-                  title={
-                    <div>
-                      {" "}
-                      <p style={{ color: "white", fontSize: "30px" }}>
-                        Your interview has been completed.You will get notified
-                        once the review process is completed
-                      </p>
-                    </div>
-                  }
-                  extra={
-                    <a href="/">
-                      <Button type="primary" key="console">
-                        Back to home
-                      </Button>
-                    </a>
-                  }
-                />
-              ) : (
-                <div className="video-assessment-container flex flex-col lg:flex-row w-full min-h-screen">
-                  {/* Video Section */}
-                  <div className="video-section w-full h-auto lg:w-1/2 lg:h-full relative mb-6 lg:mb-0">
-                    <Toaster position="top-center" reverseOrder={false} />
-                    {!interviewCompleted && (
-                      <video
-                        ref={webcamRef}
-                        className="w-full h-auto object-cover rounded-none"
-                        muted
-                        id="video"
-                      />
-                    )}
-                  </div>
-
-                  {/* QA Section */}
-                  <div className="qa-section w-full lg:w-1/2 bg-[#111] p-4 sm:p-6 flex flex-col justify-center text-white">
-                    <h1 className="text-2xl sm:text-3xl mb-4 text-center  text-white ">
-                      {!next ? "AI Video Assessment" : null}
-                    </h1>
-
-                    {isRecording && !showThankYouMessage && (
-                      <div>
-                        {next ? (
-                          <div className="">
-                            <div className="flipping text-center">
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                              <div></div>
-                            </div>
-                            <h1
-                              style={{
-                                fontSize: "25px",
-                                color: "#fff",
-                                paddingTop: "20px",
-                              }}
-                            >
-                              {nextFetch}
-                            </h1>
-                          </div>
-                        ) : (
-                          <div className="current-question">
-                            {isCodingRound ? (
-                              <div className="coding-question">
-                                <div className="question-box bg-[#1c1c1c] p-4 rounded-md shadow-lg mb-4">
-                                  <CodeEditor
-                                    setShowEditor={setShowEditor}
-                                    setCollapsedQuestion={setCollapsedQuestion}
-                                    question={displayedQuestion}
-                                    showEditor={showEditor}
-                                    setShowNextButton={setShowNextButton}
-                                    setCodingAnswer={setCodingAnswer}
-                                  />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="question-box bg-[#1c1c1c] p-4 rounded-md shadow-lg">
-                                <div className="ai-icon mb-3">
-                                  <img
-                                    src={robot}
-                                    alt="Animated Robot"
-                                    className="h-12 mx-auto"
-                                  />
-                                </div>
-                                <div className="question-text text-center  text-sm  lg:text-lg  sm:text-lg text-white">
-                                  {displayedQuestion}
-                                </div>
-                                <audio
-                                  ref={audioRef}
-                                  style={{ display: "none" }}
-                                />
-                              </div>
-                            )}
-
-                            {speech && (
-                              <div className="answer-box">
-                                <div className="user-icon">
-                                  <img
-                                    src={user}
-                                    alt="Animated Robot"
-                                    style={{ height: "30px", width: "30px" }}
-                                  />
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                                <div class="voice-loading">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="controls-btn mt-6 text-center">
-                              {/* {isCodingRound && !collapsedQuestion ? (
-                                <button
-                                  onClick={() => {
-                                    setCollapsedQuestion(true);
-                                    setShowEditor(true);
-                                  }}
-                                  className={`px-4 py-2 rounded-md text-white transition duration-300 ${
-                                    showNextButton
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : "bg-gray-500 cursor-not-allowed"
-                                  }`}
-                                >
-                                  Start Coding
-                                </button>
-                              ) : (*/}
-                              <Tooltip
-                                title={
-                                  !showNextButton
-                                    ? "You can't click now"
-                                    : "Click to move to next question"
-                                }
-                              >
-                                <button
-                                  onClick={handleNextQuestion}
-                                  disabled={!showNextButton}
-                                  className={`px-4 py-2 rounded-md text-white transition duration-300 ${
-                                    showNextButton
-                                      ? "bg-blue-600 hover:bg-blue-700"
-                                      : "bg-gray-500 cursor-not-allowed"
-                                  }`}
-                                >
-                                  {nextText}
-                                </button>
-                              </Tooltip>
-                              {/*)}*/}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {!isRecording &&
-                      !isFeedbackModalOpen &&
-                      !feedbackCompleted && (
-                        <div className="controls mt-6 text-center">
-                          <button
-                            className="controls-btn bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-md text-lg"
-                            // onClick={handleStartRecording}
-                            onClick={() => handleStartInterviewClick()}
-                          >
-                            <FaPlay className="inline-block mr-2" /> Start
-                            Interview
-                          </button>
-
-                          {isInstructionsModalOpen && (
-                            <InstructionsModal
-                              onAgree={handleInstructionsAgree}
-                              onCancel={handleCancelAgree}
-                              loader={loader}
-                            />
-                          )}
+    <main className="ss-video-session">
+      <Toaster position="top-center" />
+      <PracticeHeader type="Video" title={jobTitle || "Interview"} assessment>
+        {isRecording && !spinner && !submissionError && !showThankYouMessage && interviewStatus !== "Completed" && !(currentTime > expireIn) && <span className="ss-recording">● Recording</span>}
+      </PracticeHeader>
+      {initialised ? <PracticeLoading title="Preparing your assessment" /> : maintenanceMode ? <AssessmentState kind="maintenance" /> : interviewStatus === "Completed" ? <AssessmentState /> : currentTime > expireIn ? <AssessmentState kind="expired" email={interviewerEmail} /> : spinner ? <PracticeLoading title="Submitting your responses" description="Keep this tab open while your answers and recording are submitted." /> : submissionError ? <section className="ss-session-state"><h2>Submission needs attention</h2><p>Your submission could not be confirmed. Keep this tab open and try again.</p><Button type="primary" onClick={() => closeFeedbackModal(...retrySubmission.current)}>Retry submission</Button></section> : showThankYouMessage ? <AssessmentState /> : <>
+          <div className="ss-session-toolbar">
+            <strong>
+              {isRecording ? "Question " + questionCount : "Device check"}
+            </strong>
+            <span>
+              {isRecording
+                ? "Keep your camera, microphone and screen sharing active."
+                : "Check your devices before starting your interview."}
+            </span>
+          </div>
+          <div className="ss-video-grid">
+            <section className="ss-card ss-interviewer">
+              {initialised || loader ? (
+                <PracticeLoading />
+              ) : isRecording ? (
+                <>
+                  <span className="ss-eyebrow">AI INTERVIEWER · AI-GENERATED VOICE</span>
+                  {next ? (
+                    <PracticeLoading
+                      title={nextFetch}
+                      description="Please keep this tab open."
+                    />
+                  ) : (
+                    <>
+                      {isCodingRound ? (
+                        <div className="ss-practice-inline-editor">
+                        <CodeEditor
+                          setShowEditor={setShowEditor}
+                          setCollapsedQuestion={setCollapsedQuestion}
+                          question={displayedQuestion}
+                          showEditor={showEditor}
+                          setShowNextButton={setShowNextButton}
+                          setCodingAnswer={setCodingAnswer}
+                        />
                         </div>
+                      ) : (
+                        <>
+                          <div className="ss-ai-orb" aria-hidden="true">
+                            ✧
+                          </div>
+                          <h1 className="ss-interview-question">
+                            {displayedQuestion}
+                          </h1>
+                        </>
                       )}
-
-                    {isFeedbackModalOpen && (
-                      <FeedbackModal onClose={closeFeedbackModal} />
-                    )}
-
-                    {showThankYouMessage && (
-                      <>
-                        {spinner ? (
-                          <div className="final-message text-center mt-8">
-                            <h2 className="text-lg">
-                              Please Don't Close the Window.
-                            </h2>
-                            <h2 className="text-lg">
-                              Please Don't Stop sharing
-                            </h2>
-                            <h2 className="text-lg mb-4">
-                              Submitting your Answers...
-                            </h2>
-                            <div className="spinner mx-auto"></div>
-                          </div>
-                        ) : (
-                          <div className="thank-you-message text-center mt-8">
-                            <h2
-                              className="text-2xl"
-                              style={{
-                                fontSize: "20px",
-                                color: "#fff",
-                              }}
-                            >
-                              {thankYouMessage}
-                            </h2>
-                            <audio ref={audioRef} style={{ display: "none" }} />
-                          </div>
-                        )}
-                      </>
-                    )}
+                      <div className="ss-voice-state">
+                        <span className={speech ? "ss-listening" : ""}>
+                          ▂ ▅ ▃ ▇ ▄ ▆ ▂ ▅ ▃ ▇ ▄ ▆ ▂
+                        </span>
+                        <p>
+                          {speech
+                            ? "Listening to your answer…"
+                            : "Listen to the question, then answer aloud."}
+                        </p>
+                      </div>
+                      <div className="ss-interview-controls">
+                        <small>Finish your answer before continuing.</small>
+                        <Button
+                          type="primary"
+                          size="large"
+                          disabled={!showNextButton}
+                          onClick={() => handleNextQuestion()}
+                        >
+                          {nextText} →
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="ss-device-intro">
+                  <span className="ss-ai-orb">◉</span>
+                  <h1>Let’s check your devices</h1>
+                  <p>
+                    Your camera, microphone and screen will be recorded during
+                    the interview.
+                  </p>
+                  <div className="ss-device-checklist">
+                    <span><Video size={20} />Camera preview</span>
+                    <span><Mic size={20} />Microphone check</span>
+                    <span><Monitor size={20} />Screen sharing</span>
                   </div>
-                  {/* <Modal
-                    title="Step 1: Allow Camera & Microphone"
-                    open={currentStep === 1}
-                    onCancel={() => setCurrentStep(0)}
-                    footer={[
-                      <Button
-                        key="allow"
-                        type="primary"
-                        onClick={async () => {
-                          try {
-                            const stream =
-                              await navigator.mediaDevices.getUserMedia({
-                                video: true,
-                                audio: true,
-                              });
-                            setMicAllowed(true);
-                            setCameraAllowed(true);
-                            webcamRef.current.srcObject = stream;
-                            setCurrentStep(2);
-                          } catch (err) {
-                            toast.error(
-                              "Please allow camera and mic permissions."
-                            );
-                          }
-                        }}
-                      >
-                        Allow Camera & Mic
-                      </Button>,
-                    ]}
+                  <div className="ss-info">
+                    Choose a quiet space and keep this tab open throughout your
+                    assessment.
+                  </div>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={handleStartInterviewClick}
                   >
-                    <p>
-                      Click the button below to enable camera and microphone for
-                      the interview.
-                    </p>
-                  </Modal>*/}
-                  <Modal
+                    Check devices →
+                  </Button>
+                </div>
+              )}
+              <audio ref={audioRef} style={{ display: "none" }} />
+            </section>
+            <aside className="ss-video-side">
+              <section className="ss-card ss-card-padding">
+                <span className="ss-eyebrow">YOUR CAMERA</span>
+                <video
+                  ref={webcamRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  id="video"
+                  className="ss-camera-preview"
+                />
+              </section>
+              <section className="ss-card ss-card-padding">
+                <h2>Session status</h2>
+                <dl className="ss-device-status">
+                  {[
+                    ["Camera", cameraAllowed],
+                    ["Microphone", micAllowed],
+                    ["Screen sharing", screenStream?.active],
+                  ].map(([name, ready]) => (
+                    <div key={name}>
+                      <dt>{name}</dt>
+                      <dd className={ready ? "ready" : ""}>
+                        {ready ? "● Active" : "Not started"}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="ss-info">
+                  Keep this tab open and continue sharing your screen.
+                </div>
+              </section>
+            </aside>
+          </div>
+
+                  <Modal className="ss-device-modal" width={700}
                     open={currentStep === 1}
                     title="Step 1: Allow Camera & Microphone"
                     onCancel={() => setCurrentStep(0)}
@@ -1445,7 +1195,7 @@ const VideoAssessment = () => {
                       />
                     </div>
                   </Modal>
-                  <Modal
+                  <Modal className="ss-device-modal" width={700}
                     title="Step 2: Share Your Screen"
                     open={currentStep === 2}
                     onCancel={() => {
@@ -1504,7 +1254,7 @@ const VideoAssessment = () => {
                       </li>
                     </ul>
                   </Modal>
-                  <Modal
+                  <Modal className="ss-device-modal" width={700}
                     title="Step 3: Instructions"
                     open={currentStep === 3}
                     onCancel={() => setCurrentStep(0)}
@@ -1569,13 +1319,8 @@ const VideoAssessment = () => {
                       </ul>
                     </main>
                   </Modal>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
-    </div>
+      </>}
+    </main>
   );
 };
 

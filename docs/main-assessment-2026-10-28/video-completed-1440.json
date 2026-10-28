@@ -1,0 +1,13 @@
+{
+  "height": 900,
+  "scroll": 900,
+  "width": 1440,
+  "scrollWidth": 1440,
+  "buttons": [
+    {
+      "text": "Back to home",
+      "top": 560.1875,
+      "bottom": 600.1875
+    }
+  ]
+}

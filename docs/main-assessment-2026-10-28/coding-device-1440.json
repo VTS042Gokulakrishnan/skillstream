@@ -1,0 +1,13 @@
+{
+  "height": 900,
+  "scroll": 900,
+  "width": 1440,
+  "scrollWidth": 1440,
+  "buttons": [
+    {
+      "text": "Allow camera & microphone",
+      "top": 827,
+      "bottom": 867
+    }
+  ]
+}

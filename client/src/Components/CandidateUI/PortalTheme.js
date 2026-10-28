@@ -24,7 +24,7 @@ export default function PortalTheme() {
   useLayoutEffect(() => {
     const kind = workspace.has(pathname)
       ? "ss-workspace"
-      : practice.has(pathname)
+      : practice.has(pathname) || /^\/(videoAssessment|codingRound)\//.test(pathname)
       ? "ss-practice"
       : pathname === "/employers-list" || /^\/employers\/[^/]+$/.test(pathname)
       ? "ss-companies"

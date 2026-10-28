@@ -1,13 +1,13 @@
 {
   "height": 844,
-  "scroll": 918,
+  "scroll": 844,
   "width": 390,
   "scrollWidth": 390,
   "buttons": [
     {
       "text": "Continue to device check →",
-      "top": 834.5,
-      "bottom": 874.5
+      "top": 728.1875,
+      "bottom": 768.1875
     }
   ]
 }

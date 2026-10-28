@@ -5,12 +5,12 @@ import BrandLoader from "../Loader/BrandLoader";
 import { Video, Code2 } from "lucide-react";
 import practiceApi from "./practiceApi";
 import logo from "../../assets/logo-twos.png";
-export function PracticeHeader({ type, title, children }) {
+export function PracticeHeader({ type, title, children, assessment = false }) {
   return (
     <header className="ss-session-header">
       <img src={logo} alt="SkillStream" />
       <div className="ss-practice-heading">
-        <span className="ss-practice-type">{type === "Coding" ? <Code2 size={17} /> : <Video size={17} />}{type} practice</span>
+        <span className="ss-practice-type">{type === "Coding" ? <Code2 size={17} /> : <Video size={17} />}{type} {assessment ? "assessment" : "practice"}</span>
         <span className="ss-practice-role">{title}</span>
       </div>
       {children}

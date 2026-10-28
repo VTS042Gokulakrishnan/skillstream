@@ -1,0 +1,1 @@
+const fs=require('fs');let p='client/src/Components/VideoAssessment/VideoAssessment.js',s=fs.readFileSync(p,'utf8');s=s.replaceAll('<Modal className="ss-device-modal"','<Modal className="ss-device-modal" width={700}');fs.writeFileSync(p,s);

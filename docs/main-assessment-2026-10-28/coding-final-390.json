@@ -1,0 +1,13 @@
+{
+  "height": 844,
+  "scroll": 844,
+  "width": 390,
+  "scrollWidth": 390,
+  "buttons": [
+    {
+      "text": "Finish & submit",
+      "top": 787,
+      "bottom": 827
+    }
+  ]
+}

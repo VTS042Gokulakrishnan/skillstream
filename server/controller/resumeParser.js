@@ -14,6 +14,8 @@ const { OpenAI } = require("openai");
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const { createInterviewSpeech } = require("../services/interviewSpeech");
+const interviewSpeech = createInterviewSpeech(openai);
 const path = require("path");
 const unzipper = require("unzipper");
 const s3 = new Aws.S3({
@@ -26,9 +28,7 @@ const { GoogleGenAI } = require("@google/genai");
 const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-3.6-flash";
-const AUDIO_MODEL = process.env.GEMINI_AUDIO_MODEL || "gemini-3.6-flash";
-const TTS_MODEL =
-  process.env.GEMINI_TTS_MODEL || "gemini-2.5-flash-preview-tts";
+
 
 function getGeminiError(error) {
   return (
@@ -642,133 +642,33 @@ a referral/share request, and relevant professional hashtags. Return plain text 
   },
 
 async speechToText(req, res) {
-  try {
-    const form = formidable({
-      multiples: false,
-      keepExtensions: true,
-    });
-
-    const { files } = await new Promise((resolve, reject) => {
-      form.parse(req, (error, fields, parsedFiles) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-
-        resolve({
-          fields,
-          files: parsedFiles,
-        });
-      });
-    });
-
-    const uploadedFile = Array.isArray(files.file)
-      ? files.file[0]
-      : files.file;
-
-    if (!uploadedFile?.filepath) {
-      return res.status(400).json({
-        message: "No file uploaded",
-        status: false,
-      });
-    }
-
-    const audioBase64 = await fs.promises.readFile(
-      uploadedFile.filepath,
-      {
-        encoding: "base64",
-      }
-    );
-
-    const response = await gemini.models.generateContent({
-      model: AUDIO_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                mimeType: uploadedFile.mimetype || "audio/webm",
-                data: audioBase64,
-              },
-            },
-            {
-              text: [
-                "Transcribe this audio accurately.",
-                "Return only the spoken text.",
-                "Do not include commentary, labels, timestamps, or markdown.",
-              ].join(" "),
-            },
-          ],
-        },
-      ],
-    });
-
-    const transcription = response.text?.trim();
-
-    if (!transcription) {
-      throw new Error("Gemini returned an empty transcription");
-    }
-console.log("Transcription completed:", transcription)
-    return res.status(200).json({
-      text: transcription,
-      status: true,
-    });
-  } catch (error) {
-    const message = getGeminiError(error);
-
-    console.error("Gemini speech-to-text error:", message);
-
-    return res.status(500).json({
-      message,
-      status: false,
-    });
-  }
-},
-
-  async textToSpeech(req, res) {
+    let uploadedFile;
     try {
-      const { textInput } = req.body;
-
-      if (!textInput?.trim()) {
-        return res
-          .status(400)
-          .json({ message: "textInput is required", status: false });
-      }
-
-      const response = await gemini.models.generateContent({
-        model: TTS_MODEL,
-        contents: [{ parts: [{ text: textInput }] }],
-        config: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: "Kore" },
-            },
-          },
-        },
-      });
-
-      const audioPart = response.candidates?.[0]?.content?.parts?.find(
-        (part) => part.inlineData?.data
-      );
-
-      if (!audioPart?.inlineData?.data) {
-        throw new Error("Gemini returned no audio data");
-      }
-
-      const pcmBuffer = Buffer.from(audioPart.inlineData.data, "base64");
-      const wavBuffer = pcmToWav(pcmBuffer);
-
-      res.setHeader("Content-Type", "audio/wav");
-      res.setHeader("Content-Length", wavBuffer.length);
-
-      console.log("TTS Completed") 
-      return res.status(200).send(wavBuffer);
+      const form = formidable({ multiples: false, keepExtensions: true, maxFileSize: 25 * 1024 * 1024 });
+      const files = await new Promise((resolve, reject) => form.parse(req, (error, fields, files) => error ? reject(error) : resolve(files)));
+      uploadedFile = getUploadedFile(files.file);
+      if (!uploadedFile?.filepath) return res.status(400).json({ message: "No file uploaded", status: false });
+      const text = await interviewSpeech.transcribe(uploadedFile);
+      return res.status(200).json({ text, status: true });
     } catch (error) {
-      const message = getGeminiError(error);
-      console.error("Gemini text-to-speech error:", message);
-      return res.status(500).json({ message, status: false });
+      console.error("OpenAI transcription failed:", error.status || error.code || "request_failed");
+      return res.status(error.httpCode === 413 ? 413 : 502).json({ message: "Unable to transcribe audio. Please try again.", status: false });
+    } finally {
+      if (uploadedFile?.filepath) await fs.promises.unlink(uploadedFile.filepath).catch(() => {});
+    }
+  },
+  async textToSpeech(req, res) {
+    const text = req.body?.textInput;
+    if (typeof text !== "string" || !text.trim()) return res.status(400).json({ message: "textInput is required", status: false });
+    if (text.length > 4096) return res.status(400).json({ message: "textInput must not exceed 4096 characters", status: false });
+    try {
+      const audio = await interviewSpeech.speak(text.trim());
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).send(audio);
+    } catch (error) {
+      console.error("OpenAI speech generation failed:", error.status || error.code || "request_failed");
+      return res.status(502).json({ message: "Unable to generate speech. Please try again.", status: false });
     }
   },
 };

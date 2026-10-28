@@ -14,17 +14,8 @@ video-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":
 video-validation-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
 coding-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
 coding-validation-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
-video-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":673.5,"bottom":713.5}]}
-video-validation-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":749.5,"bottom":789.5}]}
-coding-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":748.5,"bottom":788.5}]}
-coding-validation-390 {"height":844,"scroll":918,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":834.5,"bottom":874.5}]}
-AssertionError [ERR_ASSERTION]: page overflow coding-validation-390
-    at measure (D:\GitHub\skillstream\.ui-test-cache\check-setup-layout.cjs:10:612)
-    at async D:\GitHub\skillstream\.ui-test-cache\check-setup-layout.cjs:11:763 {
-  generatedMessage: false,
-  code: 'ERR_ASSERTION',
-  actual: false,
-  expected: true,
-  operator: '==',
-  diff: 'simple'
-}
+video-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":610,"bottom":650}]}
+video-validation-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":661.1875,"bottom":701.1875}]}
+coding-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":683,"bottom":723}]}
+coding-validation-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":728.1875,"bottom":768.1875}]}
+COMPLETE []
