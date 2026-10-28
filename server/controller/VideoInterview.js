@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const OpenAI = require("openai");
 const formidable = require("formidable");
+const { ensureInterviewUploadDirectory } = require("../services/interviewUploadDirectory");
 const employerModel = require("../models/employerModel");
 const mongoose = require("mongoose");
 const speechFile = path.resolve("./audio/speech.mp3");
@@ -1562,7 +1563,7 @@ const controller = {
         multiples: true,
         keepExtensions: true,
         useTempFiles: true,
-        uploadDir: "/data/upload",
+        uploadDir: ensureInterviewUploadDirectory(),
         // maxFileSize: 3000 * 1024 * 1024, // 3000MB (3GB)
         // uploadDir: "/data/upload",
         maxFileSize: 4 * 1024 * 1024 * 1024, // 12 GB
@@ -2265,7 +2266,7 @@ const controller = {
         multiples: true,
         keepExtensions: true,
         useTempFiles: true,
-        uploadDir: "/data/upload",
+        uploadDir: ensureInterviewUploadDirectory(),
         maxFileSize: 4 * 1024 * 1024 * 1024, // 12 GB
       });
 

@@ -61,6 +61,8 @@ const secureRequestLogger = require("./middleware/secureRequestLogger");
 // This route must receive the exact raw bytes for Stripe signature verification.
 app.post("/api/v1/practiceInterview/payments/webhook",
   express.raw({ type: "application/json" }), require("./services/practiceBilling").webhook);
+// Own JSON/CORS handling allows demo forms on independently hosted websites.
+app.use("/api/demo-booking", require("./router/demoBooking")());
 app.use(express.json());
 app.use(bodyParser.json());
 const allowedOrigins = [
