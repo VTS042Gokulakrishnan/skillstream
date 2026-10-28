@@ -4,12 +4,13 @@ import axios from "axios";
 import { Helmet } from "react-helmet";
 import { Server } from "../../App";
 import { BriefcaseBusiness, Landmark, House, Users, TrendingUp, Calculator, FileText, MessageSquare, BookOpen, Video, Code2, Search, Check, ArrowRight } from "lucide-react";
-const iconMap = {laptop:BriefcaseBusiness,bank:Landmark,home:House,people:Users,chart:TrendingUp,calculator:Calculator,boost:FileText,chat:MessageSquare,learn:BookOpen,video:Video,code:Code2,search:Search};
-const CareerIcon = ({name}) => React.createElement(iconMap[name] || BriefcaseBusiness, {className:"cl-icon",strokeWidth:1.6,"aria-hidden":true});
 import heroPhoto from "../../assets/landing-professional-hero.png";
 import logo from "../../assets/logo-twos.png";
 import "./CandidateLanding.css";
 import "./CandidateLandingPremium.css";
+
+const iconMap = {laptop:BriefcaseBusiness,bank:Landmark,home:House,people:Users,chart:TrendingUp,calculator:Calculator,boost:FileText,chat:MessageSquare,learn:BookOpen,video:Video,code:Code2,search:Search};
+const CareerIcon = ({name}) => React.createElement(iconMap[name] || BriefcaseBusiness, {className:"cl-icon",strokeWidth:1.6,"aria-hidden":true});
 
 const categories = [["IT", "laptop"], ["Banking", "bank"], ["Work From Home", "home"], ["HR", "people"], ["Sales", "chart"], ["Accounting", "calculator"]];
 const faqs = [

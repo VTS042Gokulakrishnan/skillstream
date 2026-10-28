@@ -102,4 +102,13 @@ const userSchema = new schema(
   { timestamps: true }
 );
 
+// Legacy records can contain negative balances from older deduction logic.
+// Repair in MongoDB so a login cannot overwrite concurrently purchased credits.
+userSchema.statics.recordLogin = function (candidateId) {
+  return this.updateOne({ _id: candidateId }, {
+    $set: { lastLoggedIn: new Date() },
+    $max: { practiceInterviewCount: 0, codingPracticeInterviewCount: 0 },
+  }, { runValidators: true });
+};
+
 module.exports = mongoose.model("Candidate", userSchema);

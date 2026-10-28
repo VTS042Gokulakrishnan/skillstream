@@ -1863,8 +1863,7 @@ const controller = {
                   secure: true,
                   maxAge: 24 * 60 * 60 * 1000,
                 });
-                findUser.lastLoggedIn = new Date();
-                await findUser.save();
+                await usermodel.recordLogin(findUser._id);
 
                 res.status(200).json({
                   message: "Login Successfully",
@@ -2329,8 +2328,7 @@ const controller = {
               secure: true,
               maxAge: 24 * 60 * 60 * 1000,
             });
-            isUserExists.lastLoggedIn = new Date();
-            await isUserExists.save();
+            await usermodel.recordLogin(isUserExists._id);
             res.status(200).json({
               message: "Login Successfully",
               userId: isUserExists.userId,
@@ -2953,8 +2951,7 @@ const controller = {
               status: false,
             });
           }
-          user.lastLoggedIn = new Date();
-          await user.save();
+          await usermodel.recordLogin(user._id);
           return res.status(200).json({
             message: "Login Successfully",
             userId: user.userId,

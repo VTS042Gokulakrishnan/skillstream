@@ -54,6 +54,28 @@ const paidSession = (plan = "pack3", id = randomUUID()) => ({ id: `cs_test_${id}
   currency: "usd", amount_total: plan === "pack3" ? 1999 : plan === "pack5" ? 2949 : 9900,
   metadata: { purpose: "candidate-practice-v1", candidateId: String(candidate._id), practicePlan: plan } });
 
+test("login repairs legacy balances and preserves credits added after the candidate was read", async () => {
+  await Candidate.collection.updateOne({ _id: candidate._id }, {
+    $set: { practiceInterviewCount: -14, codingPracticeInterviewCount: -2 },
+  });
+  const stale = await Candidate.findById(candidate._id);
+  await assert.rejects(stale.validate(), /less than minimum allowed value/);
+  await Candidate.recordLogin(stale._id);
+  let stored = await read();
+  assert.equal(stored.practiceInterviewCount, 0);
+  assert.equal(stored.codingPracticeInterviewCount, 0);
+  assert.ok(stored.lastLoggedIn instanceof Date);
+  assert.equal(stored.practicePurchased, false);
+
+  await Candidate.updateOne({ _id: candidate._id }, {
+    $inc: { practiceInterviewCount: 3, codingPracticeInterviewCount: 5 },
+  });
+  await Candidate.recordLogin(stale._id);
+  stored = await read();
+  assert.equal(stored.practiceInterviewCount, 3);
+  assert.equal(stored.codingPracticeInterviewCount, 5);
+});
+
 async function grantDemo(count = 10) {
   await Candidate.updateOne({ _id: candidate._id }, { $set: { practiceDemoAccess: {
     enabled: true, grantId: randomUUID(), grantedAt: new Date(),
