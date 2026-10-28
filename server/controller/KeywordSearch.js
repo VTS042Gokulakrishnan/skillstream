@@ -1,3 +1,4 @@
+const { booleanSearch } = require("../services/booleanSearch");
 const { availableJobStages } = require("../services/jobAvailability");
 const { json } = require("express");
 const usermodel = require("../models/candidateModel");
@@ -27,100 +28,6 @@ const controller = {
     try {
       const { keyword, jobTitle, country, city, state, distance } = req.body;
       console.log(req.body);
-      const parseQuery = (query) => {
-        const tokens = [];
-        const phraseRegex = /"([^"]+)"/g;
-        let match;
-
-        // Extract phrases in quotes
-        while ((match = phraseRegex.exec(query)) !== null) {
-          tokens.push({ type: "PHRASE", value: match[1], exact: true });
-        }
-
-        // Remove phrases from the query string
-        let remainingQuery = query.replace(phraseRegex, "").trim();
-
-        // Tokenize the remaining query based on boolean operators
-        const boolTokens = remainingQuery
-          .split(/(\sAND\s|\sOR\s|\sNOT\s|\(|\))/i)
-          .filter(Boolean)
-          .map((token) => token.trim().toUpperCase());
-
-        tokens.push(...boolTokens);
-
-        return tokens;
-      };
-
-      // Function to construct the MongoDB query structure from tokens
-      const constructBooleanQuery = (tokens, path, isFuzzy) => {
-        const queryStack = [];
-        const operatorStack = [];
-
-        // Helper functions
-        const applyOperator = () => {
-          const operator = operatorStack.pop();
-          const right = queryStack.pop();
-          const left = queryStack.pop();
-
-          if (operator === "AND") {
-            queryStack.push({
-              compound: {
-                must: [left, right],
-              },
-            });
-          } else if (operator === "OR") {
-            queryStack.push({
-              compound: {
-                should: [left, right],
-              },
-            });
-          } else if (operator === "NOT") {
-            queryStack.push({
-              compound: {
-                mustNot: [right],
-              },
-            });
-          }
-        };
-
-        for (let token of tokens) {
-          if (token === "(") {
-            operatorStack.push(token);
-          } else if (token === ")") {
-            while (
-              operatorStack.length > 0 &&
-              operatorStack[operatorStack.length - 1] !== "("
-            ) {
-              applyOperator();
-            }
-            operatorStack.pop(); // Remove the '(' from the stack
-          } else if (["AND", "OR", "NOT"].includes(token)) {
-            operatorStack.push(token);
-          } else {
-            // It's a search term (could be a word or phrase)
-            const query = {
-              text: {
-                path,
-                query: token,
-              },
-            };
-
-            // Add fuzzy search only if isFuzzy is true
-            if (isFuzzy) {
-              query.text.fuzzy = {};
-            }
-
-            queryStack.push(query);
-          }
-        }
-
-        // Apply remaining operators
-        while (operatorStack.length > 0) {
-          applyOperator();
-        }
-
-        return queryStack.length > 0 ? queryStack[0] : null;
-      };
       const JobparseQuery = (query) => {
         // Handle exact phrases enclosed in double quotes
         const phraseRegex = /"([^"]+)"/g;
@@ -427,12 +334,7 @@ const controller = {
       // }
       // Keyword Search with fuzzy
       if (keyword) {
-        const keywordTokens = parseQuery(keyword);
-        const keywordQuery = constructBooleanQuery(
-          keywordTokens,
-          "skills",
-          false
-        ); // Fuzzy allowed for skills
+        const keywordQuery = booleanSearch(keyword, "skills");
         if (keywordQuery) {
           mustQueries.push(keywordQuery);
         }
@@ -545,6 +447,7 @@ const controller = {
         res.status(404).json({ message: "No results Found", status: false });
       }
     } catch (error) {
+      if (error instanceof SyntaxError) return res.status(400).json({ message: error.message, status: false });
       console.error("Error during candidate search:", error);
       res.status(500).json({ error: "Internal Server Error", status: false });
     }

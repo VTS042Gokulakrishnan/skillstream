@@ -1,0 +1,10 @@
+/shortlisted-resumes 1440 {"width":1440,"scroll":1440,"title":"Shortlisted resumes","logo":494,"searchDirection":"row","content":"Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\n1\nshortlist"}
+/shortlisted-resumes 390 {"width":390,"scroll":390,"title":"Shortlisted resumes","logo":494,"searchDirection":"row","content":"Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\n1\nshortlist"}
+/interview-candidates 1440 {"width":1440,"scroll":1440,"title":"Interviewed candidates","logo":494,"searchDirection":"row","content":"Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nVideo Round"}
+/interview-candidates 390 {"width":390,"scroll":390,"title":"Interviewed candidates","logo":494,"searchDirection":"row","content":"Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nVideo Round"}
+/employer-dashboard 1440 {"width":1440,"scroll":1440,"title":"Hiring overview","logo":494,"searchDirection":"row","content":"Jobs posted\n2\nApplicants\n3\nShortlisted\n2\nInterviews\n1\nApplication trend\nAll\nApplied candid"}
+/employer-dashboard 390 {"width":390,"scroll":390,"title":"Hiring overview","logo":494,"searchDirection":"row","content":"Jobs posted\n2\nApplicants\n3\nShortlisted\n2\nInterviews\n1\nApplication trend\nAll\nApplied candid"}
+/aiFitment 1440 {"width":1440,"scroll":1440,"title":"AI fitment analysis","logo":494,"searchDirection":"row","content":"AI-ASSISTED REVIEW\nResume meets requirements\n\nAdd the role and candidate resume to compare"}
+/aiFitment 390 {"width":390,"scroll":390,"title":"AI fitment analysis","logo":494,"searchDirection":"row","content":"AI-ASSISTED REVIEW\nResume meets requirements\n\nAdd the role and candidate resume to compare"}
+SETUP { opacity: '1', animation: 'none' }
+RESULTS 8 screens; errors 0 overflow []

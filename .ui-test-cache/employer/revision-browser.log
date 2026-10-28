@@ -1,0 +1,17 @@
+PASS Resume search cancellation and restart
+PASS independent Boolean and multiselect
+PASS AI cancellation, restart and icon
+PREVIEW /applicants
+PASS preview drawer and failure state /applicants
+PREVIEW /shortlisted-resumes
+PASS preview drawer and failure state /shortlisted-resumes
+PREVIEW /interview-candidates
+PASS preview drawer and failure state /interview-candidates
+PREVIEW /savedResume
+PASS preview drawer and failure state /savedResume
+PASS actual pdf render
+PASS actual docx render
+Error: No element found for selector: .ss-site-menu-toggle
+    at assert (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\util\assert.js:18:15)
+    at CdpFrame.click (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\Frame.js:751:40)
+    at async D:\GitHub\skillstream\.ui-test-cache\employer\check-revision.cjs:80:308

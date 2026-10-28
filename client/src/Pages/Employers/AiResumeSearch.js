@@ -1,3 +1,5 @@
+import BrandLoader from "../../Components/Loader/BrandLoader";
+import EmployerAvatar from "../../Components/EmployerUI/EmployerAvatar";
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import {
@@ -11,6 +13,7 @@ import {
   Modal,
   Spin,
   Typography,
+  Tooltip,
   Card,
   List,
   Dropdown,
@@ -31,7 +34,6 @@ import "jspdf-autotable";
 import { jwtDecode } from "jwt-decode";
 import ForwardMail from "Components/ForwardMail";
 import Mail from "../../Components/Mail";
-import ProgressLoader from "Components/Loader/ProgressLoader/Loader";
 import ReCAPTCHA from "react-google-recaptcha";
 import ResumePreviewDrawer from "Components/ReaderDrawer/ResumePreviewDrawer";
 import SubscriptionGuard from "Components/SubscriberCheckWrapper/SubscriptionGuard";
@@ -170,6 +172,9 @@ const AiResumeSearch = () => {
   const [searchedColumn, setSearchedColumn] = useState("");
   const [selectedAction, setSelectedAction] = useState("none");
   const [loading, setLoading] = useState(false);
+  const searchRequest = useRef(null);
+  useEffect(() => () => searchRequest.current?.abort(), []);
+  const stopSearch = () => { searchRequest.current?.abort(); searchRequest.current = null; setLoading(false); setStatus("Stopped"); };
   const [loader, setLoader] = useState(false);
   const [Bloader, setBLoader] = useState(false);
   const searchInput = useRef(null);
@@ -399,6 +404,9 @@ const AiResumeSearch = () => {
   }, []);
 
   const SearchWithAI = async (tokenFromCaptcha) => {
+    searchRequest.current?.abort();
+    const request = new AbortController();
+    searchRequest.current = request;
     // console.log("loading");
 
     try {
@@ -421,18 +429,20 @@ const AiResumeSearch = () => {
           `${Server}/api/v1/search/keyword/ai/search/candidate`,
           formData,
           {
+            signal: request.signal,
             headers: {
               Authorization: `Bearer ${token}`,
             },
           },
         );
-        // console.log(data.candidates);
+        if (request.signal.aborted || searchRequest.current !== request) return;
         data?.candidates?.sort((a, b) => a.rank - b.rank);
         let candidates = [];
         data?.candidates?.map((e, idx) =>
           candidates.push({
             key: idx,
             rank: e.rank,
+            image: e.image,
             name: e.name ? e.name : "User",
             position: e.jobTitle,
             experience: e.experience,
@@ -457,8 +467,9 @@ const AiResumeSearch = () => {
         // console.log("Completed");
       }
     } catch (error) {
+      if (request.signal.aborted || axios.isCancel(error) || searchRequest.current !== request) return;
       // console.log(error);
-      if (error.response.data.message === "No results Found") {
+      if (error.response?.data?.message === "No results Found") {
         setLoading(false);
         setStatus("Completed");
         setResumes([]);
@@ -1192,7 +1203,7 @@ const AiResumeSearch = () => {
       key: "rank",
       // sorter: (a, b) => a.rank.localeCompare(b.rank),
       // // ...getColumnSearchProps("rank"),
-      width: "8%", // Adjusted width
+      width: 64,
     },
     {
       title: "Name",
@@ -1200,15 +1211,16 @@ const AiResumeSearch = () => {
       key: "name",
       sorter: (a, b) => a.name.localeCompare(b.name),
       ...getColumnSearchProps("name"),
-      width: "15%", // Adjusted width
+      render: (name, record) => <div className="em-resume-name"><EmployerAvatar src={record.image} name={name} size={40} /><strong>{name}</strong></div>,
+      width: 200,
     },
     {
       title: "Position",
       dataIndex: "position",
       key: "position",
-      sorter: (a, b) => a.jobTitle.localeCompare(b.jobTitle),
+      sorter: (a, b) => String(a.position || "").localeCompare(String(b.position || "")),
       ...getColumnSearchProps("position"),
-      width: "15%", // Adjusted width
+      width: 220,
     },
     {
       title: "Experience",
@@ -1220,29 +1232,34 @@ const AiResumeSearch = () => {
         return yearsA - yearsB;
       },
       ...getColumnSearchProps("experience"),
-      width: "10%", // Adjusted width
+      width: 120,
     },
     {
       title: "Country",
       dataIndex: "location",
       key: "location",
-      width: "15%", // Adjusted width
+      width: 140,
     },
     {
       title: "State",
       dataIndex: "state",
       key: "state",
-      width: "15%", // Adjusted width
+      width: 140,
     },
     {
       title: "City",
       dataIndex: "city",
       key: "city",
+      width: 150,
+      className: "em-ai-location-cell",
     },
     {
       title: "Work Authorization",
       dataIndex: "workAuthorization",
       key: "workAuthorization",
+      width: 180,
+      className: "em-ai-location-cell",
+      render: value => value || "Not provided",
     },
     {
       title: "Score",
@@ -1270,11 +1287,13 @@ const AiResumeSearch = () => {
         </div>
       ),
       // sorter: (a, b) => a.score - b.score,
-      width: "15%", // Adjusted width
+      width: 130,
     },
     {
       title: "Action",
       key: "action",
+      width: 180,
+      fixed: "right",
       render: (_, record) => {
         const fileExtension = record?.resume?.split(".").pop().toLowerCase();
         const isDocx = fileExtension === "docx";
@@ -1308,19 +1327,9 @@ const AiResumeSearch = () => {
                 </Button>
               </>
             ) : (
-              <Button onClick={() => handleModalOk(record)} disabled={loader}>
-                {record.isAnalysing === "Analysing" ? (
-                  <>
-                    <LoadingOutlined />
-                    <span>Analysing</span>
-                  </>
-                ) : (
-                  <>
-                    <SearchOutlined />
-                    <span>Analyse</span>
-                  </>
-                )}
-              </Button>
+              <Tooltip title={record.isAnalysing === "Analysing" ? "Analysing" : "Analyse"}>
+                <Button aria-label="Analyse" onClick={() => handleModalOk(record)} disabled={loader} icon={record.isAnalysing === "Analysing" ? <BrandLoader size="button" label="" /> : <SearchOutlined />} />
+              </Tooltip>
             )}
           </Space>
         );
@@ -1333,7 +1342,7 @@ const AiResumeSearch = () => {
       key: "lastUpdated",
       sorter: (a, b) => new Date(a.lastUpdated) - new Date(b.lastUpdated),
       ...getColumnSearchProps("lastUpdated"),
-      width: "15%", // Adjusted width
+      width: 180,
    */
     },
   ];
@@ -1427,7 +1436,7 @@ const AiResumeSearch = () => {
     <Menu>
       {jobs.map((e, idx) => (
         <Menu.Item key={`1-${idx + 1}`}>
-          <Button loading={Bloader} onClick={() => shortlistedJob(e)}>
+          <Button disabled={Bloader} icon={Bloader ? <BrandLoader size="button" label="" /> : undefined} onClick={() => shortlistedJob(e)}>
             {e?.JobTitle}
           </Button>
         </Menu.Item>
@@ -1510,57 +1519,8 @@ const AiResumeSearch = () => {
 
   return (
     <SubscriptionGuard>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "20px",
-          backgroundColor: "#f9f9f9",
-        }}
-      >
+      <div className="em-ai-search">
         <Toaster position="top-center" reverseOrder={false} />
-
-        <h2
-          style={{
-            position: "relative",
-            fontSize: "24px",
-            fontWeight: "bold",
-            width: "100%",
-            height: "150px",
-            marginBottom: "20px",
-            padding: "10px 20px",
-            backgroundImage:
-              "linear-gradient(45deg, #0A0A23, #000000 40%, #1E90FF 80%)",
-            color: "white",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            borderRadius: "5px",
-          }}
-        >
-          <span
-            onClick={() => navigate("/employer-dashboard")}
-            style={{
-              position: "absolute",
-              top: "15px",
-              left: "20px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              color: "#1E90FF",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "rgba(255,255,255,0.1)",
-              padding: "4px 10px",
-              borderRadius: "8px",
-            }}
-          >
-            <ArrowLeftOutlined style={{ marginRight: "5px" }} />
-            Back
-          </span>
-          AI Resume Search
-        </h2>
         {maintenanceMode ? (
           <>
             <Result
@@ -1589,7 +1549,7 @@ const AiResumeSearch = () => {
           </>
         ) : (
           <>
-            <div
+            <div className="em-ai-controls"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -1617,13 +1577,9 @@ const AiResumeSearch = () => {
                 ))}
               </Select>
 
-              <div className="loader-one">
+              <div className="ss-search-control">
                 {loading ? (
-                  <div>
-                    <span className="loader__inner1"></span>
-                    <span className="loader__inner1"></span>
-                    <span className="loader__text1">AI</span>
-                  </div>
+                  <Space><BrandLoader size="compact" label="Searching…" /><Button danger onClick={stopSearch}>Stop search</Button></Space>
                 ) : (
                   <Button
                     style={{
@@ -1651,13 +1607,14 @@ const AiResumeSearch = () => {
             </div>
 
             {status === "Pending" && (
-              <p style={{ padding: "100px", fontSize: "30px" }}>
+              <p className="em-card em-empty">
                 {" "}
                 Select a Job & Search With AI{" "}
               </p>
             )}
+            {status === "Stopped" && <p className="em-card" role="status">Search stopped. Select a job and search again when ready.</p>}
             {status === "Error" && (
-              <p style={{ padding: "100px", fontSize: "30px", color: "red" }}>
+              <p className="em-card em-empty" role="alert">
                 {" "}
                 Service Unavailable, Please try after some time!.
               </p>
@@ -1665,7 +1622,7 @@ const AiResumeSearch = () => {
             {status === "Searching" && (
               <div style={{ paddingTop: "100px", paddingBottom: "80px" }}>
                 {" "}
-                <ProgressLoader />
+                <BrandLoader label="Searching resumes…" />
               </div>
             )}
             {status === "Completed" && (
@@ -1721,6 +1678,8 @@ const AiResumeSearch = () => {
                   columns={columns}
                   dataSource={resumes}
                   pagination={{ pageSize: 10 }}
+                  tableLayout="fixed"
+                  scroll={{ x: 1676 }}
                   className="aiResumeSearch-table"
                   style={{}}
                 />
@@ -1810,7 +1769,7 @@ const AiResumeSearch = () => {
           centered
           styles={{ textAlign: "center" }}
         >
-          <Spin spinning={loading}>
+          <Spin spinning={loading} indicator={<BrandLoader size="compact" label="" />}>
             <div id="modal-content">
               {aiResult?.candidate_briefSummary ? (
                 <div>

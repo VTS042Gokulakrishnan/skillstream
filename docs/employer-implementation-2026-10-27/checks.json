@@ -1,0 +1,313 @@
+{
+  "results": [
+    {
+      "route": "/company-profile",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Edit company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "My Profile\nBrowse Logo\nMax file size is 1MB, Minimum dimension: 330x300 And Suitable files"
+    },
+    {
+      "route": "/company-profile",
+      "width": 390,
+      "scroll": 390,
+      "title": "Edit company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "My Profile\nBrowse Logo\nMax file size is 1MB, Minimum dimension: 330x300 And Suitable files"
+    },
+    {
+      "route": "/employer-view-profile",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AT\nAcme Technologies\n\nTechnology\n\nSan Francisco, California, United States\nWebsite\n51–200 "
+    },
+    {
+      "route": "/employer-view-profile",
+      "width": 390,
+      "scroll": 390,
+      "title": "Company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AT\nAcme Technologies\n\nTechnology\n\nSan Francisco, California, United States\nWebsite\n51–200 "
+    },
+    {
+      "route": "/candidates-list",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Resume search",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Boolean skill search\nAll these skills (AND)\nType or select skills\nAny of these skills (OR)"
+    },
+    {
+      "route": "/candidates-list",
+      "width": 390,
+      "scroll": 390,
+      "title": "Resume search",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Boolean skill search\nAll these skills (AND)\nType or select skills\nAny of these skills (OR)"
+    },
+    {
+      "route": "/aiSearch",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "AI resume search",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Select Job\nSearch with AI\n\nSelect a Job & Search With AI"
+    },
+    {
+      "route": "/aiSearch",
+      "width": 390,
+      "scroll": 390,
+      "title": "AI resume search",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Select Job\nSearch with AI\n\nSelect a Job & Search With AI"
+    },
+    {
+      "route": "/manage-jobs",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Manage jobs",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "My Job Listings\nMy Jobs\nOther Users Jobs\nActive\nInactive\nHold\nClosed\n\tTitle\tApplications\tC"
+    },
+    {
+      "route": "/manage-jobs",
+      "width": 390,
+      "scroll": 390,
+      "title": "Manage jobs",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "My Job Listings\nMy Jobs\nOther Users Jobs\nActive\nInactive\nHold\nClosed\nTitle\nApplications\nCr"
+    },
+    {
+      "route": "/savedResume",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Saved resumes",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Saved by job\nAll saved\n2\nSenior React Developer\n2\nProduct Designer\n0\n2 saved candidates\nAK"
+    },
+    {
+      "route": "/savedResume",
+      "width": 390,
+      "scroll": 390,
+      "title": "Saved resumes",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Saved by job\nAll saved\n2\nSenior React Developer\n2\nProduct Designer\n0\n2 saved candidates\nAK"
+    },
+    {
+      "route": "/employer-profile-view",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AT\nAcme Technologies\n\nTechnology\n\nSan Francisco, California, United States\nWebsite\n51–200 "
+    },
+    {
+      "route": "/employer-profile-view",
+      "width": 390,
+      "scroll": 390,
+      "title": "Company profile",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AT\nAcme Technologies\n\nTechnology\n\nSan Francisco, California, United States\nWebsite\n51–200 "
+    },
+    {
+      "route": "/resume-alerts",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Notifications",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Your activity\nMark all as read\nAll (1)\nUnread (1)\nApplications\nShortlists\nAisha Khan appli"
+    },
+    {
+      "route": "/resume-alerts",
+      "width": 390,
+      "scroll": 390,
+      "title": "Notifications",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Your activity\nMark all as read\nAll (1)\nUnread (1)\nApplications\nShortlists\nAisha Khan appli"
+    },
+    {
+      "route": "/globalSearch?keyword=React",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Search across SkillStream",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "All\nSearch\nShowing results for “React”\nCandidates\n2 found\nAK\nAisha Khan\nFrontend Developer"
+    },
+    {
+      "route": "/globalSearch?keyword=React",
+      "width": 390,
+      "scroll": 390,
+      "title": "Search across SkillStream",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "All\nSearch\nShowing results for “React”\nCandidates\n2 found\nAK\nAisha Khan\nFrontend Developer"
+    },
+    {
+      "route": "/post-job",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Post a new job",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Live job summary\n\nThis is how your job will appear to candidates.\n\nAUTO-UPDATING\nYour job "
+    },
+    {
+      "route": "/post-job",
+      "width": 390,
+      "scroll": 390,
+      "title": "Post a new job",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Live job summary\n\nThis is how your job will appear to candidates.\n\nAUTO-UPDATING\nYour job "
+    },
+    {
+      "route": "/allusers",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Users & permissions",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Team members 1\n+ Add user\nAll roles\nName\tEmail\tRole\tJobs\tActions\n\n \n\t\n \n\t\n \n\t\n \n\t\n \n\n\nT\nte"
+    },
+    {
+      "route": "/allusers",
+      "width": 390,
+      "scroll": 390,
+      "title": "Users & permissions",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Team members 1\n+ Add user\nAll roles\nName\tEmail\tRole\tJobs\tActions\n\n \n\t\n \n\t\n \n\t\n \n\t\n \n\n\nT\nte"
+    },
+    {
+      "route": "/employer-billing",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Billing",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Your current plan\n\nYour current plan status and key dates.\n\nActive\nRecommended Plan • Ends"
+    },
+    {
+      "route": "/employer-billing",
+      "width": 390,
+      "scroll": 390,
+      "title": "Billing",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Your current plan\n\nYour current plan status and key dates.\n\nActive\nRecommended Plan • Ends"
+    },
+    {
+      "route": "/applicants",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "All applicants",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nJob\nAll rol"
+    },
+    {
+      "route": "/applicants",
+      "width": 390,
+      "scroll": 390,
+      "title": "All applicants",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nJob\nAll rol"
+    },
+    {
+      "route": "/shortlisted-resumes",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Shortlisted resumes",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\n1\nshortlist"
+    },
+    {
+      "route": "/shortlisted-resumes",
+      "width": 390,
+      "scroll": 390,
+      "title": "Shortlisted resumes",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\n1\nshortlist"
+    },
+    {
+      "route": "/interview-candidates",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Interviewed candidates",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nVideo Round"
+    },
+    {
+      "route": "/interview-candidates",
+      "width": 390,
+      "scroll": 390,
+      "title": "Interviewed candidates",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Applicants\nVendor Job Applicant\nMy Jobs Applicants\nOther Users Jobs Applicants\nVideo Round"
+    },
+    {
+      "route": "/employer-dashboard",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Hiring overview",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Jobs posted\n2\nApplicants\n3\nShortlisted\n2\nInterviews\n1\nApplication trend\nAll\nApplied candid"
+    },
+    {
+      "route": "/employer-dashboard",
+      "width": 390,
+      "scroll": 390,
+      "title": "Hiring overview",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "Jobs posted\n2\nApplicants\n3\nShortlisted\n2\nInterviews\n1\nApplication trend\nAll\nApplied candid"
+    },
+    {
+      "route": "/aiFitment",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "AI fitment analysis",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AI-ASSISTED REVIEW\nResume meets requirements\n\nAdd the role and candidate resume to compare"
+    },
+    {
+      "route": "/aiFitment",
+      "width": 390,
+      "scroll": 390,
+      "title": "AI fitment analysis",
+      "logo": 494,
+      "searchDirection": "row",
+      "content": "AI-ASSISTED REVIEW\nResume meets requirements\n\nAdd the role and candidate resume to compare"
+    }
+  ],
+  "errors": [],
+  "profileGate": "passed",
+  "booleanSubmission": "passed"
+}

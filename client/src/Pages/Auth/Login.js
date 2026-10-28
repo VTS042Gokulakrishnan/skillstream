@@ -1,621 +1,88 @@
-import React, { useState, useEffect } from "react";
-import $ from "jquery";
-import { Button, Modal, Spin, ConfigProvider } from "antd";
+import React, { useRef, useState } from "react";
+import { Modal } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
-import Register from "./Register";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
-import ConfirmModal from "./ConfirmModal";
-import toast, { Toaster } from "react-hot-toast";
 import { Server } from "../../App";
 import Googlelogin from "./Googlelogin";
-import ForgotPassword from "./ForgotPassword";
 import MicrosoftLogin from "./MicrosoftLogin";
 import ReCAPTCHA from "react-google-recaptcha";
-const Login = (isModalOpen) => {
-  const [loading, setloading] = useState(false);
-  const [userType, setUserType] = useState("Candidate");
-  const navigate = useNavigate();
-  const [passwordVisible, setPasswordVisible] = useState(false);
+import logo from "../../assets/logo-twos.png";
+import { accountRole, loginDestination, saveSession } from "./authContext";
+import "../../Components/PublicSite/PublicSite.css";
+import "./Auth.css";
+
+export default function Login({ isModalOpen = true, setIsModalOpen, setModalType, initialRole, isVendor = false }) {
+  const location = useLocation(), navigate = useNavigate();
+  const role = accountRole(location.pathname, { initialRole, isVendor });
+  const [stage, setStage] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmModal, setConfirmModal] = useState(false);
-  const [forgotModal, setForgotModal] = useState(false);
-  const [close, setClose] = useState(false);
-  const [modalType, setModalType] = useState("login");
-  const [showCandidate, setShowCandidate] = useState(true);
-  const [showEmployer, setShowEmployer] = useState(true);
-  const [forgotLoader, setForgotLoader] = useState(false);
-  const [captchaValue, setCaptchaValue] = useState(null);
-  const handleCaptcha = (value) => {
-    setCaptchaValue(value);
+  const [confirm, setConfirm] = useState("");
+  const [otp, setOtp] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [captcha, setCaptcha] = useState(null);
+  const captchaRef = useRef(null);
+  const close = () => setIsModalOpen(false);
+  const changeStage = (next) => { setError(""); setNotice(""); setStage(next); setPassword(""); setConfirm(""); setCaptcha(null); };
+  const complete = (data) => {
+    saveSession(data);
+    close();
+    navigate(loginDestination(data, location));
   };
-
-  const location = useLocation();
-  useEffect(() => {
-    // console.log(isModalOpen.isVendor === true);
-    if (isModalOpen.initialRole) {
-      setUserType(isModalOpen.initialRole);
-      setShowCandidate(isModalOpen.initialRole === "Candidate");
-      setShowEmployer(isModalOpen.initialRole === "Employer");
-    } else if (
-      (location.pathname === "/" && !isModalOpen.isVendor) ||
-      location.pathname === "/practiceInterviewLanding" || location.pathname === "/pricing/candidate"
-    ) {
-      setShowCandidate(true);
-      setShowEmployer(false);
-      setUserType("Candidate");
-    } else if (
-      location.pathname === "/employers" || location.pathname === "/pricing/employer" ||
-      (location.pathname === "/pricing" && !isModalOpen.isVendor)
-    ) {
-      setShowCandidate(false);
-      setShowEmployer(true);
-      setUserType("Employer");
-    } else if (isModalOpen.isVendor === true) {
-      setShowCandidate(false);
-      setShowEmployer(false);
-      setUserType("Vendor");
-    } else {
-      setShowCandidate(true);
-      setShowEmployer(true);
-    }
-  }, [location.pathname, isModalOpen.isVendor]);
-
-  // const [confirmModal, setConfirmModal] = useState(false);
-  // const [signUpModalOpen, setsignUpModalOpen] = useState(false);
-
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  // const showModal = () => {
-  //   setIsModalOpen(true);
-
-  // };
-
-  // console.log(location.pathname);
-  const showModal = (type) => {
-    setModalType(type);
-    isModalOpen.setIsModalOpen(true);
-  };
-  const togglePasswordVisibility = () => {
-    setPasswordVisible((prev) => !prev);
-  };
-
-  const handleCancel = () => {
-    isModalOpen.setIsModalOpen(false);
-  };
-  const handleTypeToggle = (type) => {
-    setUserType(type);
-  };
-  // console.log(isModalOpen.setModalType);
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
+  const submit = async (event) => {
+    event.preventDefault();
+    if (busy) return;
+    setError(""); setNotice("");
+    if (stage === "login" && !captcha) return setError("Please complete the security check.");
+    if (stage === "reset" && password !== confirm) return setError("Passwords do not match.");
+    setBusy(true);
     try {
-      let data = {
-        email,
-        password,
-        role: userType,
-        region: "United States",
-        captcha: captchaValue,
-      };
-      if (email.length === 0) {
-        toast.error("Email Required");
-        setloading(false);
-        return;
-      } else if (password.length === 0) {
-        toast.error("Password Required");
-        setloading(false);
-        return;
-      } else if (!captchaValue) {
-        toast.error("Please verify the CAPTCHA");
-        setloading(false);
-        return;
+      if (stage === "login") {
+        const { data } = await axios.post(`${Server}/api/v1/auth/login`, { email: email.trim(), password, role, region: "United States", captcha });
+        if (data.message === "Login Successfully") complete(data);
+        else if (data.message === "Email Verification Pending") { setUserId(data.userId); setStage("confirm"); }
+        else setError(data.message || "Unable to sign in. Please try again.");
+      } else if (stage === "recover") {
+        const { data } = await axios.post(`${Server}/api/v1/password/forgotPassword`, { email: email.trim(), role, region: "United States" });
+        if (data.userId) { setUserId(data.userId); setStage("reset"); setNotice("Check your email for your password reset code."); }
+        else setNotice(data.message || "Check your email for password reset instructions.");
+      } else if (stage === "reset") {
+        await axios.post(`${Server}/api/v1/password/resetPassword/${userId}`, { password, securityCode: otp, region: "United States" });
+        changeStage("login"); setNotice("Password updated. Sign in with your new password.");
       } else {
-        setloading(true);
-        const response = await axios.post(`${Server}/api/v1/auth/login`, data);
-        // console.log(response);
-        if (response.data.message === "Login Successfully") {
-          toast.success(response.data.message);
-          if (response.data.role === "Candidate") {
-            setTimeout(() => {
-              if (
-                location.pathname === "/" ||
-                location.pathname === "/contact"
-              ) {
-                if (
-                  !response.data.profileCompleted ||
-                  !response.data.isResumeUploaded
-                ) {
-                  navigate(`/update-profile/${response.data.accessToken}`);
-                } else {
-                  navigate("/candidate-dashboard");
-                }
-              } else {
-                navigate(location.pathname);
-                window.location.reload();
-              }
-              let storeToken = localStorage.setItem(
-                "token",
-                response.data.accessToken
-              );
-              let storeRole = localStorage.setItem("Role", response.data.role);
-              let userId = localStorage.setItem("UserId", response.data.userId);
-              let profileCompleted = localStorage.setItem(
-                "ProfileCompleted",
-                response.data.profileCompleted
-              );
-              isModalOpen.setIsModalOpen(false);
-            }, 200);
-          } else if (response.data.role === "Employer") {
-            setTimeout(() => {
-              if (
-                location.pathname === "/" ||
-                location.pathname === "/contact"
-              ) {
-                if (!response.data.profileCompleted) {
-                  navigate(`/update-profile/${response.data.accessToken}`);
-                } else if (!response.data.subscribed) {
-                  navigate("/pricing");
-                } else {
-                  navigate("/employer-dashboard");
-                }
-              } else {
-                navigate(location.pathname);
-                window.location.reload();
-              }
-              isModalOpen.setIsModalOpen(false);
-              let storeToken = localStorage.setItem(
-                "token",
-                response.data.accessToken
-              );
-              let storeRole = localStorage.setItem("Role", response.data.role);
-              let userId = localStorage.setItem("UserId", response.data.userId);
-              let profileCompleted = localStorage.setItem(
-                "ProfileCompleted",
-                response.data.profileCompleted
-              );
-              let Subscribed = localStorage.setItem(
-                "Subscribed",
-                response.data.subscribed
-              );
-              let linkedInloggedIn = localStorage.setItem(
-                "linkedinAccessToken",
-                response.data.linkedInloggedIn
-              );
-            }, 200);
-          } else if (response.data.role === "Vendor") {
-            setTimeout(() => {
-              if (
-                location.pathname === "/" ||
-                location.pathname === "/contact"
-              ) {
-                if (!response.data.profileCompleted) {
-                  navigate(`/update-profile/${response.data.accessToken}`);
-                } else {
-                  navigate("/vendor/dashboard");
-                }
-              } else {
-                navigate(location.pathname);
-                window.location.reload();
-              }
-              let storeToken = localStorage.setItem(
-                "token",
-                response.data.accessToken
-              );
-              let storeRole = localStorage.setItem("Role", response.data.role);
-              let userId = localStorage.setItem("UserId", response.data.userId);
-              let profileCompleted = localStorage.setItem(
-                "ProfileCompleted",
-                response.data.profileCompleted
-              );
-              isModalOpen.setIsModalOpen(false);
-            }, 200);
-          }
-        } else if (response.data.message === "Email Verification Pending") {
-          toast.error(response.data.message);
-          setTimeout(() => {
-            isModalOpen.setIsModalOpen(false);
-            isModalOpen.setConfirmModal(true);
-          }, 300);
-
-          let userId = localStorage.setItem("UserId", response.data.userId);
-          let storeRole = localStorage.setItem("Role", response.data.role);
-          let profileCompleted = localStorage.setItem(
-            "ProfileCompleted",
-            response.data.profileCompleted
-          );
-        }
+        await axios.post(`${Server}/api/v1/auth/register/confirmation/resend`, { userId, role, region: "United States" });
+        setNotice("Verification email sent. Follow the link in your email, then sign in.");
       }
-      setloading(false);
-
-      // isModalOpen.setModalType("login");
-    } catch (error) {
-      // console.log(error);
-      if (error.response) {
-        if (
-          error.response.data.message ===
-          "Profile Incomplete. Please update your profile."
-        ) {
-          toast.error(error.response.data.message);
-          if (error.response.data.role === "Candidate") {
-            localStorage.setItem(
-              "ResumeUploaded",
-              error.response.data.isResumeUploaded
-            );
-          } else if (error.response.data.role === "Employer") {
-            let linkedInloggedIn = localStorage.setItem(
-              "linkedinAccessToken",
-              error.response.data.linkedInloggedIn
-            );
-            let Subscribed = localStorage.setItem(
-              "Subscribed",
-              error.response.data.subscribed
-            );
-          }
-          let storeToken = localStorage.setItem(
-            "token",
-            error.response.data.accessToken
-          );
-          let storeRole = localStorage.setItem(
-            "Role",
-            error.response.data.role
-          );
-          let userId = localStorage.setItem(
-            "UserId",
-            error.response.data.userId
-          );
-          let profileCompleted = localStorage.setItem(
-            "ProfileCompleted",
-            error.response.data.profileCompleted
-          );
-          navigate(`/update-profile/${error.response.data.accessToken}`);
-          setloading(false);
-        } else {
-          toast(error.response.data.message, {
-            icon: "❌",
-          });
-          setloading(false);
-        }
-      } else {
-        toast.error("Internal server error");
-        setloading(false);
-      }
+    } catch (err) {
+      const data = err.response?.data;
+      if (stage === "login" && data?.message === "Profile Incomplete. Please update your profile." && data.accessToken) {
+        saveSession(data); close(); navigate(`/update-profile/${data.accessToken}`);
+      } else setError(data?.message || "Unable to connect. Please try again.");
+    } finally {
+      setBusy(false);
+      if (stage === "login") { setCaptcha(null); captchaRef.current?.reset(); }
     }
   };
-
-  const handleForgotPassword = async () => {
-    try {
-      setForgotLoader(true);
-      // console.log(email);
-      let data = {
-        email: email,
-        role: userType,
-        region: "United States",
-      };
-      if (email.length === 0) {
-        toast.error("Enter Registered Email");
-      } else {
-        // setloading(true);
-        const response = await axios.post(
-          `${Server}/api/v1/password/forgotPassword`,
-          data
-        );
-        // console.log(response);
-        if (response.data.message === "Password Reset LinK Sent to your Mail") {
-          toast.success("OTP has sent to your mail");
-          let userId = localStorage.setItem("UserId", response.data.userId);
-          let storeRole = localStorage.setItem("Role", response.data.role);
-          setTimeout(() => {
-            setForgotLoader(false);
-            isModalOpen.setIsModalOpen(false);
-            isModalOpen.setForgotModal(true);
-          }, 300);
-        }
-      }
-    } catch (error) {
-      // console.log(error);
-      setForgotLoader(false);
-      if (error.response) {
-        toast.error(error.response.data.message);
-      } else {
-        toast.error("Internal server error");
-      }
-    }
-  };
-  const { setIsModalOpen } = isModalOpen;
-  // console.log(setIsModalOpen);
-  return (
-    <div>
-      <Modal
-        centered
-        open={isModalOpen}
-        // onOk={handleOk}
-        onCancel={handleCancel}
-        footer={null}
-      >
-        {" "}
-        <Toaster position="top-center" reverseOrder={false} />
-        <div class="model">
-          <div id="login-modal">
-            <div class="login-form default-form">
-              <div class="form-inner">
-                <h3>Login </h3>
-
-                <form onSubmit={handleLogin}>
-                  <div className="form-group">
-                    <div
-                      className="btn-box row"
-                      style={{ justifyContent: "center" }}
-                    >
-                      {showCandidate && !showEmployer && (
-                        <div className="col-12" style={{ textAlign: "center" }}>
-                          <button
-                            type="button"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: " #000",
-                              fontSize: "20px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              padding: "10px 20px",
-                              borderRadius: "5px",
-                            }}
-                            className={`plain-btn ${
-                              userType === "Candidate" ? "active" : ""
-                            }`}
-                            onClick={() => handleTypeToggle("Candidate")}
-                          >
-                            Candidate Login
-                          </button>
-                        </div>
-                      )}
-                      {!showCandidate && !showEmployer && (
-                        <div className="col-12" style={{ textAlign: "center" }}>
-                          <button
-                            type="button"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: " #000",
-                              fontSize: "20px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              padding: "10px 20px",
-                              borderRadius: "5px",
-                            }}
-                            className={`plain-btn ${
-                              userType === "Vendor" ? "active" : ""
-                            }`}
-                            onClick={() => handleTypeToggle("Vendor")}
-                          >
-                            Vendor Login
-                          </button>
-                        </div>
-                      )}
-                      {showEmployer && !showCandidate && (
-                        <div className="col-12" style={{ textAlign: "center" }}>
-                          <button
-                            type="button"
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: " #000",
-                              fontSize: "20px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
-                              padding: "10px 20px",
-                              borderRadius: "5px",
-                            }}
-                            className={`plain-btn ${
-                              userType === "Employer" ? "active" : ""
-                            }`}
-                            onClick={() => handleTypeToggle("Employer")}
-                          >
-                            Employer Login
-                          </button>
-                        </div>
-                      )}
-
-                      {showCandidate && showEmployer && (
-                        <>
-                          <div className="col-lg-6 col-md-12">
-                            <button
-                              type="button"
-                              className={`theme-btn btn-style-four ${
-                                userType === "Candidate" ? "active" : ""
-                              }`}
-                              onClick={() => handleTypeToggle("Candidate")}
-                            >
-                              <i className="la la-user"></i> Candidate
-                            </button>
-                          </div>
-                          <div className="col-lg-6 col-md-12">
-                            <button
-                              type="button"
-                              className={`theme-btn btn-style-four ${
-                                userType === "Employer" ? "active" : ""
-                              }`}
-                              onClick={() => handleTypeToggle("Employer")}
-                            >
-                              <i className="la la-briefcase"></i> Employer
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Email"
-                      onChange={(e) => setEmail(e.target.value)}
-                      value={email}
-                      // required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Password</label>
-                    <div className="password-input-group">
-                      <input
-                        id="password-field"
-                        type={passwordVisible ? "text" : "password"}
-                        name="password"
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="toggle-password"
-                        onClick={togglePasswordVisibility}
-                      >
-                        <FontAwesomeIcon
-                          icon={passwordVisible ? faEyeSlash : faEye}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <div class="field-outer">
-                      <div class="input-group checkboxes ">
-                        <div
-                          style={{
-                            transform: "scale(0.90)",
-                            transformOrigin: "0 0",
-                          }}
-                        >
-                          {" "}
-                          <ReCAPTCHA
-                            sitekey="6LcxaGYrAAAAAGEbS0IuB200lZKYBBbh4af426yP" // Replace with your real site key
-                            onChange={handleCaptcha}
-                          />
-                        </div>
-
-                        {/*<input
-                          type="checkbox"
-                          name="remember-me"
-                          value=""
-                          id="remember"
-                        />*/}
-                        {/*<label for="remember" class="remember">
-                          <span class="custom-checkbox"></span> Remember me
-                        </label>*/}
-                      </div>
-                      <a class="pwd" onClick={handleForgotPassword}>
-                        {forgotLoader ? <Spin /> : "Forgot Password ?"}
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="form-group">
-                    <button
-                      class="theme-btn btn-style-one"
-                      type="submit"
-                      // onClick={handleLogin}
-                      name="log-in"
-                      loading={loading}
-                      disabled={loading}
-                      style={{
-                        opacity: loading ? 0.6 : 1,
-                        cursor: loading ? "not-allowed" : "pointer",
-                        pointerEvents: loading ? "none" : "auto",
-                      }}
-                    >
-                      {loading ? (
-                        <ConfigProvider
-                          theme={{
-                            token: {
-                              colorPrimary: "black",
-                            },
-                          }}
-                        >
-                          <Spin />
-                        </ConfigProvider>
-                      ) : (
-                        "Login"
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                <div class="bottom-box">
-                  <div class="text">
-                    Don't have an account?{" "}
-                    <button
-                      onClick={() => {
-                        isModalOpen.setModalType("register");
-                      }}
-                      class="call-modal signup"
-                    >
-                      Signup
-                    </button>
-                    {forgotModal && (
-                      <ForgotPassword
-                        forgotModal={forgotModal}
-                        setForgotModal={setForgotModal}
-                        isModalOpen={isModalOpen.isModalOpen}
-                        setIsModalOpen={isModalOpen.setIsModalOpen}
-                        setModalType={setModalType}
-                      />
-                    )}
-                    {confirmModal && (
-                      <ConfirmModal
-                        confirmModal={confirmModal}
-                        setConfirmModal={setConfirmModal}
-                      />
-                    )}
-                  </div>
-                  <div class="divider">
-                    <span>or</span>
-                  </div>
-                  <div class="btn-box row">
-                    <div
-                      class="col-lg-12 col-md-12"
-                      style={{ paddingBottom: "12px" }}
-                    >
-                      {" "}
-                      <a class="theme-btn  facebook-btn">
-                        <MicrosoftLogin
-                          role={userType}
-                          region="United States"
-                        />
-                      </a>
-                    </div>
-                    <div class="col-lg-12 col-md-12">
-                      <a class="theme-btn  facebook-btn">
-                        <Googlelogin
-                          userType={userType}
-                          setIsModalOpen={isModalOpen.setIsModalOpen}
-                        />
-                      </a>
-                    </div>
-                  </div>
-                  {/*   <div class="btn-box row">
-                    <div class="col-lg-6 col-md-12">
-                      <a href="#" class="theme-btn social-btn-two facebook-btn">
-                        <i class="fab fa-facebook-f"></i> Log In via Facebook
-                      </a>
-                    </div>
-                    <div class="col-lg-6 col-md-12">
-                      <a href="#" class="theme-btn social-btn-two google-btn">
-                        <i class="fab fa-google"></i> Log In via Gmail
-                      </a>
-                    </div>
-                    </div>*/}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
+  const title = stage === "login" ? `Sign in to your ${role.toLowerCase()} account` : stage === "recover" ? "Forgot your password?" : stage === "reset" ? "Set a new password" : "Confirm your email";
+  return <Modal open={!!isModalOpen} onCancel={close} footer={null} width={500} className="ss-auth-modal" title={<><img className="ss-auth-brand" src={logo} alt="SkillStream" /><span className="ss-auth-heading">{title}</span></>}>
+    <div className="ss-public">
+      <p>{stage === "login" ? (role === "Vendor" ? "Welcome back. Connect with your hiring partners." : role === "Employer" ? "Welcome back. Your next great hire starts here." : "Welcome back. Take the next step in your career.") : stage === "recover" ? `Enter the email for your ${role.toLowerCase()} account.` : stage === "reset" ? "Enter the code from your email and choose a new password." : "Verify your email address before signing in."}</p>
+      {error && <p className="ss-notice ss-error" role="alert">{error}</p>}
+      {notice && <p className="ss-notice" role="status">{notice}</p>}
+      <form className="ss-form" onSubmit={submit}>
+        {(stage === "login" || stage === "recover") && <label>Email<input autoFocus name="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>}
+        {stage === "reset" && <label>Verification code<input autoFocus name="otp" autoComplete="one-time-code" required value={otp} onChange={e => setOtp(e.target.value)} /></label>}
+        {(stage === "login" || stage === "reset") && <label>Password<div className="ss-auth-password"><input name="password" type={visible ? "text" : "password"} autoComplete={stage === "reset" ? "new-password" : "current-password"} required minLength={stage === "reset" ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} /><button type="button" aria-label={visible ? "Hide password" : "Show password"} onClick={() => setVisible(!visible)}>{visible ? "Hide" : "Show"}</button></div></label>}
+        {stage === "reset" && <label>Confirm password<input name="confirm" type="password" autoComplete="new-password" required minLength={8} value={confirm} onChange={e => setConfirm(e.target.value)} /></label>}
+        {stage === "login" && <><div className="ss-auth-help"><button type="button" className="ss-text-btn" onClick={() => changeStage("recover")}>Forgot password?</button></div><div className="ss-auth-captcha"><ReCAPTCHA ref={captchaRef} sitekey="6LcxaGYrAAAAAGEbS0IuB200lZKYBBbh4af426yP" onChange={setCaptcha} onExpired={() => setCaptcha(null)} onErrored={() => { setCaptcha(null); setError("The security check could not load. Please retry."); }} /></div></>}
+        <button type="submit" className="ss-btn ss-auth-submit" disabled={busy}>{busy ? "Please wait…" : stage === "login" ? "Sign in" : stage === "recover" ? "Send reset code" : stage === "reset" ? "Update password" : "Resend verification email"}</button>
+      </form>
+      {stage === "login" && <><div className="ss-auth-divider">or continue with</div><div className="ss-auth-social"><Googlelogin userType={role} setIsModalOpen={setIsModalOpen} onAuthenticated={complete} /><MicrosoftLogin role={role} region="United States" onAuthenticated={complete} /></div>{role !== "Vendor" && <p className="ss-auth-bottom">New to SkillStream? <button className="ss-text-btn" type="button" onClick={() => setModalType("register")}>Create {role.toLowerCase()} account</button></p>}</>}
+      {stage !== "login" && <p className="ss-auth-bottom"><button className="ss-text-btn" type="button" onClick={() => changeStage("login")}>Back to {role.toLowerCase()} sign in</button></p>}
     </div>
-  );
-};
-
-export default Login;
+  </Modal>;
+}

@@ -1,3 +1,6 @@
+import brandLogo from "../../../assets/logo-twos.png";
+import HeaderDemo from "../../../Components/Header/HeaderDemo";
+import "../../../Components/EmployerUI/EmployerWorkspace.css";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Steps,
@@ -1060,20 +1063,6 @@ function EmployerUpdateProfile({ token, decoded }) {
     useLocationMasters(Server, "United States");
 
   const [loading, setLoading] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const [completedText, setCompletedText] = useState("");
-  const [countdown, setCountdown] = useState(7);
-
-  if (completed) {
-    return (
-      <SuccessResult
-        role={role}
-        completedText={completedText}
-        countdown={countdown}
-        navigate={navigate}
-      />
-    );
-  }
 
   const onFinish = async (values) => {
     try {
@@ -1086,18 +1075,25 @@ function EmployerUpdateProfile({ token, decoded }) {
         city: values.city,
         primaryIndustry: values.primaryIndustry,
         phone: values.phone,
+        website: values.website,
+        foundedIn: values.foundedIn,
+        teamSize: values.teamSize,
+        description: values.description,
+        address: values.completeAddress,
         profileCompleted: true,
       };
 
-      await axios.post(`${Server}/api/v1/employer/update/${userId}`, payload, {
+      const saved = await axios.post(`${Server}/api/v1/employer/update/${userId}`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      localStorage.setItem("ProfileCompleted", "True");
-      setCompletedText("Your Details has updated successfully.");
-      setCompleted(true);
-
-      startRedirectCountdown({ role, navigate, setCountdown, seconds: 7 });
+      if (saved.data.profileCompleted !== true) throw new Error("Profile completion was not confirmed");
+      localStorage.setItem("token", token);
+      localStorage.setItem("Role", "Employer");
+      localStorage.setItem("UserId", userId);
+      localStorage.setItem("ProfileCompleted", "true");
+      window.dispatchEvent(new Event("skillstream-auth"));
+      navigate("/employer-dashboard", { replace: true });
     } catch (e) {
       message.error("Failed to update employer profile");
     } finally {
@@ -1106,17 +1102,12 @@ function EmployerUpdateProfile({ token, decoded }) {
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: "0 auto" ,marginTop:"100px"}}>
-      <Title level={3} style={{ textAlign: "center" }}>
-        Welcome to Skillstream AI
-      </Title>
-      <Paragraph style={{ textAlign: "center" }}>
-        Thank you for registering with Skill Stream. Updating your profile helps
-        job seekers learn more about your company and the opportunities you
-        offer.
-      </Paragraph>
-
-      <Form form={form} layout="vertical" onFinish={onFinish}>
+    <div className="em-setup">
+      <header><img src={brandLogo} alt="SkillStream" /></header>
+      <main className="em-setup-main">
+        <div className="em-setup-heading"><h1>Complete your profile</h1><p>Complete your profile to unlock your employer workspace.</p><span className="em-setup-lock">Workspace access is locked until setup is complete.</span></div>
+        <Form className="em-setup-form" form={form} layout="vertical" onFinish={onFinish}>
+          <h2>Company details</h2><p>Tell us about your company to set up your employer workspace.</p>
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <Form.Item
@@ -1154,6 +1145,10 @@ function EmployerUpdateProfile({ token, decoded }) {
             </Form.Item>
           </Col>
 
+          <Col xs={24} md={12}><Form.Item name="website" label="Website" rules={[{ type: "url", message: "Enter a valid website URL" }]}><Input placeholder="https://www.yourcompany.com" /></Form.Item></Col>
+          <Col xs={24} md={12}><Form.Item name="foundedIn" label="Established year"><Input placeholder="e.g. 2019" maxLength={4} /></Form.Item></Col>
+          <Col xs={24} md={12}><Form.Item name="teamSize" label="Team size"><Select placeholder="Select team size" options={["1 -20", "21-200", "201 - 500", "501 - 1000", "1001- 5000", "5000 +"].map(value => ({value,label:value}))} /></Form.Item></Col>
+          <Col span={24}><Form.Item name="description" label="Company description"><Input.TextArea rows={3} placeholder="Tell us about your company and the work you do." /></Form.Item><hr className="em-setup-divider" /><h2>Location</h2><p>Where is your company located?</p></Col>
           <Col xs={24} md={12}>
             <Form.Item
               name="country"
@@ -1192,12 +1187,12 @@ function EmployerUpdateProfile({ token, decoded }) {
               />
             </Form.Item>
           </Col>
+          <Col span={24}><Form.Item name="completeAddress" label="Address"><Input placeholder="Building, street and area" /></Form.Item></Col>
         </Row>
 
-        <Button type="primary" htmlType="submit" loading={loading} block>
-          Submit
-        </Button>
+        <div className="em-setup-actions"><Button type="primary" htmlType="submit" loading={loading}>Save &amp; continue →</Button></div>
       </Form>
+      </main>
     </div>
   );
 }
@@ -1391,7 +1386,8 @@ export default function UpdateProfile() {
   }
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: role === "Employer" ? 0 : 16 }}>
+      {role !== "Employer" && <HeaderDemo />}
       {role === "Candidate" && (
         <CandidateUpdateProfile token={token} decoded={decoded} />
       )}

@@ -1,0 +1,1 @@
+const fs=require('fs');const p='client/src/Pages/Candidates/CandidatesList.js';let s=fs.readFileSync(p,'utf8');s=s.replace('<Button disabled={loader} icon={loader ? <BrandLoader size="button" label="" /> : undefined} disabled={!jobs.length}>','<Button disabled={loader || !jobs.length} icon={loader ? <BrandLoader size="button" label="" /> : undefined}>');fs.writeFileSync(p,s);

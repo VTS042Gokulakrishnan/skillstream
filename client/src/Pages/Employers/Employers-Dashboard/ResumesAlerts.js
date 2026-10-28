@@ -1,170 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Skeleton } from "antd";
+import { Link } from "react-router-dom";
+import { Alert, Button, Skeleton, Tabs } from "antd";
+import { Bell } from "lucide-react";
 import { Server } from "../../../App";
-import { useNavigate, Link } from "react-router-dom";
-const ResumesAlerts = () => {
-  const [notifications, setNotifications] = useState([]);
-  const navigate = useNavigate();
-  let token = localStorage.getItem("token");
-
-  const getData = async () => {
-    try {
-      let userId = localStorage.getItem("UserId");
-
-      const { data } = await axios.get(`${Server}/api/v1/employer/${userId}`);
-      const sort = data?.Employer[0]?.notifications?.sort(
-        (a, b) => new Date(b.time) - new Date(a.time)
-      );
-      setNotifications(sort);
-      await axios.post(
-        `${Server}/api/v1/employer/read/notifications/${userId}`,
-        {}, // empty body (since you're just updating read status)
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log(data?.Employer[0]?.notifications);
-      // countJobsByMonth(data.Employer[0].jobs);
-    } catch (error) {
-      // console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, []);
-  return (
-    <div>
-      <section class="user-dashboard">
-        <div class="dashboard-outer">
-          <div class="upper-title-box">
-            <h3>Notifications</h3>
-          </div>
-
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="ls-widget">
-                <div class="tabs-box">
-                  <div class="widget-title">
-                    <h4>My Notifications</h4>
-                  </div>
-                  {notifications?.length === 0 ? (
-                    <p style={{ textAlign: "center" }}>No Notifications</p>
-                  ) : (
-                    <div class="widget-content">
-                      <div class="table-outer">
-                        <table class="default-table manage-job-table">
-                          <thead>
-                            <tr>
-                              <th>Alerts</th>
-                              {/**
-        <th>Alert Query</th>
-        <th>Number Jobs</th>
-        <th>Times</th> */}
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {notifications?.map((alerts, idx) => (
-                              <>
-                                {alerts?.type === "Shortlist Job" ? (
-                                  <tr key={idx}>
-                                    <td>
-                                      <a
-                                      // onClick={() =>
-                                      //   navigate(
-                                      //     `/candidates-single/${alerts.userId}`
-                                      //   )
-                                      // }
-                                      >
-                                        <strong>{alerts.name}</strong>
-                                      </a>{" "}
-                                      shortlisted your job{" "}
-                                      <a
-                                        onClick={() => navigate(`/applicants`)}
-                                      >
-                                        <strong>{alerts?.JobTitle}</strong>
-                                      </a>{" "}
-                                    </td>
-
-                                    <td>
-                                      <div class="option-box">
-                                        <ul class="option-list">
-                                          <li>
-                                            <button
-                                              data-text="View Application"
-                                              onClick={() =>
-                                                navigate(`/applicants`)
-                                              }
-                                            >
-                                              <span class="la la-eye"></span>
-                                            </button>
-                                          </li>
-                                        </ul>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ) : (
-                                  <tr key={idx}>
-                                    <td>
-                                      <a
-                                      // onClick={() =>
-                                      //   navigate(
-                                      //     `/candidates-single/${alerts.userId}`
-                                      //   )
-                                      // }
-                                      >
-                                        <strong>{alerts.name}</strong>
-                                      </a>{" "}
-                                      applied for a Job{" "}
-                                      <a
-                                        onClick={() => navigate(`/applicants`)}
-                                      >
-                                        <strong>{alerts?.JobTitle}</strong>
-                                      </a>{" "}
-                                    </td>
-
-                                    <td>
-                                      <div class="option-box">
-                                        <ul class="option-list">
-                                          <li>
-                                            <button
-                                              data-text="View Application"
-                                              onClick={() =>
-                                                navigate(`/applicants`)
-                                              }
-                                            >
-                                              <span class="la la-eye"></span>
-                                            </button>
-                                          </li>
-                                        </ul>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                )}
-                              </>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="copyright-text">
-        <p>© 2024 Skill Stream. All Right Reserved.</p>
-      </div>
-    </div>
-  );
-};
-
-export default ResumesAlerts;
+export default function ResumesAlerts() {
+  const [notifications,setNotifications]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+  const [tab,setTab]=useState("all");
+  const [saving,setSaving]=useState(false);
+  const token=localStorage.getItem("token"),userId=localStorage.getItem("UserId");
+  const load=async()=>{setLoading(true);setError("");try{const {data}=await axios.get(`${Server}/api/v1/employer/${userId}`,{headers:{Authorization:`Bearer ${token}`}});setNotifications([...(data.Employer?.[0]?.notifications||[])].sort((a,b)=>new Date(b.time)-new Date(a.time)));}catch{setError("Unable to load notifications.");}finally{setLoading(false);}};
+  useEffect(()=>{load();},[]);
+  const markRead=async()=>{setSaving(true);try{await axios.post(`${Server}/api/v1/employer/read/notifications/${userId}`,{},{headers:{Authorization:`Bearer ${token}`}});setNotifications(items=>items.map(n=>({...n,read:true})));window.dispatchEvent(new Event("employer-notifications-read"));}catch{setError("Could not mark notifications as read. Please try again.");}finally{setSaving(false);}};
+  const unread=notifications.filter(n=>!n.read).length;
+  const filtered=notifications.filter(n=>tab === "all" || (tab === "unread" ? !n.read : tab === "shortlists" ? n.type === "Shortlist Job" : n.type !== "Shortlist Job"));
+  return <><div className="em-card"><div className="em-card-header"><h2>Your activity</h2><Button type="primary" loading={saving} disabled={!unread} onClick={markRead}>Mark all as read</Button></div><Tabs activeKey={tab} onChange={setTab} items={[{key:"all",label:`All (${notifications.length})`},{key:"unread",label:`Unread (${unread})`},{key:"applications",label:"Applications"},{key:"shortlists",label:"Shortlists"}]}/>{error && <Alert type="error" message={error} action={<Button onClick={load}>Retry</Button>}/>} {loading ? <Skeleton active/> : filtered.map((n,i)=><article className={`em-notification ${n.read ? "":"unread"}`} key={n._id || i}><span className="em-stat-icon"><Bell size={21}/></span><div><strong>{n.name || "Candidate"} {n.type === "Shortlist Job" ? "shortlisted your job":"applied for a job"}</strong><p>{n.JobTitle}</p></div><time>{Number.isFinite(new Date(n.time).getTime()) ? new Date(n.time).toLocaleString():""}</time><Link className="em-primary" to="/applicants">View application</Link></article>)}{!loading && !error && !filtered.length && <p className="em-empty">You’re all caught up. New hiring updates will appear here.</p>}</div></>;
+}

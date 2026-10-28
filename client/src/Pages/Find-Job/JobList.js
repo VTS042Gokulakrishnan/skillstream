@@ -6,6 +6,7 @@ import axios from "axios";
 import moment from "moment";
 import { Server } from "../../App";
 import "./JobList.css";
+import { PublicAuthDialogs, useSessionRole } from "../../Components/PublicSite/PublicHeader";
 
 const PAGE_SIZE = 5;
 const jobTypes = ["Full Time", "Part Time", "Contract", "Freelance", "Internship", "Temporary"];
@@ -20,12 +21,14 @@ export default function JobList() {
   const navigate = useNavigate();
   const location = useLocation();
   const userId = localStorage.getItem("UserId");
-  const role = localStorage.getItem("Role");
+  const role = useSessionRole();
   const isCandidate = role === "Candidate" && !!userId;
+  const [authModal, setAuthModal] = useState(null);
+  const urlSearch = new URLSearchParams(location.search);
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState({ ...emptySearch, jobTitle: location.state?.job || "", city: location.state?.City || "", state: location.state?.State || "", industry: location.state?.Industry || "" });
+  const [search, setSearch] = useState({ ...emptySearch, jobTitle: urlSearch.get("job") || location.state?.job || "", companyName: urlSearch.get("company") || "", city: urlSearch.get("City") || location.state?.City || "", state: urlSearch.get("State") || location.state?.State || "", industry: urlSearch.get("Industry") || location.state?.Industry || "", skills: urlSearch.getAll("skill") });
   const [activeSearch, setActiveSearch] = useState(null);
   const [types, setTypes] = useState([]);
   const [workModes, setWorkModes] = useState([]);
@@ -68,9 +71,6 @@ export default function JobList() {
   };
 
   useEffect(() => {
-    const initial = Object.fromEntries(Object.entries(search).filter(([, value]) => Array.isArray(value) ? value.length : String(value).trim()));
-    const query = Object.keys(initial).length ? initial : null;
-    setActiveSearch(query); loadJobs(query);
     if (isCandidate) axios.get(`${Server}/api/v1/candidate/preferences/locations`, auth())
       .then(({ data }) => setSavedLocations(data.preferred_locations || []))
       .catch(() => setPreferencesError("Unable to load saved locations. Please sign in again or retry."));
@@ -80,6 +80,17 @@ export default function JobList() {
     return () => { requestVersion.current++; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const nextSearch = { ...emptySearch, jobTitle: params.get("job") || location.state?.job || "", companyName: params.get("company") || "", city: params.get("City") || location.state?.City || "", state: params.get("State") || location.state?.State || "", industry: params.get("Industry") || location.state?.Industry || "", skills: params.getAll("skill") };
+    setSearch(nextSearch);
+    const values = Object.fromEntries(Object.entries(nextSearch).filter(([, value]) => Array.isArray(value) ? value.length : !!value));
+    const query = Object.keys(values).length ? values : null;
+    setActiveSearch(query); loadJobs(query);
+    // Search is tied to browser history, including refresh and back/forward.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, location.state, role]);
 
   useEffect(() => {
     if (!prefState) { setPrefCities([]); return; }
@@ -107,19 +118,29 @@ export default function JobList() {
       const { data } = await axios.put(`${Server}/api/v1/candidate/preferences/locations`, { preferred_locations: draftLocations }, auth());
       setSavedLocations(data.preferred_locations); setEditing(false);
       setSearch({ ...emptySearch }); setActiveSearch(null); clearLocalFilters();
+      navigate("/find-jobs", { replace:true, state:null });
       await loadJobs(null);
       message.success("Preferred locations saved. Recommendations refreshed.");
     } catch (err) { message.error(err.response?.data?.message || "Unable to save your locations."); }
     finally { setSaving(false); }
   };
   const clearLocalFilters = () => { setTypes([]); setWorkModes([]); setExperience(""); setDays(0); setPage(1); };
-  const clearAll = () => { clearLocalFilters(); setSearch({ ...emptySearch }); setActiveSearch(null); loadJobs(null); };
+  const clearAll = () => {
+    clearLocalFilters(); setSearch({ ...emptySearch }); setActiveSearch(null);
+    if (!location.search && !location.state) loadJobs(null);
+    else navigate("/find-jobs", { state:null });
+  };
   const submitSearch = (event) => {
     event.preventDefault();
     const query = Object.fromEntries(Object.entries(search).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
       .filter(([, value]) => Array.isArray(value) ? value.length : !!value));
     const next = Object.keys(query).length ? query : null;
-    setActiveSearch(next); loadJobs(next);
+    const params = new URLSearchParams();
+    const keys = { jobTitle:"job", companyName:"company", city:"City", state:"State", industry:"Industry" };
+    Object.entries(next || {}).forEach(([key,value]) => { if (key === "skills") value.forEach(skill => params.append("skill", skill)); else params.set(keys[key], value); });
+    const nextUrl = params.toString();
+    if (location.search === (nextUrl ? "?" + nextUrl : "")) { setActiveSearch(next); loadJobs(next); }
+    else navigate("/find-jobs" + (nextUrl ? "?" + nextUrl : ""), { state:null });
   };
   const filtered = useMemo(() => {
     const result = jobs.filter((job) => {
@@ -135,7 +156,7 @@ export default function JobList() {
   useEffect(() => { setPage(1); }, [types, workModes, experience, days, sort]);
 
   const bookmark = async (job) => {
-    if (!userId) { message.info("Sign in to save jobs."); navigate("/login"); return; }
+    if (!isCandidate) { if (!role) setAuthModal("login"); else message.info("Sign in with a candidate account to save jobs."); return; }
     const key = `${job.userId}/${job.jobId}`;
     setBookmarks((old) => ({ ...old, [key]: true }));
     try {
@@ -161,6 +182,7 @@ export default function JobList() {
   </div>;
 
   return <main className="find-jobs-page">
+    <PublicAuthDialogs auth={authModal} setAuth={setAuthModal} />
     <div className="fj-container">
       <div className="fj-intro"><h1>Find your next opportunity</h1><p>Explore roles that match your skills and preferred locations.</p></div>
       <form className="fj-search" onSubmit={submitSearch}>

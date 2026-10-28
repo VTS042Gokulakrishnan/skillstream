@@ -4,6 +4,7 @@ import "./PortalTheme.css";
 
 const workspace = new Set([
   "/candidate-dashboard",
+  "/my-profile",
   "/applied-jobs",
   "/shortlisted-jobs",
   "/job-alerts",

@@ -116,6 +116,7 @@ app.use(
 //   next();
 // });
 app.use(secureRequestLogger);
+app.use("/api/v1", require("./middleware/employerSetupGate").employerSetupGate);
 async function generateUniqueOrgId() {
   let unique = false;
   let orgId;

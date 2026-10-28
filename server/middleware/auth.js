@@ -35,6 +35,12 @@ const Authorization = async (req, res, next) => {
 
         if (decoded.exp > currentTime) {
           req.user = user;
+          const requestPath = req.originalUrl.split("?")[0];
+          const setupRequest = (req.method === "GET" && requestPath === "/api/v1/employer/profile-status") ||
+            (req.method === "POST" && requestPath === `/api/v1/employer/update/${user.userId}`);
+          if (decoded.role === "Employer" && user.profileCompleted !== true && !setupRequest) {
+            return res.status(403).json({ code: "PROFILE_INCOMPLETE", message: "Complete your employer profile before accessing the workspace." });
+          }
           next();
         } else {
           res.status(401).json({

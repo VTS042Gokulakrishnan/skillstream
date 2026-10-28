@@ -1,3 +1,5 @@
+import { Select, Tag } from "antd";
+import EmployerAvatar from "../../Components/EmployerUI/EmployerAvatar";
 import React, { useState, useEffect } from "react";
 import {
   Form,
@@ -61,6 +63,8 @@ const EditableCell = ({
 };
 
 const AllUsers = () => {
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
   const [editingKey, setEditingKey] = useState("");
@@ -93,6 +97,9 @@ const AllUsers = () => {
         .map((users, idx) =>
           userData.push({
             key: idx + 1,
+            name: users.name || users.fullName || users.email?.split("@")[0],
+            image: users.image,
+            lastActive: users.lastLoggedIn,
             email: users.email,
             userType: users.access,
             jobCount: users.jobs,
@@ -168,22 +175,24 @@ const AllUsers = () => {
     }
   };
   const columns = [
+    {title:"Name",dataIndex:"name",width:220,render:(_,record)=><div className="em-resume-name"><EmployerAvatar src={record.image} name={record.name} size={38}/><strong>{record.name}</strong></div>},
     {
       title: "Email",
       dataIndex: "email",
-      width: "40%",
+      width: 240,
       editable: true,
     },
     {
-      title: "User Type",
+      title: "Role",
       dataIndex: "userType",
-      width: "25%",
+      render:value=><Tag color={value === "Admin" ? "purple":"blue"}>{value}</Tag>,
+      width: 120,
       editable: true,
     },
     {
-      title: "No of Jobs",
+      title: "Jobs",
       dataIndex: "jobCount",
-      width: "15%",
+      width: 100,
       editable: false,
       render: (text, record) => (
         <span
@@ -203,8 +212,9 @@ const AllUsers = () => {
       ),
     },
     {
-      title: "Operation",
+      title: "Actions",
       dataIndex: "operation",
+      width:150,
       render: (_, record) => {
         const editable = isEditing(record);
         return editable ? (
@@ -270,13 +280,13 @@ const AllUsers = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <Typography.Title level={4}>Users</Typography.Title>
+                    <Typography.Title level={4}>Team members <Tag color="blue">{data.length}</Tag></Typography.Title>
                     <div className="chosen-outer">
                       <Button
                         type="primary"
                         onClick={() => navigate("/create-user")}
                       >
-                        + Create Users
+                        + Add user
                       </Button>
                       {/*<select className="chosen-select">
                         <option>Last 6 Months</option>
@@ -288,11 +298,12 @@ const AllUsers = () => {
                     </div>
                   </div>
                   <div className="widget-content">
+                    <div className="em-search-toolbar"><Input.Search aria-label="Search team users" placeholder="Search users by name or email" value={search} onChange={e=>setSearch(e.target.value)} allowClear style={{maxWidth:480}}/><Select aria-label="Filter team role" value={roleFilter} onChange={setRoleFilter} options={[{value:"all",label:"All roles"},{value:"Admin",label:"Admin"},{value:"User",label:"User"}]} style={{width:160}}/></div>
                     <Form form={form} component={false}>
                       <Table
                         components={{ body: { cell: EditableCell } }}
-                        bordered
-                        dataSource={data}
+                        scroll={{x:850}}
+                        dataSource={data.filter(user => [user.email,user.name].join(" ").toLowerCase().includes(search.toLowerCase()) && (roleFilter === "all" || user.userType === roleFilter))}
                         columns={mergedColumns}
                         loading={loader}
                         rowClassName="editable-row"

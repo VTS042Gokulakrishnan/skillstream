@@ -1,0 +1,4 @@
+1440 { logoTop: 17, headerLeft: 240, headerWidth: 1200, overflow: false }
+1100 { logoTop: 17, headerLeft: 240, headerWidth: 860, overflow: false }
+390 { logoTop: 47, headerLeft: 0, headerWidth: 390, overflow: false }
+Candidate header/sidebar alignment passed

@@ -14,7 +14,7 @@ const msalConfig = {
 };
 
 const msalInstance = new PublicClientApplication(msalConfig);
-const MicrosoftLogin = ({ role, region, policyAcceptance }) => {
+const MicrosoftLogin = ({ role, region, policyAcceptance, onAuthenticated }) => {
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
   const location = useLocation();
@@ -41,6 +41,11 @@ const MicrosoftLogin = ({ role, region, policyAcceptance }) => {
 
       // console.log("Login Response:", data);
 
+      if (onAuthenticated && (data.message === "Login Successfully" || data.message === "Registered Successfully")) {
+        setLoader(false);
+        onAuthenticated(data);
+        return;
+      }
       if (data.message === "Login Successfully") {
         toast.success(data.message);
         if (data.role === "Candidate") {

@@ -7,17 +7,28 @@ const controller = {
   async updateProfile(req, res) {
     try {
       const { userId } = req.params;
+      if (req.user.role !== "Employer" || String(req.user.userId) !== String(userId)) {
+        return res.status(403).json({ message: "You can only update your own profile", status: false });
+      }
+      if (req.body.profileCompleted === true || req.user.profileCompleted !== true) {
+        const required = ["companyName", "primaryIndustry", "phone", "country", "state", "city"];
+        const missing = required.filter(key => !String(req.body[key] ?? req.user[key] ?? "").trim());
+        if (missing.length) return res.status(400).json({ message: `Complete required fields: ${missing.join(", ")}`, status: false });
+      }
       const isUserCheck = await employerModel.findOne({ userId });
       if (isUserCheck) {
+        const profileFields = ["companyName", "primaryIndustry", "phone", "country", "state", "city", "website", "foundedIn", "teamSize", "description", "address", "social", "categories", "allowInSearch", "image"];
+        const changes = Object.fromEntries(profileFields.filter(key => Object.prototype.hasOwnProperty.call(req.body, key)).map(key => [key, req.body[key]]));
+        if (req.body.profileCompleted === true) changes.profileCompleted = true;
         const updateDetails = await employerModel.updateOne(
           { userId },
-          { $set: req.body }
+          { $set: changes }
         );
         console.log(updateDetails);
         if (updateDetails.acknowledged) {
           res
             .status(201)
-            .json({ message: "Successfully updated profile", status: true });
+            .json({ message: "Successfully updated profile", status: true, profileCompleted: req.body.profileCompleted === true || isUserCheck.profileCompleted === true });
         } else {
           res
             .status(400)

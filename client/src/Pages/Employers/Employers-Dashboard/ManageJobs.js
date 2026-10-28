@@ -1,3 +1,4 @@
+import { Input } from "antd";
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
@@ -37,6 +38,7 @@ import { Tabs } from "antd";
 const { Dragger } = Upload;
 const ManageJobs = () => {
   const navigate = useNavigate();
+  const [jobSearch, setJobSearch] = useState("");
   const [activeJobs, setActiveJobs] = useState([]);
   const [inactiveJobs, setInactiveJobs] = useState([]);
   const [holdJobs, setHoldJobs] = useState([]);
@@ -813,7 +815,7 @@ const ManageJobs = () => {
         <Table
           columns={columnstouse}
           className="manage-tables"
-          dataSource={jobList}
+          dataSource={jobList.filter(job => [job.JobTitle, job.City, job.Industry, job.EmailAddress].filter(Boolean).join(" ").toLowerCase().includes(jobSearch.toLowerCase()))}
           rowSelection={rowSelection}
           rowKey={(record) => record.jobId}
           pagination={true}
@@ -942,6 +944,7 @@ const ManageJobs = () => {
                   </div>
 
                   <div className="widget-content">
+                    <Input.Search aria-label="Search jobs" placeholder="Search job title, location, industry or owner" value={jobSearch} onChange={e => setJobSearch(e.target.value)} allowClear style={{maxWidth:600,marginBottom:24}} />
                     {selectedRowKeys.length > 0 && (
                       <div style={{ marginBottom: 16 }}>
                         <Dropdown

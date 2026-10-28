@@ -1,0 +1,10 @@
+.ss-brand-loader{display:inline-flex;align-items:center;justify-content:center;gap:12px;color:#566c88;font:500 13px/1.5 Inter,system-ui,sans-serif;vertical-align:middle}
+.ss-brand-loader-mark{display:flex;position:relative;align-items:center;justify-content:center;background:white;border-radius:8px;padding:8px 10px 12px;overflow:hidden}
+.ss-brand-loader-mark img{width:110px;height:42px;object-fit:contain}
+.ss-brand-loader-mark>span{position:absolute;bottom:2px;left:10%;height:3px;width:80%;border-radius:3px;background:linear-gradient(90deg,#087df1,#27c5dc);animation:ss-brand-pulse 1.4s ease-in-out infinite;transform-origin:left}
+.ss-brand-loader--page{display:flex;flex-direction:column;min-height:150px;padding:24px}
+.ss-brand-loader--compact .ss-brand-loader-mark img{width:68px;height:26px}
+.ss-brand-loader--button .ss-brand-loader-mark{padding:2px 4px 5px;border-radius:4px}
+.ss-brand-loader--button .ss-brand-loader-mark img{width:36px;height:18px}
+@keyframes ss-brand-pulse{0%,100%{transform:scaleX(.3);opacity:.45}50%{transform:scaleX(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.ss-brand-loader-mark>span{animation:none}}

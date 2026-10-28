@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import Register from "../../Pages/Auth/Register";
-import Login from "../../Pages/Auth/Login";
+import { PublicNavigation, PublicAuthDialogs } from "./PublicHeader";
+import logo from "../../assets/logo-twos.png";
 import "./PublicSite.css";
 const AuthContext = createContext(() => {});
 export const usePublicAuth = () => useContext(AuthContext);
@@ -11,81 +11,27 @@ export default function PublicShell({
   title,
   description,
   employer = false,
+  className = "",
 }) {
-  const [auth, setAuth] = useState(null),
-    [menu, setMenu] = useState(false);
+  const [auth, setAuth] = useState(null);
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-    setMenu(false);
+    setAuth(null);
   }, [pathname]);
-  const role = localStorage.getItem("Role");
   return (
     <AuthContext.Provider value={(mode = "register") => setAuth(mode)}>
-      <div className="ss-public">
+      <div className={`ss-public ${className}`}>
         <Helmet>
           <title>{title} | SkillStream</title>
           <meta name="description" content={description || title} />
         </Helmet>
-        <header className="ss-public-header">
-          <Link className="ss-brand" to="/">
-            Skill<span>Stream</span>
-          </Link>
-          <button
-            className="ss-menu-toggle"
-            aria-label="Toggle navigation"
-            aria-expanded={menu}
-            onClick={() => setMenu(!menu)}
-          >
-            ☰
-          </button>
-          <nav className={menu ? "is-open" : ""} aria-label="Main navigation">
-            <Link to="/find-jobs">Find jobs</Link>
-            <Link to="/employers">For employers</Link>
-            <Link to="/practiceInterviewLanding">Practice</Link>
-            <Link to="/blog">Resources</Link>
-            <Link to={employer ? "/pricing/employer" : "/pricing/candidate"}>
-              Pricing
-            </Link>
-            <Link to="/about">About</Link>
-          </nav>
-          <div className="ss-header-actions">
-            {localStorage.getItem("token") ? (
-              <Link
-                className="ss-btn ss-btn-small"
-                to={
-                  role === "Employer"
-                    ? "/employer-dashboard"
-                    : role === "Vendor"
-                    ? "/vendor/dashboard"
-                    : "/candidate-dashboard"
-                }
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <button
-                  className="ss-text-btn"
-                  onClick={() => setAuth("login")}
-                >
-                  Sign in
-                </button>
-                <button
-                  className="ss-btn ss-btn-small"
-                  onClick={() => setAuth("register")}
-                >
-                  Get started
-                </button>
-              </>
-            )}
-          </div>
-        </header>
+        <PublicNavigation employer={employer} onAuth={setAuth} />
         <main className="ss-public-main">{children}</main>
         <footer className="ss-public-footer">
           <div>
             <Link className="ss-brand" to="/">
-              Skill<span>Stream</span>
+              <img src={logo} alt="SkillStream" className="ss-footer-logo" />
             </Link>
             <p>Your next step, clearly.</p>
           </div>
@@ -114,22 +60,7 @@ export default function PublicShell({
             <a href="mailto:info@skillstreamjobs.us">info@skillstreamjobs.us</a>
           </div>
         </footer>
-        {auth === "register" && (
-          <Register
-            isModalOpen={true}
-            setIsModalOpen={() => setAuth(null)}
-            setModalType={setAuth}
-            initialRole={employer ? "Employer" : "Candidate"}
-          />
-        )}
-        {auth === "login" && (
-          <Login
-            isModalOpen={true}
-            setIsModalOpen={() => setAuth(null)}
-            setModalType={setAuth}
-            initialRole={employer ? "Employer" : "Candidate"}
-          />
-        )}
+        <PublicAuthDialogs auth={auth} setAuth={setAuth} employer={employer} />
       </div>
     </AuthContext.Provider>
   );

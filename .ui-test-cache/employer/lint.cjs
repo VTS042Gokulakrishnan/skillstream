@@ -1,0 +1,4 @@
+const {ESLint}=require('D:/GitHub/skillstream-jobs-us/node_modules/eslint');
+const fs=require('fs');
+(async()=>{const lint=new ESLint({useEslintrc:false,allowInlineConfig:false,ignore:false,baseConfig:{env:{browser:true,node:true,es2022:true,jest:true},parserOptions:{ecmaVersion:2022,sourceType:'module',ecmaFeatures:{jsx:true}},rules:{'no-undef':'error'}}});const paths=['client/src/Components/EmployerUI','client/src/Pages/Employers/Employers-Dashboard','client/src/Pages/Employers/AiResumeSearch.js','client/src/Pages/Employers/SavedResumes.js','client/src/Pages/Candidates/CandidatesList.js'];const results=await lint.lintFiles(paths);fs.writeFileSync('.ui-test-cache/employer/lint.log',(await lint.loadFormatter('stylish')).format(results));console.log('Errors',results.reduce((n,r)=>n+r.errorCount,0),'files',results.length);process.exitCode=results.some(r=>r.errorCount)?1:0;})();
+

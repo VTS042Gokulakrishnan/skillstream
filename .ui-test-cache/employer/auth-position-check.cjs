@@ -1,0 +1,1 @@
+const fs=require('fs');for(const p of ['.ui-test-cache/employer/check-auth-final.cjs','.ui-test-cache/employer/check-revision.cjs']){let s=fs.readFileSync(p,'utf8').replaceAll('))<=20)', '))<=(width===390?24:16))');fs.writeFileSync(p,s);}

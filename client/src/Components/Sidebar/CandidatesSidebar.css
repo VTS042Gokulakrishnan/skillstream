@@ -1,0 +1,24 @@
+.ss-workspace .user-sidebar.ss-candidate-sidebar{background:#102440;border-right:0;width:240px}
+.ss-workspace .ss-candidate-sidebar .sidebar-inner{padding:22px 16px}
+.ss-candidate-brand{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:0 10px 20px}
+.ss-candidate-brand img{width:150px;height:58px;object-fit:contain;background:white;padding:7px;border-radius:8px}
+.ss-candidate-brand span{font-size:9px;letter-spacing:.14em;color:#9bb0ca;font-weight:600}
+.ss-workspace .ss-candidate-sidebar .ss-nav-label{color:#91a6c1;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:16px 12px 10px}
+.ss-workspace .ss-candidate-sidebar .navigation li{margin-bottom:5px}
+.ss-workspace .ss-candidate-sidebar .navigation li a{display:flex;align-items:center;padding:12px;border-radius:8px;font-size:13px;font-weight:500;color:#bfcde0;line-height:20px}
+.ss-workspace .ss-candidate-sidebar .navigation li.active a{background:#087cf0;color:white;box-shadow:none}
+.ss-workspace .ss-candidate-sidebar .navigation li:not(.active) a:hover{background:#203954;color:white}
+.ss-workspace .ss-candidate-sidebar .navigation .cl-icon{width:19px;height:19px;margin-right:12px}
+.ss-workspace .ss-candidate-sidebar .ss-nav-divider{border-color:#2b405d;margin-top:16px}
+.ss-workspace .ss-candidate-sidebar a:focus-visible{outline:2px solid #65c7ff;outline-offset:2px}
+/* Desktop brand rail begins at the viewport top, beside the header. */
+@media(min-width:1025px){
+  body.ss-workspace .user-sidebar.ss-candidate-sidebar{top:0;padding-top:0;height:100vh;z-index:100}
+  body.ss-workspace .ss-candidate-sidebar .sidebar-inner{padding-top:16px}
+  body.ss-workspace .ss-candidate-brand{padding:0 8px 22px;gap:0;min-height:64px}
+  body.ss-workspace .ss-candidate-brand img{width:164px;height:44px;padding:5px 12px;border-radius:6px}
+  body.ss-workspace .ss-candidate-brand span{display:none}
+  body.ss-workspace .main-header{left:240px;width:calc(100% - 240px)}
+  body.ss-workspace .main-header .main-box{padding-left:24px;padding-right:24px}
+}
+

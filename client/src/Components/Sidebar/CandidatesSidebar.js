@@ -1,5 +1,7 @@
+import logo from "../../assets/logo-twos.png";
+import "./CandidatesSidebar.css";
 import React, { useEffect } from "react";
-import CareerIcon from "../../Pages/HomeNew/CareerIcon";
+import { LayoutDashboard, FileText, Heart, Bell, MessageSquare, BarChart3, UserRound } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 const groups = [
   [
@@ -50,8 +52,8 @@ export default function CandidatesSidebar() {
         className="sidebar-backdrop"
         onClick={() => document.body.classList.remove("user-sidebar-active")}
       />
-      <aside className="user-sidebar" aria-label="Candidate navigation">
-        <div className="sidebar-inner">
+      <aside className="user-sidebar ss-candidate-sidebar" aria-label="Candidate navigation">
+        <div className="sidebar-inner"><Link to="/candidate-dashboard" className="ss-candidate-brand"><img src={logo} alt="SkillStream" /><span>CANDIDATE WORKSPACE</span></Link>
           {groups.map(([title, items], i) => (
             <div key={title} className={i ? "ss-nav-divider" : ""}>
               <div className="ss-nav-label">{title}</div>
@@ -62,7 +64,7 @@ export default function CandidatesSidebar() {
                       to={url}
                       aria-current={pathname === url ? "page" : undefined}
                     >
-                      <CareerIcon name={({home:"home", "file-alt":"document",heart:"heart",bell:"bell",envelope:"chat","chart-bar":"chart","file-invoice":"document",user:"people"})[icon]} />
+                      {React.createElement(({home:LayoutDashboard,"file-alt":FileText,heart:Heart,bell:Bell,envelope:MessageSquare,"chart-bar":BarChart3,"file-invoice":FileText,user:UserRound})[icon], {size:19, className:"cl-icon", "aria-hidden":true})}
                       {label}
                     </Link>
                   </li>

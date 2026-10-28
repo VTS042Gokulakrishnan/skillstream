@@ -1,0 +1,1 @@
+const fs=require('fs');let s=fs.readFileSync('.ui-test-cache/employer/check-revision.cjs','utf8');const a=s.indexOf('  for(const width of [1440,390]) {');const b=s.indexOf("  for(const route of ['/applicants'",a);s=s.slice(0,a)+"  await page.setViewport({width:390,height:1000});\n"+s.slice(b);fs.writeFileSync('.ui-test-cache/employer/check-preview.cjs',s);

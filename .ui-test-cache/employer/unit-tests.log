@@ -1,0 +1,50 @@
+  console.error
+    Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      19 | });
+      20 | test("broken photos fall back to initials and a changed photo can load", () => {
+    > 21 |   const { rerender } = render(<EmployerAvatar src="/broken.png" name="Rahul Sharma" />);
+         |                              ^
+      22 |   fireEvent.error(screen.getByRole("img"));
+      23 |   expect(screen.getByText("RS")).toBeTruthy();
+      24 |   rerender(<EmployerAvatar src="/new.png" name="Rahul Sharma" />);
+
+      at printWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../skillstream-jobs-us/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at Object.<anonymous> (client/src/Components/EmployerUI/EmployerUI.test.js:21:30)
+      at TestScheduler.scheduleTests (../skillstream-jobs-us/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../skillstream-jobs-us/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../skillstream-jobs-us/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../skillstream-jobs-us/node_modules/@jest/core/build/cli/index.js:173:3)
+
+(node:19364) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+One of your dependencies, babel-preset-react-app, is importing the
+"@babel/plugin-proposal-private-property-in-object" package without
+declaring it in its dependencies. This is currently working because
+"@babel/plugin-proposal-private-property-in-object" is already in your
+node_modules folder for unrelated reasons, but it may break at any time.
+
+babel-preset-react-app is part of the create-react-app project, which
+is not maintianed anymore. It is thus unlikely that this bug will
+ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
+your devDependencies to work around this error. This will make this message
+go away.
+  
+PASS client/src/Components/EmployerUI/EmployerUI.test.js (91.84 s)
+  √ name initials use first and last name and handle missing names (3 ms)
+  √ broken photos fall back to initials and a changed photo can load (830 ms)
+  √ an incomplete server profile redirects even when local storage says complete (25 ms)
+  √ protected content waits for the server and opens after confirmation (10 ms)
+  √ failed verification stays closed and can be retried (46 ms)
+  √ candidate search filters rows and preserves the original job and candidate for actions (1754 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        99.727 s
+Ran all test suites.

@@ -49,7 +49,7 @@ function JobSearch() {
   const submit = (event) => {
     event.preventDefault();
     const values = { job: job.trim(), City: city.trim(), State: state, Industry: industry, country: "United States" };
-    navigate("/find-jobs", { state: Object.fromEntries(Object.entries(values).filter(([, value]) => value)) });
+    navigate("/find-jobs?" + new URLSearchParams(Object.fromEntries(Object.entries(values).filter(([, value]) => value))).toString());
   };
   return <form className="cl-search" onSubmit={submit} aria-label="Search jobs">
     <div className="cl-search-row">
@@ -105,7 +105,7 @@ export default function CandidatePage() {
       <nav aria-label="About us"><h3>About Us</h3><Link to="/about">About</Link><Link to="/pricing/candidate">Pricing</Link><Link to="/blog">Blog</Link><Link to="/contact">Contact</Link><Link to="/employers">Employers Page</Link></nav>
       <nav aria-label="Helpful resources"><h3>Helpful Resources</h3><a href="#site-map">Site Map</a><Link to="/termsAndCondition">Terms of Use</Link><Link to="/privacyCenter">Privacy Center</Link><Link to="/securityCenter">Security Center</Link></nav>
       <div className="cl-reach"><h3>Reach Us</h3><a href="mailto:info@skillstreamjobs.us">info@skillstreamjobs.us</a><a href="tel:+18475981122">+1 (847) 598-1122</a><address>1827 Walden Office Sq Suite #260<br />Schaumburg, IL 60173</address></div>
-      <details id="site-map" className="cl-site-map"><summary>Site Map</summary><nav aria-label="Site map"><Link to="/">Home</Link><Link to="/find-jobs">Find Jobs</Link><Link to="/employers-list">Companies</Link><Link to="/practiceInterviewLanding">Practice Interviews</Link><Link to="/employers">Employers</Link><Link to="/contact">Contact</Link></nav></details>
+      <details id="site-map" className="cl-site-map"><summary>Site Map</summary><nav aria-label="Site map"><Link to="/">Home</Link><Link to="/practiceInterviewLanding">Practice Interviews</Link><Link to="/employers">Employers</Link><Link to="/contact">Contact</Link></nav></details>
       <div className="cl-footer-bottom"><small>© {new Date().getFullYear()} SkillStream. All rights reserved.</small><nav aria-label="Social media"><a href="https://www.facebook.com/profile.php?id=61563887762159" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.instagram.com/skillstream_jobs/" target="_blank" rel="noreferrer">Instagram</a><a href="https://www.linkedin.com/company/104131262/" target="_blank" rel="noreferrer">LinkedIn</a></nav></div>
     </div></footer>
   </div>;

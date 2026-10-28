@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Modal } from "antd";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Server } from "../../App";
 import Googlelogin from "./Googlelogin";
@@ -8,6 +8,9 @@ import MicrosoftLogin from "./MicrosoftLogin";
 import { PolicyDialog } from "../../Components/PublicSite/PolicyView";
 import { policyConsent } from "../../Components/PublicSite/policies";
 import "../../Components/PublicSite/PublicSite.css";
+import logo from "../../assets/logo-twos.png";
+import { accountRole, loginDestination, saveSession } from "./authContext";
+import "./Auth.css";
 export default function Register({
   isModalOpen = true,
   setIsModalOpen,
@@ -15,15 +18,11 @@ export default function Register({
   initialRole,
   isVendor = false,
 }) {
-  const { pathname } = useLocation();
-  const [role, setRole] = useState(
-    isVendor
-      ? "Vendor"
-      : initialRole ||
-          (pathname === "/employers" || pathname === "/pricing/employer"
-            ? "Employer"
-            : "Candidate")
-  );
+  const location = useLocation();
+  const { pathname } = location;
+  const navigate = useNavigate();
+  const complete = (data) => { saveSession(data); setIsModalOpen(false); navigate(loginDestination(data, location)); };
+  const role = accountRole(pathname, { initialRole, isVendor });
   const [form, setForm] = useState({
       name: "",
       email: "",
@@ -72,8 +71,8 @@ export default function Register({
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         width={580}
-        className="ss-signup-modal"
-        title={"Create your " + role.toLowerCase() + " account"}
+        className="ss-signup-modal ss-auth-modal"
+        title={<><img className="ss-auth-brand" src={logo} alt="SkillStream" /><span className="ss-auth-heading">{"Create your " + role.toLowerCase() + " account"}</span></>}
       >
         <div className="ss-public">
           <p>
@@ -81,24 +80,6 @@ export default function Register({
               ? "Manage job posts and connect with candidates."
               : "Find opportunities and prepare for your next interview."}
           </p>
-          {!isVendor && (
-            <div className="ss-tabs" role="group" aria-label="Account type">
-              {["Candidate", "Employer"].map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  className={r === role ? "active" : ""}
-                  aria-pressed={r === role}
-                  onClick={() => {
-                    setRole(r);
-                    setAgreed(false);
-                  }}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          )}
           {success ? (
             <div role="status">
               <p className="ss-notice">
@@ -199,11 +180,13 @@ export default function Register({
                     userType={role}
                     setIsModalOpen={setIsModalOpen}
                     policyAcceptance={policyConsent(role)}
+                    onAuthenticated={complete}
                   />
                   <MicrosoftLogin
                     role={role}
                     region="United States"
                     policyAcceptance={policyConsent(role)}
+                    onAuthenticated={complete}
                   />
                 </div>
               ) : (

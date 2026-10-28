@@ -1,3 +1,6 @@
+import EmployerWorkspace from "./Components/EmployerUI/EmployerWorkspace";
+import EmployerAccess from "./Components/EmployerUI/EmployerAccess";
+import BrowseAccess from "./Components/PublicSite/BrowseAccess";
 import { AboutPage, ContactPage, CommunityPage, EmployerLanding, PracticeLanding, PolicyPage } from "./Pages/Public/PublicPages";
 import { CandidatePricing, EmployerPricing, PricingChooser } from "./Pages/Public/PublicPricing";
 import { BlogPage, BlogArticle, BlogEditor } from "./Pages/Public/PublicBlog";
@@ -366,7 +369,6 @@ function App() {
           path="/update-profile/:token"
           element={
             <div>
-              <HeaderDemo />
               <UpdateProfile />
             </div>
           }
@@ -398,11 +400,7 @@ function App() {
           <Route
             path="/aiFitment"
             element={
-              <div className="dashboard">
-                <Header1 />
-                <EmployerSidebar />
-                <AiFitmentAnalysis />
-              </div>
+              <EmployerWorkspace><AiFitmentAnalysis /></EmployerWorkspace>
             }
           />
         </Route>
@@ -480,12 +478,11 @@ function App() {
         <Route
           path="/job-detail/:userId/:jobId"
           element={
-            <div>
+            <BrowseAccess><div>
               {" "}
               <Header1 />
               <JobSingle />
-              <Footer />
-            </div>
+            </div></BrowseAccess>
           }
         />
         <Route element={<ProtectedRoute allowedRole="Employer" />}>
@@ -493,33 +490,28 @@ function App() {
           <Route
             path="/employer-dashboard"
             element={
-              <div className="dashboard">
-                {" "}
-                <Header1 />
-                <EmployerSidebar />
-                <Dashboard />
-              </div>
+              <EmployerWorkspace><Dashboard /></EmployerWorkspace>
             }
           />
         </Route>
         <Route
           path="/employers-list"
           element={
-            <div>
+            <BrowseAccess><div>
               {" "}
               <Header1 />
               <EmployersList />
-            </div>
+            </div></BrowseAccess>
           }
         />
         <Route
           path="employers/:id"
           element={
-            <div>
+            <BrowseAccess><div>
               {" "}
               <Header1 />
               <EmployersSingle />
-            </div>
+            </div></BrowseAccess>
           }
         />
         <Route element={<ProtectedRoute allowedRole="Candidate" />}>
@@ -539,32 +531,20 @@ function App() {
         <Route
           path="/candidates-list"
           element={
-            <div>
-              {" "}
-              <Header1 />
-              <CandidatesList />
-            </div>
+            localStorage.getItem("Role") === "Employer" ? <EmployerWorkspace><CandidatesList /></EmployerWorkspace> : <><Header1 /><CandidatesList /></>
           }
         />
         <Route
           path="/globalSearch"
           element={
-            <div>
-              {" "}
-              <Header1 />
-              <GlobalSearch />
-            </div>
+            localStorage.getItem("Role") === "Employer" ? <EmployerWorkspace><GlobalSearch /></EmployerWorkspace> : <><Header1 /><GlobalSearch /></>
           }
         />
         <Route element={<ProtectedRoute allowedRole="Employer" />}>
           <Route
             path="/aiSearch"
             element={
-              <div>
-                {" "}
-                <Header1 />
-                <AiResumeSearch />
-              </div>
+              <EmployerWorkspace><AiResumeSearch /></EmployerWorkspace>
             }
           />
         </Route>
@@ -599,11 +579,7 @@ function App() {
               key={e.path}
               path={e.path}
               element={
-                <div className="dashboard">
-                  <Header1 />
-                  <EmployerSidebar />
-                  {e.element}
-                </div>
+                <EmployerWorkspace>{e.element}</EmployerWorkspace>
               }
             />
           ))}
@@ -659,7 +635,7 @@ function App() {
       <ScrollProvider>
         {" "}
         <BrowserRouter><PortalTheme /><PurchaseReturn />
-          <AppLayout />
+          <EmployerAccess><AppLayout /></EmployerAccess>
         </BrowserRouter>
       </ScrollProvider>
     </>

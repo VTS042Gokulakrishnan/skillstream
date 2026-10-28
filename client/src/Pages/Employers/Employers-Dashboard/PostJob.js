@@ -797,7 +797,8 @@ const PostJob = () => {
                   </div>
                   <Toaster position="top-center" reverseOrder={false} />
 
-                  <div class="widget-content">
+                  <div class="widget-content em-post-content">
+                    <aside id="em-job-preview" className="em-job-preview em-card"><h2>Live job summary</h2><p>This is how your job will appear to candidates.</p><span className="em-preview-label">AUTO-UPDATING</span><h2>{JobTitle || "Your job title"}</h2><p>{[City, State, Country].filter(Boolean).join(", ")}</p><div className="em-resume-skills">{[jobType,employmentType,Experience].filter(Boolean).map((value,i)=><span key={i}>{value}</span>)}</div>{offeredSalary && <p><strong>{offeredSalary}</strong> {rate}</p>}<hr/><h3>About the role</h3><p className="em-preview-description">{JobDescription.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g," ").slice(0,600) || "Your description will appear here as you write."}</p><h3>Skills</h3><div className="em-resume-skills">{jobSkills.map((skill,i)=><span key={i}>{skill}</span>)}</div>{ApplicationDeadlineDate && <p>Apply by {ApplicationDeadlineDate}</p>}</aside>
                     <div
                       className="post-job-steps"
                       style={{ position: "relative", marginBottom: "15px" }}
@@ -812,10 +813,10 @@ const PostJob = () => {
                           }
                         >
                           <span
-                            className="icon flaticon-briefcase"
+                            className="em-step-number"
                             style={{ color: "#000" }}
                           ></span>
-                          <h5>Job Detail</h5>
+                          <h5>Job details<small>Basic information</small></h5>
                         </button>
                       </div>
 
@@ -829,10 +830,10 @@ const PostJob = () => {
                           }
                         >
                           <span
-                            className="icon flaticon-money"
+                            className="em-step-number"
                             style={{ color: "#000" }}
                           ></span>
-                          <h5>Package & Payments</h5>
+                          <h5>Requirements<small>Compensation & experience</small></h5>
                         </button>
                       </div>
 
@@ -846,10 +847,10 @@ const PostJob = () => {
                           }
                         >
                           <span
-                            className="icon flaticon-checked"
+                            className="em-step-number"
                             style={{ color: "#000" }}
                           ></span>
-                          <h5>Confirmation</h5>
+                          <h5>Location & skills<small>Candidate requirements</small></h5>
                         </button>
                       </div>
                     </div>
@@ -864,7 +865,7 @@ const PostJob = () => {
                       onSubmit={handlePostJob}
                     >
                       <div class="row">
-                        <div ref={jobDetailRef}>
+                        <div ref={jobDetailRef} className="em-job-fields"><h2>Job details</h2><p className="em-form-help">Provide the basic information about the role.</p>
                           <div class="form-group col-lg-12 col-md-12">
                             <label>Job Title</label>
                             <input
@@ -1013,7 +1014,7 @@ const PostJob = () => {
                           </div>
                         </div>
 
-                        <div ref={packagePaymentsRef}>
+                        <div ref={packagePaymentsRef} className="em-job-fields"><h2>Compensation & requirements</h2>
                           <div className="form-group  col-lg-12 col-md-12">
                             <label>Salary Preference</label>
                             <Select
@@ -1646,7 +1647,7 @@ const PostJob = () => {
                             )}
                           </div>
                         </div>
-                        <div ref={confirmationRef}>
+                        <div ref={confirmationRef} className="em-job-fields"><h2>Location & skills</h2>
                           <div class="form-group  col-lg-12 col-md-12">
                             <label>Country</label>
 

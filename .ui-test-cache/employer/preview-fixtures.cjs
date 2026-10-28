@@ -1,0 +1,14 @@
+const fs=require('fs');const p='.ui-test-cache/employer/check-revision.cjs';let s=fs.readFileSync(p,'utf8');s=s.replace('let delaySearch=false, pending=[];',`let delaySearch=false, pending=[], previewFailure=true;
+ const {PDFDocument,StandardFonts}=require('D:/GitHub/skillstream-jobs-us/node_modules/pdf-lib');
+ const pdf=await PDFDocument.create();const pdfPage=pdf.addPage();pdfPage.drawText('Aisha Khan - React Developer',{x:50,y:700,size:20,font:await pdf.embedFont(StandardFonts.Helvetica)});const pdfBytes=Buffer.from(await pdf.save());
+ const zip=new (require('D:/GitHub/skillstream-jobs-us/node_modules/jszip'))();
+ zip.file('[Content_Types].xml','<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+ zip.file('_rels/.rels','<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+ zip.file('word/document.xml','<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Aisha Khan - React Developer</w:t></w:r></w:p></w:body></w:document>');const docxBytes=await zip.generateAsync({type:'nodebuffer'});`);
+ s=s.replace("if(u.hostname==='code.jquery.com')",`if(u.hostname==='example.test'&&u.pathname.includes('resume')&&!previewFailure)return req.respond({contentType:u.pathname.endsWith('.docx')?'application/vnd.openxmlformats-officedocument.wordprocessingml.document':'application/pdf',headers:{'Access-Control-Allow-Origin':'*'},body:u.pathname.endsWith('.docx')?docxBytes:pdfBytes});
+   if(u.pathname.endsWith('/pdf.worker.min.js'))return req.respond({contentType:'application/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:fs.readFileSync('D:/GitHub/skillstream-jobs-us/node_modules/pdfjs-dist/build/pdf.worker.min.js')});
+   if(u.hostname==='code.jquery.com')`);
+ s=s.replace("await setRole('Candidate');",`previewFailure=false;
+  for(const ext of ['pdf','docx']) {jobs[0].savedResumes[0].resume='https://example.test/resume.'+ext+'?signature=123';await go('/savedResume');await page.waitForSelector('.em-resume-actions button');await button('View resume');await page.waitForSelector(ext==='pdf'?'.react-pdf__Page__canvas':'.docx');await shot('preview-'+ext+'-390');console.log('PASS actual '+ext+' render');}
+  await setRole('Candidate');`);
+fs.writeFileSync(p,s);

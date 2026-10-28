@@ -1,3 +1,4 @@
+import "Components/EmployerUI/ProfileEditor.css";
 import React, { useState, useEffect } from "react";
 import uniqid from "uniqid";
 import { FaPlus, FaTrash } from "react-icons/fa";
@@ -866,11 +867,11 @@ const Profile = () => {
 
   return (
     <div>
-      <section class="user-dashboard">
+      <section className="user-dashboard ss-profile-editor">
         <div class="dashboard-outer">
           <div class="upper-title-box">
-            <h3>My Profile</h3>
-            <div class="text">Ready to jump back in?</div>
+            <h3>Edit candidate profile</h3>
+            <div class="text">Tell employers about your skills and experience. Keep your profile and contact details up to date.</div>
           </div>
           <Toaster position="top-center" reverseOrder={false} />
 
@@ -879,7 +880,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>My Profile</h4>
+                    <h4><span className="ss-profile-section-number">01</span>Personal details</h4>
                   </div>
 
                   <div class="widget-content">
@@ -1566,7 +1567,7 @@ const Profile = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>Education</h4>
+                    <h4><span className="ss-profile-section-number">02</span>Education</h4>
                     <button
                       className="add-education-field theme-btn btn-style-one"
                       onClick={handleAddEducationField}
@@ -1715,7 +1716,7 @@ const Profile = () => {
               <div className="ls-widget">
                 <div className="tabs-box">
                   <div className="widget-title">
-                    <h4>Work Experience</h4>
+                    <h4><span className="ss-profile-section-number">03</span>Work experience</h4>
                     <button
                       className="add-education-field theme-btn btn-style-one"
                       onClick={handleAddWorkExperienceField}
@@ -1864,7 +1865,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>Social Network</h4>
+                    <h4><span className="ss-profile-section-number">04</span>Social links</h4>
                   </div>
 
                   <div class="widget-content">
@@ -1942,7 +1943,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>Contact Information</h4>
+                    <h4><span className="ss-profile-section-number">05</span>Contact & location</h4>
                   </div>
 
                   <div class="widget-content">

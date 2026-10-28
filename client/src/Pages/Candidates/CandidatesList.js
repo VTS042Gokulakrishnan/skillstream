@@ -1,3 +1,7 @@
+import BrandLoader from "../../Components/Loader/BrandLoader";
+import BooleanSearch from "../../Components/EmployerUI/BooleanSearch";
+import EmployerAvatar from "../../Components/EmployerUI/EmployerAvatar";
+import { Checkbox, Pagination, Radio } from "antd";
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import $ from "jquery";
@@ -22,7 +26,6 @@ import ForwardMail from "Components/ForwardMail";
 import { useSafeLayoutEffect } from "@chakra-ui/react";
 import EditCandidateDrawer from "Components/Header/EditCandidateDrawer";
 // import { Select } from "antd";
-import ProgressLoader from "Components/Loader/ProgressLoader/Loader";
 import { PlusOutlined, EyeOutlined } from "@ant-design/icons";
 import { formatDistanceToNow } from "date-fns";
 import ResumePreviewDrawer from "Components/ReaderDrawer/ResumePreviewDrawer";
@@ -30,6 +33,11 @@ import SubscriptionGuard from "Components/SubscriberCheckWrapper/SubscriptionGua
 
 const CandidatesList = () => {
   const navigate = useNavigate();
+  const searchRequest = useRef(null);
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  useEffect(() => () => searchRequest.current?.abort(), []);
+  const stopSearch = () => { searchRequest.current?.abort(); searchRequest.current = null; setStatus("Stopped"); };
+  const [resultView, setResultView] = useState("cards");
   const [areaValues, setAreaValues] = useState([0, 50]);
   const [candidates, setCandidates] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,7 +97,7 @@ const CandidatesList = () => {
   const hasState = Array.isArray(state) && state.length > 0;
   const hasCity = Array.isArray(city) && city.length > 0;
   const hasSkill =
-    Array.isArray(skills) && skills.some((s) => s.skill.trim() !== "");
+    keyword.trim() !== "" || selectedSkills.length > 0;
   const locationEntered = hasCity || hasState;
   const isSearchDisabled = !(
     (
@@ -191,6 +199,7 @@ const CandidatesList = () => {
       title: "Name",
       dataIndex: "name",
       ...getColumnSearchProps("name"),
+      render: (name, record) => <div className="em-resume-name"><EmployerAvatar src={record.image} name={name} size={40} /><strong>{name}</strong></div>,
     },
     {
       title: "Job Title",
@@ -263,6 +272,8 @@ const CandidatesList = () => {
   for (let i = 0; i < candidates.length; i++) {
     searchData.push({
       key: i,
+      image: candidates[i].image,
+      skills: candidates[i].skills || [],
       name: candidates[i].name ? candidates[i].name : "User",
       workAuthorization: candidates[i].workAuthorization
         ? candidates[i].workAuthorization
@@ -404,9 +415,14 @@ const CandidatesList = () => {
   // if (keyword.length != 0) key.keyword = keyword;
   // console.log(key);
   const keywordSearch = async (e) => {
+    searchRequest.current?.abort();
+    const request = new AbortController();
+    searchRequest.current = request;
     // e.preventDefault();
     try {
       setStatus("Loading");
+      setSelectedRowKeys([]);
+      setCurrentPage(1);
 
       let keywordData = { country: "United States" };
 
@@ -418,13 +434,15 @@ const CandidatesList = () => {
       if (state && state.length !== 0 && !state?.includes("All"))
         keywordData.state = state;
       if (distance && !distanceDisabled) keywordData.distance = distance;
-      if (keyword.length != 0) keywordData.keyword = keyword;
+      const skillQuery = selectedSkills.map(skill => '"' + skill.replace(/["\\]/g, " ").trim() + '"').join(" AND ");
+      keywordData.keyword = keyword.trim() && skillQuery ? "(" + keyword.trim() + ") AND (" + skillQuery + ")" : keyword.trim() || skillQuery;
 
       const { data } = await axios.post(
         `${Server}/api/v1/search/keyword/candidate`,
 
         keywordData,
         {
+          signal: request.signal,
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -433,6 +451,7 @@ const CandidatesList = () => {
       // console.log(data);
       // console.log(keywordData);
 
+      if (request.signal.aborted || searchRequest.current !== request) return;
       setStatus("Completed");
 
       const candidatesWithResume = data.results.filter(
@@ -444,10 +463,12 @@ const CandidatesList = () => {
       setFilteredCandidates(candidatesWithResume);
       // setKeywordData(true);
     } catch (error) {
+      if (request.signal.aborted || axios.isCancel(error) || searchRequest.current !== request) return;
       // console.log(error);
       if (error.response) {
         if (error?.response?.data?.message === "No results Found") {
           setCandidates([]);
+          setFilteredCandidates([]);
           setStatus("Completed");
           searchData = [];
         } else {
@@ -493,24 +514,12 @@ const CandidatesList = () => {
       // console.log(error);
     }
   };
-  let emails = [];
-  let selectedCandidate = [];
   useEffect(() => {
-    selectedRowKeys.map((e, idx) => {
-      // console.log(sortedCandidates[e].email);
-      emails.push(sortedCandidates[e].email);
-      selectedCandidate.push(sortedCandidates[e].resume);
-      setSelectedEmails(emails);
-      setSelectedResumes(selectedCandidate);
-    });
-  }, [selectedRowKeys]);
-  let addedCandidates = [];
-  useEffect(() => {
-    selectedRowKeys.map((e, idx) => {
-      addedCandidates.push(sortedCandidates[e]);
-      setSelectedUser(addedCandidates);
-    });
-  }, [selectedRowKeys]);
+    const selected = selectedRowKeys.map(index => candidates[index]).filter(Boolean);
+    setSelectedEmails(selected.map(candidate => candidate.email).filter(Boolean));
+    setSelectedResumes(selected.map(candidate => candidate.resume).filter(Boolean));
+    setSelectedUser(selected);
+  }, [selectedRowKeys, candidates]);
   // console.log(selectedResumes);
 
   // console.log(selectedEmails);
@@ -735,8 +744,15 @@ const CandidatesList = () => {
     // console.log("OR:", orString);
   };
   const reset = () => {
+    searchRequest.current?.abort();
+    searchRequest.current = null;
     SetCity([]);
     setState([]);
+    setDistance(50);
+    setFilteredCandidates([]);
+    setSelectedRowKeys([]);
+    setCurrentPage(1);
+    setSelectedSkills([]);
     setSkills([{ skill: "", operator: "AND" }]);
     setJobTitle("");
     setKeyword("");
@@ -812,7 +828,7 @@ const CandidatesList = () => {
     <Menu>
       {jobs.map((e, idx) => (
         <Menu.Item key={`1-${idx + 1}`}>
-          <Button loading={loader} onClick={() => shortlistedJob(e)}>
+          <Button disabled={loader} icon={loader ? <BrandLoader size="button" label="" /> : undefined} onClick={() => shortlistedJob(e)}>
             {e?.JobTitle}
           </Button>
         </Menu.Item>
@@ -861,14 +877,14 @@ const CandidatesList = () => {
   //   </Menu>
   // );
 
-  const shortlistedJob = async (job) => {
+  const shortlistedJob = async (job, selection = selectedUser) => {
     try {
       setLoader(true);
       // if (token) {
       let userId = localStorage.getItem("UserId");
       let jobDetails = {
         jobId: job.jobId,
-        candidates: selectedUser,
+        candidates: selection,
         // jobId: params.jobId,
         // jobTitle: jobData[0]?.JobTitle,
         // companyName: jobData[0]?.companyName,
@@ -900,7 +916,7 @@ const CandidatesList = () => {
     } catch (error) {
       setLoader(false);
 
-      if (error.response.data.message === "Job already shortlisted") {
+      if (error.response?.data?.message === "Job already shortlisted") {
         toast.error("Already shortlisted");
       } else {
         // console.log(error.response.data.message);
@@ -1042,6 +1058,7 @@ const CandidatesList = () => {
           </div>
         </section>
 
+        <BooleanSearch value={keyword} onChange={setKeyword} options={skillOptions} />
         <section class="ls-section">
           <div class="auto-container">
             <div class="filters-backdrop"></div>
@@ -1056,138 +1073,8 @@ const CandidatesList = () => {
 
                     <div className="filter-block">
                       <h4>Skills</h4>
-                      <div className="form-group">
-                        <input
-                          type="text"
-                          name="listing-search"
-                          placeholder="Added Skills will appear here"
-                          value={keyword}
-                          onChange={(e) => setKeyword(e.target.value)}
-                          disabled
-                        />
-                      </div>
-                    </div>
-                    {/* Add Skills */}
-                    <div className="filter-block">
-                      <h4>Add Skills</h4>
-                      <div className="skills-container">
-                        {skills.map((skillObj, index) => (
-                          <div
-                            className="form-group skill-row"
-                            key={index}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              marginBottom: "10px",
-                            }}
-                          >
-                            {/* Show AND/OR only after the first skill */}
-                            {index > 0 && (
-                              <Select
-                                style={{ width: "100px", marginRight: "10px" }}
-                                value={skillObj.operator}
-                                onChange={(value) =>
-                                  handleOperatorChange(index, value)
-                                }
-                                options={[
-                                  { label: "AND", value: "AND" },
-                                  { label: "OR", value: "OR" },
-                                ]}
-                              />
-                            )}
-
-                            {/* Skill Input */}
-                            {/* <input
-                            type="text"
-                            name="listing-skills"
-                            placeholder="Eg. Java Developer"
-                            value={skillObj.skill}
-                            onChange={(e) =>
-                              handleSkillChange(index, e.target.value)
-                            }
-                            style={{ flex: 1, paddingRight: "40px" }}
-                          />*/}
-                            <Select
-                              showSearch
-                              size={"middle"}
-                              style={{
-                                width: "100%",
-                                flex: 1,
-                                paddingRight: "40px",
-                                paddingBottom: "70px",
-                              }}
-                              optionFilterProp="children"
-                              filterOption={filterOption}
-                              className="custom-select"
-                              placeholder="Select Skills"
-                              options={skillOptions}
-                              value={skillObj.skill}
-                              onChange={(e) => handleSkillChange(index, e)}
-                              virtual={false}
-                              dropdownRender={(menu) => (
-                                <>
-                                  {menu}
-                                  <Divider
-                                    style={{
-                                      margin: "8px 0",
-                                    }}
-                                  />
-                                  <Space
-                                    style={{
-                                      padding: "0 8px 4px",
-                                    }}
-                                  >
-                                    <Input
-                                      placeholder="Please enter Skill"
-                                      // ref={inputRef}
-                                      value={addSkillDB}
-                                      onChange={(e) =>
-                                        setAddSkillDB(e.target.value)
-                                      }
-                                      onKeyDown={(e) => e.stopPropagation()}
-                                    />
-                                    <Button
-                                      type="text"
-                                      icon={<PlusOutlined />}
-                                      onClick={addSkill}
-                                    >
-                                      Add Skill
-                                    </Button>
-                                  </Space>
-                                </>
-                              )}
-                            />
-                            {/* ✅ Add Skill Button - Only If Value Is Entered */}
-                            {index === skills.length - 1 &&
-                              skillObj.skill.trim() !== "" && (
-                                <FaPlus
-                                  onClick={addSkillField}
-                                  className="icon-button add-skill-btn"
-                                  style={{
-                                    marginLeft: "10px",
-                                    cursor: "pointer",
-                                    color: "#007bff",
-                                    fontSize: "1rem",
-                                  }}
-                                />
-                              )}
-
-                            {/* ✅ Trash Icon Instead of Minus */}
-                            {index > 0 && (
-                              <FaTrash
-                                onClick={() => removeSkillField(index)}
-                                className="icon-button remove-skill-btn"
-                                style={{
-                                  marginLeft: "10px",
-                                  cursor: "pointer",
-                                  color: "#dc3545",
-                                  fontSize: "1rem",
-                                }}
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      <Select mode="tags" aria-label="Skills" allowClear showSearch style={{width:"100%"}} placeholder="Select skills" options={skillOptions} value={selectedSkills} onChange={setSelectedSkills} optionFilterProp="label" />
+                      <p style={{fontSize:12,marginTop:8,color:"#60718b"}}>Match all selected skills. Use Boolean search above for advanced combinations.</p>
                     </div>
                     <div className="filter-block">
                       <h4>Job Title</h4>
@@ -1289,9 +1176,9 @@ const CandidatesList = () => {
                       style={{
                         marginRight: "20px",
                       }}
-                      disabled={isSearchDisabled}
+
                       title={isSearchDisabled ? tooltipMessage : ""} // Tooltip here
-                      loading={status === "Loading"}
+                      disabled={status === "Loading" || isSearchDisabled}
                     >
                       Search
                     </Button>
@@ -1311,11 +1198,12 @@ const CandidatesList = () => {
               {/* {candidates.length != 0 ? (*/}
               <div className="content-column col-lg-8 col-md-12 col-sm-12">
                 {status === "Pending" && (
-                  <h1 className="text-center text-design new-word">
-                    Enter the Skills or Job title
+                  <h1 className="em-search-empty">
+                    Search by skills or job title to discover candidates
                   </h1>
                 )}
-                {status === "Loading" && <ProgressLoader />}
+                {status === "Loading" && <div><BrandLoader label="Searching resumes…" /><Button danger onClick={stopSearch}>Stop search</Button></div>}
+                {status === "Stopped" && <p role="status">Search stopped. You can change filters and search again.</p>}
                 {status === "Completed" && (
                   <>
                     {" "}
@@ -1350,7 +1238,7 @@ const CandidatesList = () => {
                         marginBottom: 16,
                       }}
                     >
-                  
+
                       <Button
                         type="primary"
                         disabled={!hasSelected}
@@ -1371,7 +1259,7 @@ const CandidatesList = () => {
                     </div>*/}
                       <div style={{ marginBottom: 16 }}>
                         <Dropdown
-                          menu={{ items }}
+                          menu={{ items: items.filter(Boolean) }}
                           disabled={!hasSelected}
                           trigger={["click"]}
                         >
@@ -1432,7 +1320,13 @@ const CandidatesList = () => {
                           Showing {from}–{to} of {totalResults} result
                           {totalResults !== 1 ? "s" : ""}
                         </div>
-                        <Table
+                        <div className="em-search-toolbar"><Checkbox checked={searchData.length > 0 && selectedRowKeys.length === searchData.length} indeterminate={selectedRowKeys.length > 0 && selectedRowKeys.length < searchData.length} onChange={e => setSelectedRowKeys(e.target.checked ? searchData.map(r => r.key) : [])}>Select all results</Checkbox><Radio.Group value={resultView} onChange={e => setResultView(e.target.value)} optionType="button" options={[{label:"Cards",value:"cards"},{label:"Table",value:"table"}]} /></div>
+                        {resultView === "cards" ? <><div className="em-resume-cards">{searchData.slice(indexOfFirstCandidate, indexOfLastCandidate).map(record => <article className="em-resume-card" key={record.key}>
+                          <Checkbox aria-label={`Select ${record.name}`} checked={selectedRowKeys.includes(record.key)} onChange={e => setSelectedRowKeys(keys => e.target.checked ? [...keys,record.key] : keys.filter(k => k !== record.key))} />
+                          <EmployerAvatar src={record.image} name={record.name} size={60} />
+                          <div className="em-resume-details"><h2>{record.name}</h2><p>{record.jobTitle} · {record.experience} experience</p><p>{[record.city,record.state,record.country].filter(v => v && v !== "NA").join(", ")}</p><p>Work authorization: {record.workAuthorization} · Updated {record.lastloggedin}</p><div className="em-resume-skills">{(Array.isArray(record.skills) ? record.skills : []).slice(0,8).map((skill,i) => <span key={i}>{typeof skill === "string" ? skill : skill.name || skill.skill}</span>)}</div></div>
+                          <div className="em-resume-actions"><Button onClick={() => handlePreview(record.resume)} icon={<EyeOutlined />}>View resume</Button><Dropdown trigger={["click"]} menu={{items: jobs.map(job => ({key:job.jobId,label:job.JobTitle,onClick:()=>shortlistedJob(job,[candidates[record.key]])}))}} disabled={!jobs.length || loader}><Button disabled={loader || !jobs.length} icon={loader ? <BrandLoader size="button" label="" /> : undefined}>Save to job <DownOutlined /></Button></Dropdown></div>
+                        </article>)}</div>{!searchData.length && <div className="em-card em-empty">No candidates match this search. Try changing your skills or location.</div>}<Pagination style={{marginTop:24,textAlign:"right"}} current={currentPage} pageSize={candidatesPerPage} total={searchData.length} showSizeChanger pageSizeOptions={[10,25,50,100]} onChange={(page,size) => {setCurrentPage(page);setCandidatesPerPage(size);}} /></> : <Table
                           rowSelection={rowSelection}
                           columns={columns}
                           dataSource={searchData}
@@ -1447,6 +1341,7 @@ const CandidatesList = () => {
                             },
                           }}
                         />
+                        }
                         <ResumePreviewDrawer
                           open={drawerVisible}
                           onClose={() => handleCancel()}

@@ -1,3 +1,6 @@
+import ResumePreviewDrawer from "../../Components/ReaderDrawer/ResumePreviewDrawer";
+import EmployerAvatar from "../../Components/EmployerUI/EmployerAvatar";
+import { Input, Button, Select, Popconfirm } from "antd";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Skeleton, Empty, Badge, Dropdown, Space, Table, Tooltip } from "antd";
@@ -18,6 +21,9 @@ const items = [
 ];
 const SavedResumes = () => {
   const [data, setData] = useState([]);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [search, setSearch] = useState("");
+  const [selectedJobId, setSelectedJobId] = useState("all");
   const params = useParams();
   const navigate = useNavigate();
   const [loader, setLoader] = useState(false);
@@ -132,8 +138,7 @@ const SavedResumes = () => {
                   color:
                     "rgba(var(--bs-link-color-rgb),var(--bs-link-opacity,1))",
                 }}
-                href={record.resume}
-                target="_blank"
+                onClick={() => setPreviewUrl(record.resume)}
               >
                 <EyeOutlined />
               </a>
@@ -283,75 +288,10 @@ const SavedResumes = () => {
     }));
   // console.log(jobData);
 
-  return (
-    <div>
-      <section class="user-dashboard">
-        <div class="dashboard-outer">
-          <div class="upper-title-box">
-            <h3>Saved Resumes!</h3>
-            <div class="text">Ready to jump back in?</div>
-          </div>
-          <Toaster position="top-center" reverseOrder={false} />
-          <div class="row">
-            <div class="col-lg-12">
-              <div class="applicants-widget ls-widget">
-                <div class="widget-title">
-                  <h4>Saved Resumes</h4>
+  const saved = (data.jobs || []).flatMap(job => (job.savedResumes || []).map(resume => ({...resume, collectionJobId:job.jobId, collectionTitle:job.JobTitle})));
+  const visible = saved.filter(resume => (selectedJobId === "all" || resume.collectionJobId === selectedJobId) && [resume.name,resume.jobTitle,resume.country,resume.collectionTitle].filter(Boolean).join(" ").toLowerCase().includes(search.toLowerCase()));
+  return <><ResumePreviewDrawer open={!!previewUrl} fileUrl={previewUrl} onClose={() => setPreviewUrl(null)} /><Toaster position="top-center"/><div className="em-saved-layout"><aside className="em-card em-saved-collections"><h2>Saved by job</h2><button className={selectedJobId === "all" ? "active":""} onClick={()=>setSelectedJobId("all")}>All saved <span>{saved.length}</span></button>{(data.jobs||[]).map(job=><button key={job.jobId} className={selectedJobId === job.jobId ? "active":""} onClick={()=>setSelectedJobId(job.jobId)}>{job.JobTitle}<span>{job.savedResumes?.length||0}</span></button>)}</aside><section><div className="em-search-toolbar"><Input.Search aria-label="Search saved resumes" placeholder="Search by name, title or location" value={search} onChange={e=>setSearch(e.target.value)} allowClear style={{maxWidth:600}}/><span>{visible.length} saved candidates</span></div>{loader ? <div className="em-card"><Skeleton active/></div> : <div className="em-resume-cards">{visible.map((resume,i)=><article className="em-resume-card" key={`${resume.collectionJobId}-${resume.id || i}`}><EmployerAvatar src={resume.image} name={resume.name} size={56}/><div className="em-resume-details"><h2>{resume.name || "Candidate"}</h2><p>{resume.jobTitle || resume.collectionTitle}</p><p>{[resume.city,resume.state,resume.country].filter(Boolean).join(", ")}</p><div className="em-resume-skills"><span>{resume.collectionTitle}</span></div><p>Saved {resume.shortlistedTime || "recently"}</p></div><div className="em-resume-actions"><Button onClick={() => setPreviewUrl(resume.resume)} disabled={!resume.resume} icon={<EyeOutlined/>}>View resume</Button><Popconfirm title="Remove this saved resume?" onConfirm={()=>deleteShortlisrted(resume.id,resume.collectionJobId)} okText="Remove"><Button icon={<DeleteOutlined/>}>Remove</Button></Popconfirm></div></article>)}</div>}{!loader && !visible.length && <div className="em-card em-empty">No saved resumes match this view.</div>}</section></div></>;
 
-                  {/*    <div class="chosen-outer">
-                    <div class="search-box-one">
-                      <form
-                        method="post"
-                        action="https://creativelayers.net/themes/Skill Stream/blog.html"
-                      >
-                        <div class="form-group">
-                          <span class="icon flaticon-search-1"></span>
-                          <input
-                            type="search"
-                            name="search-field"
-                            value=""
-                            placeholder="Search"
-                            required=""
-                          />
-                        </div>
-                      </form>
-                    </div>
-
-                    <select class="chosen-select">
-                      <option>Newest</option>
-                      <option>Last 12 Months</option>
-                      <option>Last 16 Months</option>
-                      <option>Last 24 Months</option>
-                      <option>Last 5 year</option>
-                    </select>
-                  </div>*/}
-                </div>
-                <div class="widget-content">
-                  {/*                {data?.length === 0 ? (
-                    <Empty description="No Applicants Shortlisted" />
-                  ) : (*/}
-                  <Table
-                    columns={columns}
-                    loading={loader}
-                    expandable={{
-                      expandedRowRender,
-                      defaultExpandedRowKeys: ["0"],
-                    }}
-                    dataSource={jobData}
-                  />
-                  {/* )}*/}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <div class="copyright-text">
-        <p>© 2024 Skill Stream. All Right Reserved.</p>
-      </div>
-    </div>
-  );
 };
 
 export default SavedResumes;

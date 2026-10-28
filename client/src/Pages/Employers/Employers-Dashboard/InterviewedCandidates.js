@@ -1,3 +1,5 @@
+import EmployerApplicantTable from "../../../Components/EmployerUI/EmployerApplicantTable";
+import EmployerAvatar from "../../../Components/EmployerUI/EmployerAvatar";
 // InterviewedCandidates.js
 // ✅ Ready-to-paste page
 // ✅ Keeps SAME collapsed layout + same candidate card design classes (Applicants.css)
@@ -1111,144 +1113,7 @@ const InterviewedCandidates = () => {
     setPanelPage(1);
     setApplicantPage({});
   }, [mainTab, activeTab, roundTab, stageTab]);
-  const ApplicantLayout = (givenApplicants, applLoader) => {
-    const totalPanels = givenApplicants.length;
-    const totalPanelPages = Math.ceil(totalPanels / panelsPerPage);
-
-    const paginatedPanels = givenApplicants.slice(
-      (panelPage - 1) * panelsPerPage,
-      panelPage * panelsPerPage,
-    );
-
-    const renderPageNumbers = (current, total, onChange) => {
-      const pages = [];
-      let start = 1;
-      let end = total;
-
-      if (total > 4) {
-        if (current <= 2) {
-          start = 1;
-          end = 4;
-        } else if (current >= total - 1) {
-          start = total - 3;
-          end = total;
-        } else {
-          start = current - 1;
-          end = current + 1;
-        }
-      }
-
-      if (start > 1) {
-        pages.push(
-          <Button
-            key={1}
-            size="small"
-            type={current === 1 ? "primary" : "default"}
-            onClick={() => onChange(1)}
-          >
-            1
-          </Button>,
-        );
-        if (start > 2) pages.push(<span key="dots1">...</span>);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(
-          <Button
-            key={i}
-            size="small"
-            type={current === i ? "primary" : "default"}
-            onClick={() => onChange(i)}
-          >
-            {i}
-          </Button>,
-        );
-      }
-
-      if (end < total) {
-        if (end < total - 1) pages.push(<span key="dots2">...</span>);
-        pages.push(
-          <Button
-            key={total}
-            size="small"
-            type={current === total ? "primary" : "default"}
-            onClick={() => onChange(total)}
-          >
-            {total}
-          </Button>,
-        );
-      }
-
-      return pages;
-    };
-
-    if (applLoader) {
-      return (
-        <p
-          style={{
-            paddingBottom: "80px",
-            fontSize: "22px",
-            fontweight: "800",
-            color: "#000",
-            textAlign: "center",
-          }}
-        >
-          Fetching Interview Candidates...
-        </p>
-      );
-    }
-
-    if (!givenApplicants?.length) {
-      return <Empty description="No candidates in this stage" />;
-    }
-
-    return (
-      <div>
-        {paginatedPanels.map((e, idx) => {
-          const currentApplicantPage = applicantPage[e.jobId] || 1;
-          const totalApplicants = e.applicants.length;
-          const totalApplicantPages = Math.ceil(
-            totalApplicants / applicantsPerPage,
-          );
-
-          const paginatedApplicants = e.applicants.slice(
-            (currentApplicantPage - 1) * applicantsPerPage,
-            currentApplicantPage * applicantsPerPage,
-          );
-
-          return (
-            <div className="tabs-box" key={idx}>
-              <Collapse bordered={false} key={idx}>
-                <Collapse.Panel
-                  header={
-                    activeTab === "myJobs"
-                      ? `${e.JobTitle} (${e.newId ? e.newJobId : e.jobId}) - ${
-                          e.applicants.length
-                        } Candidate${e.applicants.length > 1 ? "s" : ""}`
-                      : `${e.JobTitle} (${e.newId ? e.newJobId : e.jobId}) - ${
-                          e.EmailAddress
-                        } - ${e.applicants.length} Candidate${
-                          e.applicants.length > 1 ? "s" : ""
-                        }`
-                  }
-                  key={idx}
-                >
-                  <div className="aplicants-upper-bar">
-                    <h6>{e.JobTitle}</h6>
-                    <ul className="aplicantion-status tab-buttons clearfix">
-                      <li
-                        className="tab-btn active-btn totals"
-                        data-tab="#totals"
-                      >
-                        Total(s): {e?.applicants?.length || 0}
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="tabs-content">
-                    <div className="tab active-tab" id="totals">
-                      <div className="row">
-                        {paginatedApplicants.map((i, idx2) => {
+  const ApplicantLayout = (givenApplicants, applLoader) => <EmployerApplicantTable mode="interviews" jobs={givenApplicants} loading={applLoader} renderDetails={(i, e, idx2) => {
                           const currentStatus =
                             roundTab === "video"
                               ? getVideoInterviewStatus(i)
@@ -1283,17 +1148,7 @@ const InterviewedCandidates = () => {
                                         {/* LEFT */}
                                         <div>
                                           <figure className="image">
-                                            <img
-                                              src={
-                                                i?.image ||
-                                                "https://skill-stream-jobs.s3.amazonaws.com/candidates/5303f7d40027bf760cef74c00.png"
-                                              }
-                                              alt="User"
-                                              style={{
-                                                width: "80px",
-                                                height: "80px",
-                                              }}
-                                            />
+                                            <EmployerAvatar src={i?.image} name={i?.name} size={60} />
                                           </figure>
 
                                           <h4>
@@ -1395,7 +1250,7 @@ const InterviewedCandidates = () => {
 
                                             {/* ✅ View Resume (same as existing) */}
                                             <Tooltip title="View Resume">
-                                              <div
+                                              <button type="button" aria-label="View resume"
                                                 className="square green"
                                                 style={{
                                                   backgroundColor: "#1E88E5",
@@ -1410,7 +1265,7 @@ const InterviewedCandidates = () => {
                                                 }}
                                               >
                                                 <EyeOutlined />
-                                              </div>
+                                              </button>
                                             </Tooltip>
 
                                             {/* ✅ Pending => Send Invite (square icon like existing) */}
@@ -1487,110 +1342,7 @@ const InterviewedCandidates = () => {
                               </div>
                             </div>
                           );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <ResumePreviewDrawer
-                    open={resumeDrawerOpen}
-                    onClose={closeResumeDrawer}
-                    fileUrl={resumeUrl}
-                    highlightArray={highlightArray}
-                  />
-                  {/* Applicant pagination inside each job collapse */}
-                  {totalApplicantPages > 1 && (
-                    <div
-                      style={{
-                        marginTop: "20px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
-                      <Button
-                        size="small"
-                        disabled={currentApplicantPage === 1}
-                        onClick={() =>
-                          setApplicantPage((prev) => ({
-                            ...prev,
-                            [e.jobId]: Math.max((prev[e.jobId] || 1) - 1, 1),
-                          }))
-                        }
-                      >
-                        Prev
-                      </Button>
-
-                      {renderPageNumbers(
-                        currentApplicantPage,
-                        totalApplicantPages,
-                        (page) =>
-                          setApplicantPage((prev) => ({
-                            ...prev,
-                            [e.jobId]: page,
-                          })),
-                      )}
-
-                      <Button
-                        size="small"
-                        disabled={currentApplicantPage === totalApplicantPages}
-                        onClick={() =>
-                          setApplicantPage((prev) => ({
-                            ...prev,
-                            [e.jobId]: Math.min(
-                              (prev[e.jobId] || 1) + 1,
-                              totalApplicantPages,
-                            ),
-                          }))
-                        }
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  )}
-                </Collapse.Panel>
-              </Collapse>
-
-              {/* Panel pagination for job collapses */}
-              {totalPanelPages > 1 && idx === paginatedPanels.length - 1 && (
-                <div
-                  style={{
-                    marginTop: "25px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <Button
-                    size="small"
-                    disabled={panelPage === 1}
-                    onClick={() => setPanelPage(Math.max(panelPage - 1, 1))}
-                  >
-                    Prev
-                  </Button>
-
-                  {renderPageNumbers(panelPage, totalPanelPages, (page) =>
-                    setPanelPage(page),
-                  )}
-
-                  <Button
-                    size="small"
-                    disabled={panelPage === totalPanelPages}
-                    onClick={() =>
-                      setPanelPage(Math.min(panelPage + 1, totalPanelPages))
-                    }
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+                        }} />;
 
   // ----------------------
   // UI
@@ -1606,7 +1358,7 @@ const InterviewedCandidates = () => {
             </div>
           </div>
 
-          <Toaster position="top-center" reverseOrder={false} />
+          <Toaster position="top-center" reverseOrder={false} /><ResumePreviewDrawer open={resumeDrawerOpen} onClose={closeResumeDrawer} fileUrl={resumeUrl} highlightArray={highlightArray} />
 
           <div className="row">
             <div className="col-lg-12">

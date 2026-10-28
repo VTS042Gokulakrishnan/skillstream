@@ -1,0 +1,4 @@
+const fs=require('fs');let s=fs.readFileSync('.ui-test-cache/employer/check-pages.cjs','utf8');s=s.slice(0,s.indexOf('(async()=>{const browser='));s=s.replace("out=path.resolve('docs/employer-implementation-2026-10-27')","out=path.resolve('docs/ui-revisions-2026-10-28')");s=s.replace("function api(url,req){const p=url.pathname;",`function api(url,req){const p=url.pathname;
+ if(p.includes('/ai/search/candidate')) return {candidates:people.map((p,i)=>({...p,rank:i+1}))};
+ if(p.includes('/candidate/')) return {Candidate:[{...people[0],position:'Frontend Developer',language:['English'],education:[],work_experience:[],social:[],profileCompleted:true}]};
+ if(p.includes('/data/languages'))return {languages:['English']};`);fs.mkdirSync('docs/ui-revisions-2026-10-28',{recursive:true});fs.writeFileSync('.ui-test-cache/employer/check-revision.cjs',s);

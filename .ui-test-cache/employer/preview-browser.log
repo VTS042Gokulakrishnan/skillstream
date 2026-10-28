@@ -1,0 +1,17 @@
+PREVIEW /applicants
+PASS preview drawer and failure state /applicants
+PREVIEW /shortlisted-resumes
+PASS preview drawer and failure state /shortlisted-resumes
+PREVIEW /interview-candidates
+PASS preview drawer and failure state /interview-candidates
+PREVIEW /savedResume
+PASS preview drawer and failure state /savedResume
+PASS actual pdf render
+PASS actual docx render
+Error: Node is either not clickable or not an Element
+    at CdpElementHandle.clickablePoint (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\ElementHandle.js:696:23)
+    at async CdpElementHandle.<anonymous> (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\ElementHandle.js:122:20)
+    at async CdpElementHandle.click (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\ElementHandle.js:726:30)
+    at async CdpElementHandle.<anonymous> (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\ElementHandle.js:133:24)
+    at async CdpFrame.click (D:\GitHub\skillStream-Backend\node_modules\puppeteer-core\lib\cjs\puppeteer\api\Frame.js:752:17)
+    at async D:\GitHub\skillstream\.ui-test-cache\employer\check-preview.cjs:71:233

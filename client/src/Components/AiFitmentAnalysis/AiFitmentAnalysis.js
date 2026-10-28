@@ -1,3 +1,4 @@
+import FitmentOverview from "../EmployerUI/FitmentOverview";
 import React, { useEffect, useState } from "react";
 import "./AiFitmentAnalysis.css"; // Import the CSS file for styling
 import img from "../../assets/executives-working-hard-with-tablet.jpg";
@@ -244,7 +245,7 @@ const AiFitmentAnalysis = () => {
     onRemove: (file) => {
       // This prevents the automatic upload
       // console.log("removed");
-      setFile([]); // Store the file in state
+      setFile(null); // Clear the removed resume
     },
   };
 
@@ -1058,7 +1059,7 @@ const AiFitmentAnalysis = () => {
     <SubscriptionGuard>
       {" "}
       <div>
-        <section class="user-dashboard">
+        <section class="user-dashboard em-fitment-page">
           <div class="dashboard-outer">
             <div class="upper-title-box">
               <h3>AI Fitment Analysis </h3>
@@ -1098,132 +1099,9 @@ const AiFitmentAnalysis = () => {
                         />
                       </>
                     ) : isAnalysed ? (
-                      <div>
-                        <div>
-                          <h1
-                            style={{
-                              textAlign: "center",
-                              marginBottom: "18px",
-                              fontSize: "30px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Fitment Analysis Completed
-                          </h1>
-                          <h1
-                            style={{
-                              textAlign: "center",
-                              marginBottom: "18px",
-                              fontSize: "25px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Matching Score : {`${aiScore}%`}
-                          </h1>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "center",
-                            paddingBottom: "50px",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <Button
-                            // style={{ }}
-                            onClick={downloadPDF}
-                            // className="blue-button"
-                            style={{
-                              background:
-                                "linear-gradient(to right, #2563eb, #000000)",
-                              color: "#ffffff",
-                              marginRight: "15px",
-                              marginTop: "15px",
-                              fontWeight: 600,
-                              padding: "8px 20px",
-                              borderRadius: "12px",
-                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                              border: "none",
-                              transition: "all 0.3s ease",
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #1e40af, #111827)";
-                              e.currentTarget.style.transform = "scale(1.05)";
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #2563eb, #000000)";
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
-                          >
-                            Download Result
-                          </Button>
-                          <Button
-                            // style={{ }}
-                            onClick={() => setIsResultModalVisible(true)}
-                            // className="blue-button"
-                            style={{
-                              background:
-                                "linear-gradient(to right, #2563eb, #000000)",
-                              color: "#ffffff",
-                              fontWeight: 600,
-                              padding: "8px 20px",
-                              marginRight: "15px",
-                              marginTop: "15px",
-                              borderRadius: "12px",
-                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                              border: "none",
-                              transition: "all 0.3s ease",
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #1e40af, #111827)";
-                              e.currentTarget.style.transform = "scale(1.05)";
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #2563eb, #000000)";
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
-                          >
-                            View Result
-                          </Button>
-                          <Button
-                            // style={{  }}
-                            onClick={reset}
-                            // className="blue-button"
-                            style={{
-                              background:
-                                "linear-gradient(to right, #2563eb, #000000)",
-                              color: "#ffffff",
-                              fontWeight: 600,
-                              marginRight: "15px",
-                              marginTop: "15px",
-                              padding: "8px 20px",
-                              borderRadius: "12px",
-                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                              border: "none",
-                              transition: "all 0.3s ease",
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #1e40af, #111827)";
-                              e.currentTarget.style.transform = "scale(1.05)";
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background =
-                                "linear-gradient(to right, #2563eb, #000000)";
-                              e.currentTarget.style.transform = "scale(1)";
-                            }}
-                          >
-                            Back
-                          </Button>
-                        </div>
-                      </div>
+                      <FitmentOverview result={aiResult} score={aiScore} jobTitle={jobTitle} file={file} skills={jobSkills} onDownload={downloadPDF} onDetails={()=>setIsResultModalVisible(true)} onReset={reset} />
                     ) : (
-                      <div class="widget-content">
+                      <div class="widget-content em-fitment-entry"><aside className="em-fitment-guide"><span className="em-preview-label">AI-ASSISTED REVIEW</span><h2>Resume meets requirements</h2><p>Add the role and candidate resume to compare skills and experience.</p><ol><li>Describe the role and required skills.</li><li>Upload the candidate’s resume.</li><li>Review alignment, evidence, strengths and gaps.</li></ol><div className="em-insight em-insight-question"><strong>Your analysis will appear here</strong><p>The report includes skill evidence and recommendations, with a PDF download.</p></div></aside>
                         <form class="default-form" onSubmit={analyse}>
                           <div class="row">
                             <div class="form-group col-lg-12 col-md-12">

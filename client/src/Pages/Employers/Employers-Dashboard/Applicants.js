@@ -1,3 +1,5 @@
+import EmployerApplicantTable from "../../../Components/EmployerUI/EmployerApplicantTable";
+import EmployerAvatar from "../../../Components/EmployerUI/EmployerAvatar";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -1486,155 +1488,7 @@ const Applicants = () => {
     }
   };
 
-  const ApplicantLayout = (givenApplicants, applLoader) => {
-    const totalPanels = givenApplicants.length;
-    const totalPanelPages = Math.ceil(totalPanels / panelsPerPage);
-
-    const paginatedPanels = givenApplicants.slice(
-      (panelPage - 1) * panelsPerPage,
-      panelPage * panelsPerPage,
-    );
-
-    // Helper for generating page number buttons
-    // SMART PAGINATION (max 4 page numbers)
-    const renderPageNumbers = (current, total, onChange) => {
-      const pages = [];
-      let start = 1;
-      let end = total;
-
-      if (total > 4) {
-        if (current <= 2) {
-          start = 1;
-          end = 4;
-        } else if (current >= total - 1) {
-          start = total - 3;
-          end = total;
-        } else {
-          start = current - 1;
-          end = current + 1;
-          if (start < 1) start = 1;
-          if (end > total) end = total;
-        }
-      }
-
-      // Add first pages
-      if (start > 1) {
-        pages.push(
-          <Button
-            key={1}
-            size="small"
-            type={current === 1 ? "primary" : "default"}
-            onClick={() => onChange(1)}
-          >
-            1
-          </Button>,
-        );
-        if (start > 2) pages.push(<span key="dots1">...</span>);
-      }
-
-      // Middle pages
-      for (let i = start; i <= end; i++) {
-        pages.push(
-          <Button
-            key={i}
-            size="small"
-            type={current === i ? "primary" : "default"}
-            onClick={() => onChange(i)}
-          >
-            {i}
-          </Button>,
-        );
-      }
-
-      // Add last pages
-      if (end < total) {
-        if (end < total - 1) pages.push(<span key="dots2">...</span>);
-        pages.push(
-          <Button
-            key={total}
-            size="small"
-            type={current === total ? "primary" : "default"}
-            onClick={() => onChange(total)}
-          >
-            {total}
-          </Button>,
-        );
-      }
-
-      return pages;
-    };
-    return (
-      <>
-        {applLoader ? (
-          <p
-            style={{
-              paddingBottom: "80px",
-              fontSize: "22px",
-              fontweight: "800",
-              color: "#000",
-              textAlign: "center",
-            }}
-          >
-            Fetching Applicants...
-          </p>
-        ) : givenApplicants.length === 0 ? (
-          <Empty description="No Applicants Applied" />
-        ) : (
-          paginatedPanels?.map((e, idx) => {
-            // === APPLICANTS PAGINATION FOR EACH COLLAPSE ===
-            const currentApplicantPage = applicantPage[e.jobId] || 1;
-            const totalApplicants = e.applicants.length;
-            const totalApplicantPages = Math.ceil(
-              totalApplicants / applicantsPerPage,
-            );
-
-            const paginatedApplicants = e.applicants.slice(
-              (currentApplicantPage - 1) * applicantsPerPage,
-              currentApplicantPage * applicantsPerPage,
-            );
-
-            return (
-              <div className="tabs-box" key={idx}>
-                <Collapse bordered={false}>
-                  <Collapse.Panel
-                    header={
-                      activeTab === "myJobs"
-                        ? `${e.JobTitle}  (${
-                            e.newId ? e.newJobId : e.jobId
-                          }) - ${e.applicants.length} Applicant${
-                            e.applicants.length > 1 ? "s" : ""
-                          }`
-                        : `${e.JobTitle}  (${
-                            e.newId ? e.newJobId : e.jobId
-                          }) - ${e.EmailAddress} - ${
-                            e.applicants.length
-                          } Applicant${e.applicants.length > 1 ? "s" : ""}`
-                    }
-                    key={idx}
-                  >
-                    <div className="tabs-box" key={idx}>
-                      <div className="aplicants-upper-bar">
-                        {console.log(e)}
-                        <h6>{e.JobTitle}</h6>
-
-                        <ul className="aplicantion-status tab-buttons clearfix">
-                          <li
-                            className="tab-btn active-btn totals"
-                            data-tab="#totals"
-                          >
-                            Total(s):
-                            {e?.applicants ? e?.applicants?.length : 0}
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div className="tabs-content">
-                        <div className="tab active-tab" id="totals">
-                          <div className="row">
-                            {e.applicants ? (
-                              e.applicants?.length !== 0 ? (
-                                paginatedApplicants?.map((i, idx) => (
-                                  <div className="widget-content" key={idx}>
+  const ApplicantLayout = (givenApplicants, applLoader) => <EmployerApplicantTable mode="applicants" jobs={givenApplicants} loading={applLoader} renderDetails={(i, e, idx) => { return (<div className="widget-content" key={idx}>
                                     <div className="row">
                                       <div className="col-lg-12">
                                         <div className="candidate-block-three">
@@ -1642,17 +1496,7 @@ const Applicants = () => {
                                             <div className="content">
                                               <div>
                                                 <figure className="image">
-                                                  <img
-                                                    src={
-                                                      i?.image ||
-                                                      "https://skill-stream-jobs.s3.amazonaws.com/candidates/5303f7d40027bf760cef74c00.png"
-                                                    }
-                                                    alt="User"
-                                                    style={{
-                                                      width: "80px",
-                                                      height: "80px",
-                                                    }}
-                                                  />
+                                                  <EmployerAvatar src={i?.image} name={i?.name} size={60} />
                                                 </figure>
                                                 <h4>
                                                   <a
@@ -1918,7 +1762,7 @@ const Applicants = () => {
                                                     </div>
                                                   </Tooltip>
                                                 )}
-                                                {i?.preCallQuestion.length !==
+                                                {(i?.preCallQuestion?.length || 0) >
                                                   0 &&
                                                   i?.fitmentSummary && (
                                                     <Tooltip title="Recruiter Questions">
@@ -2095,116 +1939,7 @@ const Applicants = () => {
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                ))
-                              ) : (
-                                <Empty description="No Applicants Applied" />
-                              )
-                            ) : (
-                              <Empty description="No Applicants Applied" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {totalApplicantPages > 1 && (
-                        <div
-                          style={{
-                            marginTop: "20px",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            gap: "10px",
-                          }}
-                        >
-                          <Button
-                            size="small"
-                            disabled={currentApplicantPage === 1}
-                            onClick={() =>
-                              setApplicantPage((prev) => ({
-                                ...prev,
-                                [e.jobId]: Math.max(
-                                  currentApplicantPage - 1,
-                                  1,
-                                ),
-                              }))
-                            }
-                          >
-                            Prev
-                          </Button>
-
-                          {renderPageNumbers(
-                            currentApplicantPage,
-                            totalApplicantPages,
-                            (page) =>
-                              setApplicantPage((prev) => ({
-                                ...prev,
-                                [e.jobId]: page,
-                              })),
-                          )}
-
-                          <Button
-                            size="small"
-                            disabled={
-                              currentApplicantPage === totalApplicantPages
-                            }
-                            onClick={() =>
-                              setApplicantPage((prev) => ({
-                                ...prev,
-                                [e.jobId]: Math.min(
-                                  currentApplicantPage + 1,
-                                  totalApplicantPages,
-                                ),
-                              }))
-                            }
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </Collapse.Panel>
-                </Collapse>
-                {/* === COLLAPSE PAGINATION (PAGE NUMBERS) === */}
-                {totalPanelPages > 1 && idx === paginatedPanels.length - 1 && (
-                  <div
-                    style={{
-                      marginTop: "25px",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <Button
-                      size="small"
-                      disabled={panelPage === 1}
-                      onClick={() => setPanelPage(Math.max(panelPage - 1, 1))}
-                    >
-                      Prev
-                    </Button>
-
-                    {renderPageNumbers(panelPage, totalPanelPages, (page) =>
-                      setPanelPage(page),
-                    )}
-
-                    <Button
-                      size="small"
-                      disabled={panelPage === totalPanelPages}
-                      onClick={() =>
-                        setPanelPage(Math.min(panelPage + 1, totalPanelPages))
-                      }
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </>
-    );
-  };
+                                  </div>); }} />;
   return (
     <div>
       <section className="user-dashboard">

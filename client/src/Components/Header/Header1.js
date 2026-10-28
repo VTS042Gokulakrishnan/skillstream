@@ -25,6 +25,7 @@ import toast, { Toaster } from "react-hot-toast";
 import UploadResume from "./UploadResume";
 import { jwtDecode } from "jwt-decode";
 import "./Header.css";
+import PublicHeader from "../PublicSite/PublicHeader";
 import { SearchOutlined } from "@ant-design/icons";
 const Header3 = () => {
   const navigate = useNavigate();
@@ -592,6 +593,8 @@ const Header3 = () => {
       label: "Item 3",
     },
   ];
+  if (!token) return <PublicHeader />;
+
   return (
     <div>
       <span class="header-span"></span>
@@ -1160,7 +1163,7 @@ const Header3 = () => {
             <a href="/">
               {!isSticky ? (
                 <img
-                  src={logo2}
+                  src={NewLogo}
                   style={{ height: "50px" }}
                   className="logo-images"
                   alt="Normal Logo"

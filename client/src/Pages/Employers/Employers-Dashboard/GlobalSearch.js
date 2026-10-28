@@ -1,3 +1,4 @@
+import EmployerAvatar from "../../../Components/EmployerUI/EmployerAvatar";
 import React, { useState, useEffect } from "react";
 import { Input, Select, Collapse } from "antd";
 import { Button } from "antd";
@@ -147,7 +148,12 @@ const GlobalSearch = () => {
       // console.log(data);
 
       if (data.success) {
-        setResults(data.results);
+        const rows = data.results || {};
+        setResults({
+          candidates: Array.isArray(rows.candidates) ? rows.candidates : [],
+          employers: Array.isArray(rows.employers) ? rows.employers.map(row => ({ ...row, _doc: row._doc || row })) : [],
+          jobs: Array.isArray(rows.jobs) ? rows.jobs.map(row => ({ ...row, _doc: row._doc || row })) : [],
+        });
       } else {
         setResults({ candidates: [], employers: [], jobs: [] });
       }
@@ -183,7 +189,7 @@ const GlobalSearch = () => {
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Search Section */}
-      <section className="page-title style-two">
+      <section className="em-card em-global-query">
         <div className="auto-container">
           <div className="job-search-form">
             <form onSubmit={handleSearch}>
@@ -283,23 +289,7 @@ const GlobalSearch = () => {
                                 <div className="content">
                                   <span className="company-logo">
                                     {" "}
-                                    <img
-                                      src={
-                                        c.image
-                                          ? c.image
-                                          : "https://skill-stream-jobs.s3.amazonaws.com/candidates/5303f7d40027bf760cef74c00.png"
-                                      }
-                                      alt="Candidate"
-                                      style={{
-                                        width: "60px",
-                                        height: "60px",
-                                        borderRadius: "50%",
-                                        objectFit: "cover",
-                                      }}
-                                      onClick={() =>
-                                        handlePreview(c.resume, c.name)
-                                      }
-                                    />
+                                    <button type="button" aria-label={`View ${c.name}'s resume`} onClick={() => handlePreview(c.resume, c.name)} style={{border:0,background:"transparent",padding:0}}><EmployerAvatar src={c.image} name={c.name} size={60} /></button>
                                   </span>
                                   <h4 className="fw-bold mb-2">
                                     <a

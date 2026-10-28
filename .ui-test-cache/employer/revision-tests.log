@@ -1,0 +1,68 @@
+(node:14820) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+One of your dependencies, babel-preset-react-app, is importing the
+"@babel/plugin-proposal-private-property-in-object" package without
+declaring it in its dependencies. This is currently working because
+"@babel/plugin-proposal-private-property-in-object" is already in your
+node_modules folder for unrelated reasons, but it may break at any time.
+
+babel-preset-react-app is part of the create-react-app project, which
+is not maintianed anymore. It is thus unlikely that this bug will
+ever be fixed. Add "@babel/plugin-proposal-private-property-in-object" to
+your devDependencies to work around this error. This will make this message
+go away.
+  
+PASS client/src/Components/EmployerUI/EmployerUI.test.js (88.403 s)
+  ● Console
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      19 | });
+      20 | test("broken photos fall back to initials and a changed photo can load", () => {
+    > 21 |   const { rerender } = render(<EmployerAvatar src="/broken.png" name="Rahul Sharma" />);
+         |                              ^
+      22 |   fireEvent.error(screen.getByRole("img"));
+      23 |   expect(screen.getByText("RS")).toBeTruthy();
+      24 |   rerender(<EmployerAvatar src="/new.png" name="Rahul Sharma" />);
+
+      at printWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../skillstream-jobs-us/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at Object.<anonymous> (client/src/Components/EmployerUI/EmployerUI.test.js:21:30)
+
+PASS client/src/Components/ReaderDrawer/ResumePreviewDrawer.test.js
+  ● Console
+
+    console.error
+      Warning: `ReactDOMTestUtils.act` is deprecated in favor of `React.act`. Import `act` from `react` instead of `react-dom/test-utils`. See https://react.dev/warnings/react-dom-test-utils for more info.
+
+      10 | test("signed DOCX URLs select the DOCX renderer", async () => {
+      11 |   fetch.mockResolvedValue({ok:true,blob:async()=>new Blob(["docx"])});
+    > 12 |   render(<ResumePreviewDrawer open fileUrl="https://example.test/resume.docx?signature=123" />);
+         |         ^
+      13 |   expect(await screen.findByText("DOCX resume.docx")).toBeTruthy();
+      14 | });
+      15 | test("failed requests can be retried", async () => {
+
+      at printWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:71:30)
+      at error (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:45:7)
+      at actWithWarning (../skillstream-jobs-us/node_modules/react-dom/cjs/react-dom-test-utils.development.js:1736:7)
+      at ../skillstream-jobs-us/node_modules/@testing-library/react/dist/act-compat.js:63:25
+      at renderRoot (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:159:26)
+      at render (../skillstream-jobs-us/node_modules/@testing-library/react/dist/pure.js:246:10)
+      at Object.<anonymous> (client/src/Components/ReaderDrawer/ResumePreviewDrawer.test.js:12:9)
+      at TestScheduler.scheduleTests (../skillstream-jobs-us/node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (../skillstream-jobs-us/node_modules/@jest/core/build/runJest.js:404:19)
+      at _run10000 (../skillstream-jobs-us/node_modules/@jest/core/build/cli/index.js:320:7)
+      at runCLI (../skillstream-jobs-us/node_modules/@jest/core/build/cli/index.js:173:3)
+
+
+Test Suites: 2 passed, 2 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        105.877 s
+Ran all test suites.

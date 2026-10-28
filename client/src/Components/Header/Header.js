@@ -770,7 +770,7 @@ const Header = () => {
                         </button>
                       </div>
                       <div className="resume-button">
-                        <button
+                        {location.pathname === "/employers" && (<button
                           onClick={() => {
                             setIsVendor(true);
                             showModal("login");
@@ -818,7 +818,7 @@ const Header = () => {
                           }}
                         >
                           <span className="submit-resume">Login as Vendor</span>
-                        </button>
+                        </button>)}
                       </div>
                       <li className="mm-add-listing">
                         <a href="job-post" className="theme-btn btn-style-one">

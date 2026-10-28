@@ -5,7 +5,7 @@ import { Server } from "../../App";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-const Googlelogin = ({ userType, setIsModalOpen = () => {}, policyAcceptance }) => {
+const Googlelogin = ({ userType, setIsModalOpen = () => {}, policyAcceptance, onAuthenticated }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const clientId =
@@ -26,6 +26,10 @@ const Googlelogin = ({ userType, setIsModalOpen = () => {}, policyAcceptance }) 
         `${Server}/api/v1/auth/googleLogin`,
         body
       );
+      if (onAuthenticated && (data.message === "Login Successfully" || data.message === "Registered Successfully")) {
+        onAuthenticated(data);
+        return;
+      }
       if (data.message === "Login Successfully") {
         // console.log("login", data);
 

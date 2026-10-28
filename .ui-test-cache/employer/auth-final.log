@@ -1,0 +1,15 @@
+MODAL 1440 {
+  top: 16,
+  cssTop: '16px',
+  transform: 'none',
+  margin: '0px 470px',
+  wrap: 'ant-modal-wrap'
+}
+MODAL 390 {
+  top: 24,
+  cssTop: '16px',
+  transform: 'none',
+  margin: '8px',
+  wrap: 'ant-modal-wrap'
+}
+Revision checks passed

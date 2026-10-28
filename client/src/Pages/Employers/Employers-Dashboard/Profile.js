@@ -1,3 +1,4 @@
+import "Components/EmployerUI/ProfileEditor.css";
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -527,11 +528,11 @@ const Profile = () => {
   }, []);
   return (
     <div>
-      <section class="user-dashboard">
+      <section className="user-dashboard ss-profile-editor">
         <div class="dashboard-outer">
           <div class="upper-title-box">
-            <h3>Company Profile!</h3>
-            <div class="text">Ready to jump back in?</div>
+            <h3>Edit company profile</h3>
+            <div class="text">Help candidates get to know your company. Keep your details, links and location up to date.</div>
           </div>
 
           <div class="row">
@@ -539,7 +540,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>My Profile</h4>
+                    <h4><span className="ss-profile-section-number">01</span>Company details</h4>
                   </div>
                   <Toaster position="top-center" reverseOrder={false} />
                   <div class="widget-content">
@@ -767,7 +768,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>Social Network</h4>
+                    <h4><span className="ss-profile-section-number">02</span>Social links</h4>
                   </div>
 
                   <div class="widget-content">
@@ -846,7 +847,7 @@ const Profile = () => {
               <div class="ls-widget">
                 <div class="tabs-box">
                   <div class="widget-title">
-                    <h4>Contact Information</h4>
+                    <h4><span className="ss-profile-section-number">03</span>Contact & location</h4>
                   </div>
 
                   <div class="widget-content">

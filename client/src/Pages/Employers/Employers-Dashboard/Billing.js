@@ -23,6 +23,7 @@ const Billing = () => {
   const role = localStorage.getItem("Role");
 
   const [loading, setLoading] = useState(true);
+  const [usage, setUsage] = useState({jobs:0});
 
   const [billingStatus, setBillingStatus] = useState(""); // Recruiter Access | Not Subscribed | Trial | Subscribed | Error
   const [plan, setPlan] = useState("");
@@ -107,6 +108,7 @@ const Billing = () => {
       const decoded = jwtDecode(token);
       const res = await axios.get(`${Server}/api/v1/employer/${decoded?.userId}`);
       const employer = res?.data?.Employer?.[0];
+      setUsage({jobs:employer?.jobs?.length || 0});
 
       if (!employer) {
         setBillingStatus("Error");
@@ -386,7 +388,7 @@ const Billing = () => {
           borderRadius: 999,
           background: s.bg,
           color: s.color,
-          fontWeight: 700,
+          fontWeight: 500,
           fontSize: 12,
           border: "1px solid rgba(0,0,0,0.05)",
         }}
@@ -471,23 +473,23 @@ const Billing = () => {
   }, [YEARLY_PRICE]);
 
   const pageWrapStyle = {
-    maxWidth: 1100,
+    maxWidth: "100%",
     margin: "0 auto",
-    padding: "0 12px 48px",
+    padding: "0 0 24px",
   };
 
   const cardStyle = {
     background: "#ffffff",
     border: "1px solid rgba(15, 23, 42, 0.08)",
-    borderRadius: 16,
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+    borderRadius: 12,
+    boxShadow: "none",
     overflow: "hidden",
   };
 
   const cardHeaderStyle = {
-    padding: "16px 18px",
+    padding: "20px 24px",
     background:
-      "linear-gradient(180deg, rgba(59,130,246,0.10) 0%, rgba(255,255,255,1) 90%)",
+      "#ffffff",
     borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
     display: "flex",
     alignItems: "center",
@@ -495,18 +497,18 @@ const Billing = () => {
     gap: 12,
   };
 
-  const cardBodyStyle = { padding: 18 };
+  const cardBodyStyle = { padding: 24 };
 
   const primaryBtnStyle = (disabled) => ({
     padding: "10px 14px",
     borderRadius: 12,
     border: "none",
-    background: "linear-gradient(to right, #2563EB, #3B82F6)",
+    background: "#0785f9",
     color: "#fff",
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.7 : 1,
-    boxShadow: "0 10px 20px rgba(37,99,235,0.20)",
+    boxShadow: "none",
   });
 
   const ghostBtnStyle = (disabled) => ({
@@ -515,7 +517,7 @@ const Billing = () => {
     border: "1px solid rgba(15, 23, 42, 0.14)",
     background: "#fff",
     color: "#0F172A",
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.7 : 1,
   });
@@ -526,7 +528,7 @@ const Billing = () => {
     border: "1px solid rgba(239,68,68,0.30)",
     background: "#fff",
     color: "#B91C1C",
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.7 : 1,
   });
@@ -534,14 +536,14 @@ const Billing = () => {
   const sectionTitle = {
     margin: 0,
     fontSize: 16,
-    fontWeight: 900,
+    fontWeight: 650,
     color: "#0F172A",
   };
 
   const mutedText = { margin: "6px 0 0", color: "#475569", fontSize: 13 };
 
-  const labelText = { color: "#64748B", fontSize: 12, fontWeight: 800 };
-  const valueText = { color: "#0F172A", fontSize: 14, fontWeight: 900 };
+  const labelText = { color: "#64748B", fontSize: 12, fontWeight: 600 };
+  const valueText = { color: "#0F172A", fontSize: 14, fontWeight: 650 };
 
   const divider = {
     height: 1,
@@ -570,7 +572,7 @@ const Billing = () => {
 
   return (
     <>
-      <section>
+      <section className="em-billing">
         <Toaster position="top-center" reverseOrder={false} />
         <br />
 
@@ -582,11 +584,11 @@ const Billing = () => {
         </div>
 
         <div style={pageWrapStyle}>
-          {/* TOP SUMMARY CARD */}
-          <div style={cardStyle}>
+          { /* Current plan and usage */ }
+          <div className="em-billing-overview"><div style={cardStyle}>
             <div style={cardHeaderStyle}>
               <div>
-                <h2 style={sectionTitle}>Subscription Overview</h2>
+                <h2 style={sectionTitle}>Your current plan</h2>
                 <p style={mutedText}>Your current plan status and key dates.</p>
               </div>
               {statusPill()}
@@ -601,11 +603,11 @@ const Billing = () => {
                   background: "#F8FAFC",
                   border: "1px solid rgba(15, 23, 42, 0.08)",
                   color: "#0F172A",
-                  fontWeight: 900,
+                  fontWeight: 650,
                   lineHeight: 1.4,
                 }}
               >
-                Current Plan: <span style={{ color: "#2563EB" }}>{currentPlanLine()}</span>
+                <span className="em-plan-name">{currentPlanLine()}</span>
               </div>
 
               <div style={{ height: 10 }} />
@@ -619,13 +621,13 @@ const Billing = () => {
                     background: "#EEF2FF",
                     border: "1px solid rgba(55,48,163,0.15)",
                     color: "#1E1B4B",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     lineHeight: 1.4,
                   }}
                 >
                   You have full access provided by the admin.
                   <br />
-                  <span style={{ fontWeight: 900 }}>
+                  <span style={{ fontWeight: 650 }}>
                     Billing and transactions are managed by the admin.
                   </span>
                 </div>
@@ -639,7 +641,7 @@ const Billing = () => {
                     background: "#FEF2F2",
                     border: "1px solid rgba(153,27,27,0.15)",
                     color: "#7F1D1D",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     lineHeight: 1.4,
                   }}
                 >
@@ -662,7 +664,7 @@ const Billing = () => {
                     background: "#ECFDF3",
                     border: "1px solid rgba(6,95,70,0.15)",
                     color: "#064E3B",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     lineHeight: 1.4,
                   }}
                 >
@@ -678,7 +680,7 @@ const Billing = () => {
                     background: "#EFF6FF",
                     border: "1px solid rgba(29,78,216,0.15)",
                     color: "#1E3A8A",
-                    fontWeight: 700,
+                    fontWeight: 500,
                     lineHeight: 1.4,
                   }}
                 >
@@ -739,22 +741,24 @@ const Billing = () => {
             </div>
           </div>
 
-          {/* Payment + Invoices (only for subscribed) */}
+          <section className="em-card em-plan-usage"><h2>Plan activity</h2><div className="em-plan-usage-row"><span>Jobs posted</span><strong>{usage.jobs}</strong></div><div className="em-plan-usage-row"><span>Subscription status</span>{statusPill()}</div><div className="em-plan-usage-row"><span>{billingStatus === "Trial" ? "Trial ends":"Current period ends"}</span><strong>{formatDate(billingStatus === "Trial" ? trialInfo?.trialEnds : subscriptionInfo?.subscriptionEnds)}</strong></div><p>Usage limits are determined by your current plan.</p></section></div>
+          {/* Payment and invoices */}
           {billingStatus === "Subscribed" && (
             <div
               style={{
-                marginTop: 18,
+                marginTop: 24,
                 display: "grid",
-                gridTemplateColumns: "1fr 1.2fr",
+                gridTemplateColumns: "minmax(0,1fr)",
                 gap: 18,
               }}
             >
               {/* Payment method card */}
-              <div style={cardStyle}>
+              <div className="em-payment-card" style={cardStyle}>
                 <div style={cardHeaderStyle}>
                   <div>
-                    <h2 style={sectionTitle}>Payment Method</h2>
-                    <p style={mutedText}>Your saved card details (if available).</p>
+                    <h2 style={sectionTitle}>Payment method</h2>
+                    <p style={mutedText}>Manage the payment method used for your subscription.</p>
+                    <button className="em-primary" onClick={handleManageBilling} disabled={isManaging}>{isManaging ? "Opening…":"Update payment method"}</button>
                   </div>
                 </div>
 
@@ -772,12 +776,12 @@ const Billing = () => {
                       <div style={{ ...valueText, marginTop: 4 }}>
                         {String(paymentMethod.brand || "CARD").toUpperCase()} •••• {paymentMethod.last4}
                       </div>
-                      <div style={{ marginTop: 8, color: "#475569", fontWeight: 700 }}>
+                      <div style={{ marginTop: 8, color: "#475569", fontWeight: 500 }}>
                         Expires {paymentMethod.exp_month}/{paymentMethod.exp_year}
                       </div>
                     </div>
                   ) : (
-                    <div style={{ color: "#475569", fontWeight: 700, lineHeight: 1.5 }}>
+                    <div style={{ color: "#475569", fontWeight: 500, lineHeight: 1.5 }}>
                       Payment method isn’t available from invoices.
                       <br />
                       Use <strong>Manage Billing</strong> to view/update cards in Stripe.
@@ -790,7 +794,7 @@ const Billing = () => {
               <div style={cardStyle}>
                 <div style={cardHeaderStyle}>
                   <div>
-                    <h2 style={sectionTitle}>Billing History</h2>
+                    <h2 style={sectionTitle}>Invoices</h2>
                     <p style={mutedText}>View and download past invoices.</p>
                   </div>
                 </div>
@@ -809,6 +813,7 @@ const Billing = () => {
                           <th style={{ textAlign: "right", fontSize: 12, color: "#64748B", padding: "10px 8px", borderBottom: "1px solid rgba(15, 23, 42, 0.08)" }}>
                             Amount
                           </th>
+                          <th style={{padding:"10px 16px",textAlign:"right"}}>Invoice</th>
                         </tr>
                       </thead>
 
@@ -816,12 +821,12 @@ const Billing = () => {
                         {transactions.length > 0 ? (
                           transactions.map((invoice, idx) => (
                             <tr key={idx}>
-                              <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(15, 23, 42, 0.06)", fontWeight: 800, color: "#0F172A" }}>
+                              <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(15, 23, 42, 0.06)", fontWeight: 600, color: "#0F172A" }}>
                                 <a
                                   href={invoice.hosted_invoice_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  style={{ color: "#2563EB", textDecoration: "none", fontWeight: 900 }}
+                                  style={{ color: "#2563EB", textDecoration: "none", fontWeight: 650 }}
                                 >
                                   {new Date(invoice.created * 1000).toLocaleDateString()}
                                 </a>
@@ -835,7 +840,7 @@ const Billing = () => {
                                     padding: "6px 10px",
                                     borderRadius: 999,
                                     fontSize: 12,
-                                    fontWeight: 900,
+                                    fontWeight: 650,
                                     background: invoice.status === "paid" ? "#ECFDF3" : invoice.status === "open" ? "#EFF6FF" : "#F3F4F6",
                                     color: invoice.status === "paid" ? "#065F46" : invoice.status === "open" ? "#1D4ED8" : "#111827",
                                     border: "1px solid rgba(15, 23, 42, 0.06)",
@@ -846,14 +851,15 @@ const Billing = () => {
                                 </span>
                               </td>
 
-                              <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(15, 23, 42, 0.06)", textAlign: "right", fontWeight: 900, color: "#0F172A" }}>
+                              <td style={{ padding: "12px 8px", borderBottom: "1px solid rgba(15, 23, 42, 0.06)", textAlign: "right", fontWeight: 650, color: "#0F172A" }}>
                                 ${((invoice.amount_due ?? 0) / 100).toFixed(2)}
                               </td>
+                              <td style={{padding:"12px 16px",textAlign:"right"}}>{invoice.invoice_pdf || invoice.hosted_invoice_url ? <a href={invoice.invoice_pdf || invoice.hosted_invoice_url} target="_blank" rel="noopener noreferrer">Download ↗</a> : "—"}</td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="3" style={{ padding: 14, color: "#475569", fontWeight: 700 }}>
+                            <td colSpan="4" style={{ padding: 14, color: "#475569", fontWeight: 500 }}>
                               No billing history found.
                             </td>
                           </tr>
@@ -862,7 +868,7 @@ const Billing = () => {
                     </table>
                   </div>
 
-                  <div style={{ marginTop: 10, color: "#64748B", fontSize: 12, fontWeight: 700 }}>
+                  <div style={{ marginTop: 10, color: "#64748B", fontSize: 12, fontWeight: 500 }}>
                     Tip: Use “Manage Billing” to download invoices and update payment methods.
                   </div>
                 </div>
@@ -914,7 +920,7 @@ const Billing = () => {
                   <div style={{ fontSize: 16, fontWeight: 950, color: "#0F172A" }}>
                     Upgrade Plan
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginTop: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "#475569", marginTop: 4 }}>
                     Free trial is automatic. Choose monthly or yearly to subscribe.
                   </div>
                 </div>
@@ -926,7 +932,7 @@ const Billing = () => {
                     background: "#fff",
                     borderRadius: 12,
                     padding: "10px 12px",
-                    fontWeight: 900,
+                    fontWeight: 650,
                     cursor: "pointer",
                   }}
                 >
@@ -1005,7 +1011,7 @@ const Billing = () => {
                             borderRadius: 999,
                             background: "rgba(37,99,235,0.08)",
                             color: "#1D4ED8",
-                            fontWeight: 900,
+                            fontWeight: 650,
                             fontSize: 12,
                             border: "1px solid rgba(37,99,235,0.15)",
                           }}
@@ -1017,12 +1023,12 @@ const Billing = () => {
                         <div style={{ marginTop: 12 }}>
                           <div style={{ fontSize: 34, fontWeight: 950, color: "#0F172A", lineHeight: 1.1 }}>
                             {p.priceText}
-                            <span style={{ fontSize: 13, fontWeight: 900, color: "#64748B", marginLeft: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 650, color: "#64748B", marginLeft: 8 }}>
                               {p.durationText}
                             </span>
                           </div>
 
-                          <div style={{ marginTop: 6, color: "#475569", fontWeight: 800, fontSize: 13 }}>
+                          <div style={{ marginTop: 6, color: "#475569", fontWeight: 600, fontSize: 13 }}>
                             {isTrialCard
                               ? "Trial access for 14 days (automatic)"
                               : "Recommended Plan • Full Access"}
@@ -1052,7 +1058,7 @@ const Billing = () => {
                               >
                                 ✓
                               </span>
-                              <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 13 }}>
+                              <div style={{ color: "#0F172A", fontWeight: 600, fontSize: 13 }}>
                                 {f}
                               </div>
                             </div>
@@ -1091,12 +1097,12 @@ const Billing = () => {
                               padding: "12px 14px",
                               borderRadius: 14,
                               border: "none",
-                              background: "linear-gradient(to right, #2563EB, #3B82F6)",
+                              background: "#0785f9",
                               color: "#fff",
                               fontWeight: 950,
                               cursor: isSubscribing ? "not-allowed" : "pointer",
                               opacity: isSubscribing ? 0.7 : 1,
-                              boxShadow: "0 10px 20px rgba(37,99,235,0.20)",
+                              boxShadow: "none",
                             }}
                           >
                             {isSubscribing ? "Redirecting..." : "Subscribe"}
@@ -1106,7 +1112,7 @@ const Billing = () => {
                         {p.period === "yearly" &&
                           (!p.priceId ||
                             String(p.priceId).includes("REPLACE_WITH_YEARLY_PRICE_ID")) && (
-                            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: "#B91C1C" }}>
+                            <div style={{ marginTop: 10, fontSize: 12, fontWeight: 600, color: "#B91C1C" }}>
                               Add yearly Stripe priceId to enable yearly checkout.
                             </div>
                           )}
@@ -1115,7 +1121,7 @@ const Billing = () => {
                   })}
                 </div>
 
-                <div style={{ marginTop: 14, fontSize: 12, color: "#64748B", fontWeight: 700 }}>
+                <div style={{ marginTop: 14, fontSize: 12, color: "#64748B", fontWeight: 500 }}>
                   Payments are processed securely via Stripe.
                 </div>
               </div>
@@ -1146,6 +1152,7 @@ export default Billing;
 //   const role = localStorage.getItem("Role");
 
 //   const [loading, setLoading] = useState(true);
+//  const [usage, setUsage] = useState({jobs:0});
 
 //   const [billingStatus, setBillingStatus] = useState(""); // Recruiter Access | Not Subscribed | Trial | Subscribed | Error
 //   const [plan, setPlan] = useState("");
@@ -1684,7 +1691,7 @@ export default Billing;
 
 //             <div className="invoice-container">
 //               <div className="header-section">
-//                 <h2 className="invoice-title">Billing History</h2>
+//                 <h2 className="invoice-title">Invoices</h2>
 //                 <p className="invoice-subtitle">View or download your past invoices.</p>
 //               </div>
 
@@ -1870,6 +1877,7 @@ export default Billing;
 //   const navigate = useNavigate();
 //   const [user, setUser] = useState({});
 //   const [loading, setLoading] = useState(true);
+//  const [usage, setUsage] = useState({jobs:0});
 //   const [billingStatus, setBillingStatus] = useState("");
 //   const [plan, setPlan] = useState("");
 //   const [transactions, setTransactions] = useState([]);

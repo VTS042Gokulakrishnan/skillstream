@@ -1,7 +1,7 @@
 /* Candidate landing only. Shared navigation uses PortalTheme's ss-header scope. */
-.cl-page { --cl-ink:#102347; --cl-muted:#60718b; --cl-blue:#0784f6; color:var(--cl-ink); background:#f7fbfd; font-family:inherit; }
+.cl-page { --cl-ink:#102347; --cl-muted:#60718b; --cl-blue:#0784f6; color:var(--cl-ink); background:#f7fbfd; font-family:Inter,system-ui,-apple-system,sans-serif; }
 .cl-page * { box-sizing:border-box; }
-.cl-container { width:calc(100% - 64px); max-width:none; margin-inline:auto; }
+.cl-container { width:calc(100% - 64px); max-width:1376px; margin-inline:auto; }
 .cl-page h1,.cl-page h2,.cl-page h3,.cl-page p { margin:0; }
 .cl-page h1,.cl-page h2,.cl-page h3 { color:var(--cl-ink); font-weight:700; letter-spacing:-.035em; }
 .cl-page h1 { font-size:clamp(30px,3.4vw,46px); line-height:1.14; }
@@ -136,7 +136,7 @@
 @media(max-width:520px) { .cl-search-hero { grid-template-columns:1fr; } .cl-search-hero-copy { padding:20px; } .cl-search-hero-photo { height:200px; margin:0 16px; border-radius:60px 10px 0 0; } .cl-search-hero-photo img { object-position:center 52%; } .cl-search-hero>.cl-search { margin:-16px 8px 0; } .cl-search-first .cl-search-row { grid-template-columns:1fr; } .cl-search-first .cl-support-card { grid-template-columns:70px 1fr; } .cl-search-first .cl-support-card>.cl-icon { grid-row:1/5; } .cl-search-first .cl-support-card>h3,.cl-search-first .cl-support-card>strong,.cl-search-first .cl-support-card>p { grid-column:2; } .cl-discovery { grid-template-columns:1fr; } .cl-discovery-art .cl-icon { width:150px; height:150px; } .cl-practice-first { grid-template-columns:1fr; } }
 
 /* Wide, aligned landing grid; footer restores original navigation and contacts. */
-/* No desktop width cap: keep 32px outer gutters even on wide monitors. */
+/* Shared bounded content width keeps the hero composition stable on wide screens. */
 .cl-help { grid-template-columns:1fr; max-width:1000px; margin-left:auto; margin-right:auto; }
 .cl-help>div { padding:0!important; border:0!important; background:transparent!important; }
 .cl-footer>.cl-footer-grid { display:grid; grid-template-columns:1.2fr 1fr 1.2fr 1.4fr; align-items:start; gap:32px; }
@@ -151,3 +151,33 @@
 .cl-footer-bottom nav { flex-direction:row; flex-wrap:wrap; }
 @media(max-width:900px) { .cl-container { width:calc(100% - 40px); } .cl-footer>.cl-footer-grid { grid-template-columns:1fr 1fr; } }
 @media(max-width:520px) { .cl-container { width:calc(100% - 28px); } .cl-footer>.cl-footer-grid { grid-template-columns:1fr; } .cl-footer-bottom { flex-direction:column; } }
+
+/* Responsive hero: intrinsic image ratio preserves the complete photo at every width. */
+.cl-search-first .cl-container { max-width:1376px; }
+.cl-search-first main.cl-container { padding-top:24px; }
+.cl-search-hero { padding-top:0; align-items:center; gap:0; border-radius:20px; overflow:hidden; }
+.cl-search-hero-copy { padding:clamp(24px,3vw,48px); }
+.cl-search-hero-copy h1 { font-size:clamp(32px,3.5vw,52px); }
+.cl-search-hero-photo { height:auto; align-self:center; border-radius:100px 16px 0 0; overflow:hidden; }
+.cl-search-hero-photo img { display:block; width:100%; height:auto; object-fit:contain; object-position:center; }
+.cl-search-hero>.cl-search { margin:0 24px 24px; grid-column:1/-1; }
+.cl-search-first .cl-section { margin-top:32px; }
+@media(max-width:900px) {
+  .cl-search-hero { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .cl-search-hero-copy { padding:24px; }
+  .cl-search-hero-copy h1 { font-size:32px; }
+  .cl-search-hero-copy>p:last-child { font-size:14px; }
+  .cl-search-hero-photo { margin:0; border-radius:60px 12px 0 0; }
+  .cl-search-hero>.cl-search { margin:8px 20px 20px; }
+  .cl-search-first .cl-search-row { grid-template-columns:1fr 1fr; }
+  .cl-search-first .cl-search-row>.cl-button { grid-column:1/-1; }
+}
+@media(max-width:700px) {
+  .cl-search-first main.cl-container { padding-top:16px; }
+  .cl-search-hero { grid-template-columns:minmax(0,1fr); }
+  .cl-search-hero-copy { padding:28px 24px 24px; }
+  .cl-search-hero-photo { margin:0 20px; border-radius:56px 12px 12px 12px; }
+  .cl-search-hero>.cl-search { margin:20px 16px 16px; }
+  .cl-search-first .cl-search-row { grid-template-columns:1fr; }
+  .cl-search-first .cl-section { margin-top:24px; }
+}
