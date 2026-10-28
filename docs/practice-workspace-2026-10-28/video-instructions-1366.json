@@ -1,0 +1,13 @@
+{
+  "height": 768,
+  "scroll": 768,
+  "width": 1366,
+  "scrollWidth": 1366,
+  "buttons": [
+    {
+      "text": "Start Interview",
+      "top": 558.390625,
+      "bottom": 590.390625
+    }
+  ]
+}

@@ -27,6 +27,7 @@ import * as faceapi from "face-api.js";
 import CodeEditor from "../VideoAssessment/CodeEditor";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { jwtDecode } from "jwt-decode";
+import { Video, Mic, Monitor } from "lucide-react";
 
 const ffmpeg = new FFmpeg();
 
@@ -979,6 +980,8 @@ const VideoAssessment = () => {
               disabled={!showNextButton || next}
               onClick={() =>
                 Modal.confirm({
+                  className: "ss-practice-confirm",
+                  centered: true,
                   title: "Submit your interview?",
                   content:
                     "This will end your interview and submit your responses, including your current answer.",
@@ -1040,6 +1043,7 @@ const VideoAssessment = () => {
                   ) : (
                     <>
                       {isCodingRound ? (
+                        <div className="ss-practice-inline-editor">
                         <CodeEditor
                           setShowEditor={setShowEditor}
                           setCollapsedQuestion={setCollapsedQuestion}
@@ -1048,6 +1052,7 @@ const VideoAssessment = () => {
                           setShowNextButton={setShowNextButton}
                           setCodingAnswer={setCodingAnswer}
                         />
+                        </div>
                       ) : (
                         <>
                           <div className="ss-ai-orb" aria-hidden="true">
@@ -1098,6 +1103,11 @@ const VideoAssessment = () => {
                     Your camera, microphone and screen will be recorded during
                     the interview.
                   </p>
+                  <div className="ss-device-checklist">
+                    <span><Video size={20} />Camera preview</span>
+                    <span><Mic size={20} />Microphone check</span>
+                    <span><Monitor size={20} />Screen sharing</span>
+                  </div>
                   <div className="ss-info">
                     Choose a quiet space and keep this tab open throughout your
                     practice.

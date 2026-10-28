@@ -1,0 +1,13 @@
+{
+  "height": 720,
+  "scroll": 720,
+  "width": 1280,
+  "scrollWidth": 1280,
+  "buttons": [
+    {
+      "text": "Continue to device check →",
+      "top": 641,
+      "bottom": 687
+    }
+  ]
+}

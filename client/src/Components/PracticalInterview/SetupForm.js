@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import practiceApi from "./practiceApi";
 import { Server } from "App";
 import { Toaster, toast } from "react-hot-toast";
+import logo from "../../assets/logo-twos.png";
 
 const SetupForm = () => {
   const navigate = useNavigate();
@@ -223,7 +224,7 @@ const SetupForm = () => {
       </button>
       <section className="ss-card">
         <header className="ss-setup-top">
-          <span>{isCoding ? "⌘ Coding practice" : "◉ Video practice"}</span>
+          <div className="ss-setup-brand"><img src={logo} alt="SkillStream" /><span>{isCoding ? "Coding practice" : "Video practice"}</span></div>
           <ol className="ss-steps">
             <li className="active">
               1 <span>Setup</span>
@@ -265,6 +266,8 @@ const SetupForm = () => {
               </button>
             ))}
           </div>
+          <div className="ss-setup-fields">
+            <div className="ss-setup-details">
           {mode === "applied" ? (
             <label className="ss-field">
               Select applied job
@@ -295,30 +298,6 @@ const SetupForm = () => {
           {errors.jobTitle && (
             <p className="ss-field-error" role="alert">
               {errors.jobTitle}
-            </p>
-          )}
-          <label className="ss-field">
-            Role description
-            <textarea
-              rows={5}
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              placeholder="Describe the responsibilities and skills for this role."
-            />
-          </label>
-          {mode === "manual" && (
-            <button
-              className="ss-ai-link"
-              type="button"
-              disabled={loader || submitting}
-              onClick={completeAI}
-            >
-              {loader ? "Generating description…" : "✧ Complete with AI"}
-            </button>
-          )}
-          {errors.jobDescription && (
-            <p className="ss-field-error" role="alert">
-              {errors.jobDescription}
             </p>
           )}
           {isCoding && (
@@ -368,6 +347,35 @@ const SetupForm = () => {
             )}
             {errors.resume && <p className="ss-field-error">{errors.resume}</p>}
           </div>
+            </div>
+            <div className="ss-setup-description">
+          <label className="ss-field">
+            Role description
+            <textarea
+              rows={5}
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Describe the responsibilities and skills for this role."
+            />
+          </label>
+          {mode === "manual" && (
+            <button
+              className="ss-ai-link"
+              type="button"
+              disabled={loader || submitting}
+              onClick={completeAI}
+            >
+              {loader ? "Generating description…" : "✧ Complete with AI"}
+            </button>
+          )}
+          {errors.jobDescription && (
+            <p className="ss-field-error" role="alert">
+              {errors.jobDescription}
+            </p>
+          )}
+            </div>
+          </div>
+          <div className="ss-setup-actions">
           <div className="ss-info">
             ⓘ Your camera, microphone and screen will be recorded during
             practice.
@@ -389,6 +397,7 @@ const SetupForm = () => {
               Preparing your role and resume. Please keep this tab open.
             </p>
           )}
+          </div>
         </form>
       </section>
     </main>

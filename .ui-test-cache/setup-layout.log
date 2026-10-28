@@ -1,0 +1,30 @@
+video-1920 {"height":1080,"scroll":1080,"width":1920,"scrollWidth":1920,"buttons":[{"text":"Continue to device check →","top":985,"bottom":1031}]}
+video-validation-1920 {"height":1080,"scroll":1080,"width":1920,"scrollWidth":1920,"buttons":[{"text":"Continue to device check →","top":985,"bottom":1031}]}
+coding-1920 {"height":1080,"scroll":1080,"width":1920,"scrollWidth":1920,"buttons":[{"text":"Continue to device check →","top":985,"bottom":1031}]}
+coding-validation-1920 {"height":1080,"scroll":1080,"width":1920,"scrollWidth":1920,"buttons":[{"text":"Continue to device check →","top":985,"bottom":1031}]}
+video-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Continue to device check →","top":805,"bottom":851}]}
+video-validation-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Continue to device check →","top":805,"bottom":851}]}
+coding-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Continue to device check →","top":805,"bottom":851}]}
+coding-validation-1440 {"height":900,"scroll":900,"width":1440,"scrollWidth":1440,"buttons":[{"text":"Continue to device check →","top":805,"bottom":851}]}
+video-1366 {"height":768,"scroll":768,"width":1366,"scrollWidth":1366,"buttons":[{"text":"Continue to device check →","top":689,"bottom":735}]}
+video-validation-1366 {"height":768,"scroll":768,"width":1366,"scrollWidth":1366,"buttons":[{"text":"Continue to device check →","top":689,"bottom":735}]}
+coding-1366 {"height":768,"scroll":768,"width":1366,"scrollWidth":1366,"buttons":[{"text":"Continue to device check →","top":689,"bottom":735}]}
+coding-validation-1366 {"height":768,"scroll":768,"width":1366,"scrollWidth":1366,"buttons":[{"text":"Continue to device check →","top":689,"bottom":735}]}
+video-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
+video-validation-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
+coding-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
+coding-validation-1280 {"height":720,"scroll":720,"width":1280,"scrollWidth":1280,"buttons":[{"text":"Continue to device check →","top":641,"bottom":687}]}
+video-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":673.5,"bottom":713.5}]}
+video-validation-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":749.5,"bottom":789.5}]}
+coding-390 {"height":844,"scroll":844,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":748.5,"bottom":788.5}]}
+coding-validation-390 {"height":844,"scroll":918,"width":390,"scrollWidth":390,"buttons":[{"text":"Continue to device check →","top":834.5,"bottom":874.5}]}
+AssertionError [ERR_ASSERTION]: page overflow coding-validation-390
+    at measure (D:\GitHub\skillstream\.ui-test-cache\check-setup-layout.cjs:10:612)
+    at async D:\GitHub\skillstream\.ui-test-cache\check-setup-layout.cjs:11:763 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

@@ -443,8 +443,9 @@ export default function CodingPractice() {
                   Run code ▷
                 </Button>
               </div>
+              <div className="ss-editor-surface">
               <Editor
-                height="460px"
+                height="100%"
                 theme="vs-dark"
                 language={
                   { ts: "typescript", cs: "csharp" }[language] || language
@@ -461,6 +462,7 @@ export default function CodingPractice() {
                   scrollBeyondLastLine: false,
                 }}
               />
+              </div>
               <div className="ss-code-output">
                 <h2>Output</h2>
                 <pre>{output || "Run your code to see the output here."}</pre>

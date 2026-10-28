@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Spin } from "antd";
+import { Button } from "antd";
+import BrandLoader from "../Loader/BrandLoader";
+import { Video, Code2 } from "lucide-react";
 import practiceApi from "./practiceApi";
 import logo from "../../assets/logo-twos.png";
 export function PracticeHeader({ type, title, children }) {
   return (
     <header className="ss-session-header">
       <img src={logo} alt="SkillStream" />
-      <div>
-        {type} practice <span>/ {title}</span>
+      <div className="ss-practice-heading">
+        <span className="ss-practice-type">{type === "Coding" ? <Code2 size={17} /> : <Video size={17} />}{type} practice</span>
+        <span className="ss-practice-role">{title}</span>
       </div>
       {children}
     </header>
@@ -20,7 +23,7 @@ export function PracticeLoading({
 }) {
   return (
     <div className="ss-session-state" role="status" aria-live="polite">
-      <Spin size="large" />
+      <BrandLoader size="compact" label="" />
       <h2>{title}</h2>
       <p>{description}</p>
     </div>

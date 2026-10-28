@@ -1,6 +1,7 @@
 import { useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
 import "./PortalTheme.css";
+import "../PracticalInterview/PracticeWorkspace.css";
 
 const workspace = new Set([
   "/candidate-dashboard",

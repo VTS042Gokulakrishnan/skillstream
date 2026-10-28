@@ -1,0 +1,13 @@
+{
+  "height": 768,
+  "scroll": 768,
+  "width": 1366,
+  "scrollWidth": 1366,
+  "buttons": [
+    {
+      "text": "End & submit",
+      "top": 411.99359130859375,
+      "bottom": 443.98626708984375
+    }
+  ]
+}

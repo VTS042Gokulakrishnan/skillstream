@@ -1,0 +1,13 @@
+{
+  "height": 768,
+  "scroll": 768,
+  "width": 1366,
+  "scrollWidth": 1366,
+  "buttons": [
+    {
+      "text": "Next",
+      "top": 564.65625,
+      "bottom": 596.65625
+    }
+  ]
+}
