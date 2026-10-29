@@ -334,7 +334,7 @@ export default function PracticeAssessment() {
                                       : "—"}
                                   </td>
                                   <td>
-                                    {item.video ? (
+                                    {item.feedbackReport ? (
                                       <span className="ss-status ss-status-success">
                                         Available
                                       </span>
@@ -346,15 +346,16 @@ export default function PracticeAssessment() {
                                   </td>
                                   <td>
                                     <div className="ss-actions">
-                                      {item.video && (
+                                      {item.feedbackReport && (
                                         <a
-                                          href={item.video}
+                                          href={item.feedbackReport}
                                           target="_blank"
                                           rel="noreferrer"
                                         >
-                                          View result →
+                                          Open report →
                                         </a>
                                       )}
+                                      {item.video && <a href={item.video} target="_blank" rel="noreferrer">Watch recording →</a>}
                                       <Button
                                         size="small"
                                         danger

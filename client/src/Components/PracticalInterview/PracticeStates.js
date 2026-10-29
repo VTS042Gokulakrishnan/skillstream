@@ -44,7 +44,7 @@ export function PracticeRetry({ onRetry, loading }) {
     </section>
   );
 }
-export function PracticeResult({ type, sessionId, jobTitle }) {
+export function PracticeResult({ type, sessionId, jobTitle, closingMessage }) {
   const [report, setReport] = useState(null),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(false);
@@ -74,7 +74,7 @@ export function PracticeResult({ type, sessionId, jobTitle }) {
     <section className="ss-result ss-card ss-card-padding">
       <span className="ss-state-success">✓</span>
       <h1>Interview completed</h1>
-      <p>Your responses have been submitted successfully.</p>
+      <p>{closingMessage || "Your responses have been submitted successfully."}</p>
       <dl className="ss-result-facts">
         <div>
           <dt>Role</dt>
@@ -96,10 +96,10 @@ export function PracticeResult({ type, sessionId, jobTitle }) {
       <div className="ss-report-box">
         <h2>Interview report</h2>
         <p>Review your submitted responses and available feedback.</p>
-        {report?.video ? (
+        {report?.feedbackReport ? (
           <a
             className="ss-button"
-            href={report.video}
+            href={report.feedbackReport}
             target="_blank"
             rel="noreferrer"
           >
@@ -108,9 +108,9 @@ export function PracticeResult({ type, sessionId, jobTitle }) {
         ) : (
           <>
             <p>
-              {error
+              {loading ? "Checking your feedback report…" : error
                 ? "We couldn’t check your report. Please try again."
-                : "Your report link is not available yet."}
+                : !report ? "Your report is not available yet. Check again shortly." : report?.reportStatus === "failed" ? "Your feedback report could not be generated." : report?.reportStatus === "processing" ? "Your feedback report is being prepared. Check again shortly." : "No saved feedback report is available for this older session. Check your feedback email."}
             </p>
             <Button loading={loading} onClick={check}>
               Check again
@@ -118,6 +118,7 @@ export function PracticeResult({ type, sessionId, jobTitle }) {
           </>
         )}
       </div>
+      {report?.video && <a className="ss-button ss-button-outline" href={report.video} target="_blank" rel="noreferrer">Watch recording ↗</a>}
       <h3>Review your practice</h3>
       <p>Use the available feedback to plan your next practice session.</p>
       <div className="ss-info">

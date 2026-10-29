@@ -1,3 +1,5 @@
+import useInterviewSpeech from "../VideoAssessment/useInterviewSpeech";
+import SpeechControls from "../VideoAssessment/SpeechControls";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
@@ -143,7 +145,7 @@ const VideoAssessment = () => {
   // const [jobTitle, setJobTitle] = useState("");
   // const [completed, setCompleted] = useState(false);
   const [interviewStatus, setInterviewStatus] = useState("");
-  const audioRef = useRef(null);
+
   // declaring mediarecorder , recognition ref , web cam ref
   const mediaRecorderRef = useRef(null);
   const frameRef = useRef(null);
@@ -469,14 +471,11 @@ const VideoAssessment = () => {
             }
 
             try {
-              if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+              if (!(await closeFeedbackModal(currentQuestion, currentAnswer, { closingMessage: response.data.data.closing_message })))
                 return;
             } catch (e) {
               console.error("Silent interview close failed:", e);
             }
-            setThankYouMessage(
-              `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-            );
             setShowThankYouMessage(true);
             setIsFeedbackModalOpen(false);
             setFeedbackCompleted(true);
@@ -498,14 +497,11 @@ const VideoAssessment = () => {
             }
 
             try {
-              if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+              if (!(await closeFeedbackModal(currentQuestion, currentAnswer, { closingMessage: response.data.data.closing_message })))
                 return;
             } catch (e) {
               console.error("Silent interview close failed:", e);
             }
-            setThankYouMessage(
-              `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-            );
             setShowThankYouMessage(true);
             setIsFeedbackModalOpen(false);
             setFeedbackCompleted(true);
@@ -617,14 +613,11 @@ const VideoAssessment = () => {
               }
 
               try {
-                if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                if (!(await closeFeedbackModal(currentQuestion, currentAnswer, { closingMessage: response.data.data.closing_message })))
                   return;
               } catch (e) {
                 console.error("Silent interview close failed:", e);
               }
-              setThankYouMessage(
-                `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-              );
               setShowThankYouMessage(true);
               setIsFeedbackModalOpen(false);
               setFeedbackCompleted(true);
@@ -646,14 +639,11 @@ const VideoAssessment = () => {
               }
 
               try {
-                if (!(await closeFeedbackModal(currentQuestion, currentAnswer)))
+                if (!(await closeFeedbackModal(currentQuestion, currentAnswer, { closingMessage: response.data.data.closing_message })))
                   return;
               } catch (e) {
                 console.error("Silent interview close failed:", e);
               }
-              setThankYouMessage(
-                `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-              );
               setShowThankYouMessage(true);
               setIsFeedbackModalOpen(false);
               setFeedbackCompleted(true);
@@ -723,7 +713,7 @@ const VideoAssessment = () => {
     currentAnswer,
     options = { silent: false }
   ) => {
-    retryAnswer.current = { currentQuestion, currentAnswer };
+    retryAnswer.current = { currentQuestion, currentAnswer, options };
     setSubmissionState("submitting");
     // if (!options.silent) {
     //   setIsRecording(false);
@@ -779,6 +769,10 @@ const VideoAssessment = () => {
       // const getResults = await axios.get("http://54.227.240.212:5001/results");
       // console.log(getResults.data);
 
+      setThankYouMessage((typeof options.closingMessage === "string" && options.closingMessage.trim()) || "Thank you for completing your practice interview. Your responses have been submitted.");
+      setShowThankYouMessage(true);
+      setInterviewCompleted(true);
+      setSpeech(false);
       setSubmissionState("success");
       setIsRecording(false);
       [
@@ -807,7 +801,8 @@ const VideoAssessment = () => {
     } // Show thank you message
   };
   const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
+    speechPlayback.stop();
+    window.speechSynthesis?.cancel();
 
     // Unmute the microphone after stopping speech
     const stream = webcamRef.current?.video?.srcObject;
@@ -861,65 +856,17 @@ const VideoAssessment = () => {
 
   // console.log(speech);
 
-  const convertTextToSpeech = async (Question) => {
-    try {
-      let payLoad = {
-        textInput: `${Question}`,
-      };
-      const { data } = await axios.post(
-        `${Server}/api/v1/parser/convert/tts`,
-        payLoad,
-        {
-          headers: {
-            // Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-          },
-          responseType: "arraybuffer",
-        }
-      );
-      const audioBlob = new Blob([data], { type: "audio/mpeg" });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      // console.log(audioUrl);
-
-      if (audioRef.current) {
-        if (audioRef.current.src) {
-          URL.revokeObjectURL(audioRef.current.src); // Revoke the old URL to prevent memory leaks
-        }
-        audioRef.current.src = audioUrl;
-        const handleAudioEnd = () => {
-          // Set speech to true after playback has finished
-          // convertTextToSpeech("Now you can start answering");
-          setSpeech(true);
-          setTimeout(() => {
-            setShowNextButton(true);
-          }, [5000]);
-          audioRef.current.removeEventListener("ended", handleAudioEnd);
-        };
-
-        audioRef.current.addEventListener("ended", handleAudioEnd);
-
-        audioRef.current.play();
-        // Automatically play the audio
-      }
-      // audioRef.current.src = audioUrl;
-      // audioRef.current.play(); // Automatically play the audio
-    } catch (error) {
-      // console.log(error);
-    }
-  };
-  useEffect(() => {
-    if (!interviewCompleted) {
-      if (displayedQuestion?.length != 0) {
-        // console.log("tts started");
-        convertTextToSpeech(`${displayedQuestion}.Now you can start answer.`);
-      }
-    } else {
-      if (showThankYouMessage) {
-        setIsRecording(false);
-        convertTextToSpeech(thankYouMessage);
+  const speechPlayback = useInterviewSpeech(
+    showThankYouMessage ? thankYouMessage : (isRecording && !next && !submissionState ? displayedQuestion : ""),
+    `${Server}/api/v1/parser/convert/tts`,
+    () => {
+      if (!showThankYouMessage && !interviewCompleted) {
+        setSpeech(true);
+        setShowNextButton(true);
       }
     }
-  }, [displayedQuestion, showThankYouMessage]);
-  // console.log(audioRef);
+  );
+
   useEffect(() => {
     const cancel = () => window.speechSynthesis?.cancel();
     window.addEventListener("beforeunload", cancel);
@@ -967,11 +914,12 @@ const VideoAssessment = () => {
         )}
       </PracticeHeader>
       {submissionState === "success" ? (
-        <PracticeResult
+        <><PracticeResult
           type="video"
           sessionId={practiceSessionId}
           jobTitle={jobTitle}
-        />
+          closingMessage={thankYouMessage}
+        /><SpeechControls playback={speechPlayback} closing /></>
       ) : submissionState === "submitting" ? (
         <PracticeLoading
           title="Submitting your responses"
@@ -982,7 +930,8 @@ const VideoAssessment = () => {
           onRetry={() =>
             closeFeedbackModal(
               retryAnswer.current.currentQuestion,
-              retryAnswer.current.currentAnswer
+              retryAnswer.current.currentAnswer,
+              retryAnswer.current.options
             )
           }
         />
@@ -1010,6 +959,8 @@ const VideoAssessment = () => {
                       title={nextFetch}
                       description="Please keep this tab open."
                     />
+                  ) : !speechPlayback.ready ? (
+                    <PracticeLoading title="Preparing question audio" description="Your question will appear when the audio is ready." />
                   ) : (
                     <>
                       {isCodingRound ? (
@@ -1033,6 +984,7 @@ const VideoAssessment = () => {
                           </h1>
                         </>
                       )}
+                      <SpeechControls playback={speechPlayback} />
                       <div className="ss-voice-state">
                         <span className={speech ? "ss-listening" : ""}>
                           ▂ ▅ ▃ ▇ ▄ ▆ ▂ ▅ ▃ ▇ ▄ ▆ ▂
@@ -1083,7 +1035,7 @@ const VideoAssessment = () => {
                   </Button>
                 </div>
               )}
-              <audio ref={audioRef} style={{ display: "none" }} />
+
             </section>
             <aside className="ss-video-side">
               <section className="ss-card ss-card-padding">

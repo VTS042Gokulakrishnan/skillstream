@@ -1,3 +1,4 @@
+const { createPdf, createCodingPdf } = require("../services/interviewFeedbackPdf");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
@@ -174,150 +175,6 @@ async function candidateSendEmail(candidateEmail, jobTitle, region, pdfBytes) {
     // Email failed, but execution continues
   }
 }
-async function createPdf(summary) {
-  try {
-    const pdfDoc = await PDFDocument.create();
-    const fontSize = 12;
-    const textColor = rgb(0, 0, 0);
-    const lineHeight = 20;
-    const pageWidth = 600;
-    const pageHeight = 700;
-    const margin = 50;
-
-    let lines = [];
-
-    // Build content lines
-    lines.push(`Score: ${summary.analysis.score}`);
-    lines.push(`Focus Category: ${summary.focus_category}`);
-    lines.push(`Camera Summary: ${summary.camera_summary}`);
-    lines.push(`Gadget Summary: ${summary.gadget_summary}`);
-    lines.push("");
-
-    for (const [key, value] of Object.entries(
-      summary.analysis.per_question_feedback
-    )) {
-      lines.push(`Q: ${value.question}`);
-      lines.push(`Summary: ${value.answer_summary}`);
-      if (value.strengths?.length)
-        lines.push(`Strengths: ${value.strengths.join(", ")}`);
-      if (value.areas_for_improvement?.length)
-        lines.push(
-          `Areas for Improvement: ${value.areas_for_improvement.join(", ")}`
-        );
-      if (value.evidence?.length)
-        lines.push(`Evidence: ${value.evidence.join(" | ")}`);
-      lines.push("");
-    }
-
-    lines.push(
-      `Communication Clarity: ${summary.analysis.communication_clarity}`
-    );
-    lines.push(
-      `Next Round Eligibility: ${summary.analysis.next_round_eligibility}`
-    );
-
-    // --- 🔍 Check if any line has non-ASCII (non-English) characters
-    const hasUnicode = lines.some((line) => /[^\x00-\x7F]/.test(line));
-
-    let font;
-    if (hasUnicode) {
-      // --- 🈴 Load Unicode font dynamically (e.g. NotoSans-Regular.ttf)
-      const fontPath = path.resolve("assets/fonts/NotoSans-Regular.ttf");
-      if (!fs.existsSync(fontPath)) {
-        throw new Error(
-          `Unicode font not found at ${fontPath}. Please place NotoSans-Regular.ttf in assets/fonts/`
-        );
-      }
-      const fontBytes = fs.readFileSync(fontPath);
-      font = await pdfDoc.embedFont(fontBytes, { subset: true });
-      console.log("✅ Unicode font (NotoSans) loaded for multilingual text.");
-    } else {
-      // --- Use faster standard font if all text is English
-      font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      console.log("✅ Using Helvetica (all ASCII text detected).");
-    }
-
-    let y = pageHeight - margin;
-    let page = pdfDoc.addPage([pageWidth, pageHeight]);
-
-    for (let line of lines) {
-      if (y - lineHeight < margin) {
-        page = pdfDoc.addPage([pageWidth, pageHeight]);
-        y = pageHeight - margin;
-      }
-
-      page.drawText(line, {
-        x: margin,
-        y,
-        size: fontSize,
-        font,
-        color: textColor,
-      });
-
-      y -= lineHeight;
-    }
-
-    return await pdfDoc.save();
-  } catch (error) {
-    console.error("Error creating PDF:", error);
-    throw new Error("PDF generation failed.");
-  }
-}
-async function createCodingPdf(summary) {
-  try {
-    const pdfDoc = await PDFDocument.create();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontSize = 12;
-    const textColor = rgb(0, 0, 0);
-    const lineHeight = 20;
-    const pageWidth = 600;
-    const pageHeight = 700;
-    const margin = 50;
-    const maxWidth = pageWidth - 2 * margin;
-
-    let lines = [];
-
-    // --- Overall Evaluation ---
-    lines.push(`Total Score: ${summary.evaluation.total_score}`);
-    lines.push(`Final Feedback: ${summary.evaluation.final_feedback}`);
-    lines.push(`Decision: ${summary.evaluation.decision}`);
-    lines.push("");
-
-    // --- Per Question Feedback ---
-    for (const q of summary.evaluation.per_question) {
-      lines.push(`Q${q.id}:`);
-      lines.push(`   Score: ${q.score}`);
-      lines.push(`   Feedback: ${q.feedback}`);
-      lines.push("");
-    }
-
-    let y = pageHeight - margin;
-    let page = pdfDoc.addPage([pageWidth, pageHeight]);
-
-    for (let line of lines) {
-      if (y - lineHeight < margin) {
-        page = pdfDoc.addPage([pageWidth, pageHeight]);
-        y = pageHeight - margin;
-      }
-
-      page.drawText(line, {
-        x: margin,
-        y: y,
-        size: fontSize,
-        font,
-        color: textColor,
-      });
-
-      y -= lineHeight;
-    }
-
-    return await pdfDoc.save();
-  } catch (error) {
-    console.error("Error creating PDF:", error);
-    throw new Error("PDF generation failed.");
-  }
-}
-
 // Payment is reserved once at session creation; submission never decrements again.
 async function submitPaidPractice(req, res, coding) {
   const cleanup = [];
@@ -362,14 +219,30 @@ async function submitPaidPractice(req, res, coding) {
     ]);
     await require("../services/practiceSessions").complete(req.user._id, req.practiceSession, req.practiceLockId, {
       video: videoData.Location, transcribe: pdfData.Location, Date: new Date(),
-      videoId: req.practiceSession.id, jobTitle: field("jobTitle"),
+      videoId: req.practiceSession.id, jobTitle: field("jobTitle"), reportStatus: "processing",
     });
     res.status(201).json({ message: "Interview submitted for review", status: true, videoData, pdfData });
-    // Email failures must not turn a saved interview into a failed submission.
+    // Report generation remains after the existing submission acknowledgement.
+    let pdfBytes;
     try {
-      const pdfBytes = await (coding ? createCodingPdf(summary) : createPdf(summary));
-      await candidateSendEmail(req.user.email, field("jobTitle"), req.user.region, pdfBytes);
-    } catch (error) { console.error("Practice feedback email failed:", error.message); }
+      const normalizedSummary = typeof summary === "string" ? JSON.parse(summary) : summary;
+      pdfBytes = await (coding ? createCodingPdf(normalizedSummary, payload.questions) : createPdf(normalizedSummary));
+      const reportData = await s3.upload({ Bucket: process.env.AWS_BUCKET_NAME_VIDEOS,
+        Key: `feedback/${key}.pdf`, Body: Buffer.from(pdfBytes), ACL: "public-read", ContentType: "application/pdf" }).promise();
+      const collection = coding ? "codingPracticeInterview" : "practiceInterview";
+      await candidateModel.updateOne({ _id: req.user._id, [`${collection}.videoId`]: req.practiceSession.id }, {
+        $set: { [`${collection}.$.feedbackReport`]: reportData.Location, [`${collection}.$.reportStatus`]: "ready" },
+      });
+    } catch (error) {
+      console.error("Practice feedback report failed:", error.message);
+      const collection = coding ? "codingPracticeInterview" : "practiceInterview";
+      await candidateModel.updateOne({ _id: req.user._id, [collection]: { $elemMatch: { videoId: req.practiceSession.id, reportStatus: "processing" } } }, {
+        $set: { [`${collection}.$.reportStatus`]: "failed" },
+      }).catch((saveError) => console.error("Practice report status failed:", saveError.message));
+    }
+    // A storage failure must not prevent delivery of an already generated attachment.
+    if (pdfBytes) await candidateSendEmail(req.user.email, field("jobTitle"), req.user.region, pdfBytes)
+      .catch((error) => console.error("Practice feedback email failed:", error.message));
   } catch (error) {
     console.error("Practice submission failed:", error.message);
     if (!res.headersSent) res.status(500).json({ message: "Submission failed. Please retry; no additional credit will be charged.", status: false });

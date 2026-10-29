@@ -1,3 +1,5 @@
+import useInterviewSpeech from "../VideoAssessment/useInterviewSpeech";
+import SpeechControls from "../VideoAssessment/SpeechControls";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PracticeHeader, PracticeLoading } from "../PracticalInterview/PracticeStates";
 import AssessmentState from "./AssessmentState";
@@ -117,7 +119,7 @@ const VideoAssessment = () => {
   const [jobTitle, setJobTitle] = useState("");
   // const [completed, setCompleted] = useState(false);
   const [interviewStatus, setInterviewStatus] = useState("");
-  const audioRef = useRef(null);
+
   // declaring mediarecorder , recognition ref , web cam ref
   const mediaRecorderRef = useRef(null);
   const frameRef = useRef(null);
@@ -203,6 +205,10 @@ const VideoAssessment = () => {
   };
   const handleToggleCameraMic = async (checked) => {
     if (!checked) {
+      micStream?.getTracks().forEach((track) => track.stop());
+      setMicStream(null);
+      setCameraAllowed(false);
+      setMicAllowed(false);
       setIsAllowed(false);
       if (videoRef.current) videoRef.current.srcObject = null;
       return;
@@ -210,28 +216,7 @@ const VideoAssessment = () => {
 
     setLoading(true);
     try {
-      const camPerm = await navigator.permissions.query({ name: "camera" });
-      const micPerm = await navigator.permissions.query({ name: "microphone" });
-
-      if (camPerm.state === "granted" && micPerm.state === "granted") {
-        await startCameraMicStream();
-      } else if (camPerm.state === "prompt" || micPerm.state === "prompt") {
-        await startCameraMicStream();
-      } else {
-        Modal.error({
-          title: "Camera & Microphone Access Required",
-          content: (
-            <div>
-              Please click the <b>lock icon</b> in your browser's address bar
-              and enable <b>Camera</b> and <b>Microphone</b>.
-              <br />
-              Then click <b>Retry</b>.
-            </div>
-          ),
-          okText: "Retry",
-          onOk: () => handleToggleCameraMic(true),
-        });
-      }
+      await startCameraMicStream();
     } catch (err) {
       console.error("Permission check error:", err);
     }
@@ -258,6 +243,17 @@ const VideoAssessment = () => {
       });
     }
   };
+  useEffect(() => {
+    const tracks = micStream?.getTracks() || [];
+    const update = () => {
+      const live = (kind) => tracks.some((track) => track.kind === kind && track.readyState === "live" && track.enabled && !track.muted);
+      setCameraAllowed(live("video"));
+      setMicAllowed(live("audio"));
+    };
+    update();
+    tracks.forEach((track) => ["ended", "mute", "unmute"].forEach((event) => track.addEventListener(event, update)));
+    return () => tracks.forEach((track) => ["ended", "mute", "unmute"].forEach((event) => track.removeEventListener(event, update)));
+  }, [micStream]);
   const mixAudioStreams = (micStream, systemStream) => {
     const audioContext = new AudioContext();
     const destination = audioContext.createMediaStreamDestination();
@@ -502,21 +498,9 @@ const VideoAssessment = () => {
             //     console.error("Silent interview close failed:", e);
             //   }
             // })();
-            try {
-              await closeFeedbackModal(currentQuestion, currentAnswer);
-            } catch (e) {
-              console.error("Silent interview close failed:", e);
-            }
-            setThankYouMessage(
-              `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-            );
-            setShowThankYouMessage(true);
-            setIsFeedbackModalOpen(false);
-            setFeedbackCompleted(true);
-            // setShowThankYouMessage(true);
-            setIsRecording(false);
-
-            setInterviewCompleted(true);
+            await closeFeedbackModal(currentQuestion, currentAnswer, {
+              closingMessage: response.data.data.closing_message,
+            });
             // if (mediaRecorderRef.current) {
             //   mediaRecorderRef.current.stop(); // Stop the video recording
             // }
@@ -545,21 +529,9 @@ const VideoAssessment = () => {
             //     console.error("Silent interview close failed:", e);
             //   }
             // })();
-            try {
-              await closeFeedbackModal(currentQuestion, currentAnswer);
-            } catch (e) {
-              console.error("Silent interview close failed:", e);
-            }
-            setThankYouMessage(
-              `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-            );
-            setShowThankYouMessage(true);
-            setIsFeedbackModalOpen(false);
-            setFeedbackCompleted(true);
-            // setShowThankYouMessage(true);
-            setIsRecording(false);
-
-            setInterviewCompleted(true);
+            await closeFeedbackModal(currentQuestion, currentAnswer, {
+              closingMessage: response.data.data.closing_message,
+            });
             // if (mediaRecorderRef.current) {
             //   mediaRecorderRef.current.stop(); // Stop the video recording
             // }
@@ -677,21 +649,9 @@ const VideoAssessment = () => {
               //     console.error("Silent interview close failed:", e);
               //   }
               // })();
-              try {
-                await closeFeedbackModal(currentQuestion, currentAnswer);
-              } catch (e) {
-                console.error("Silent interview close failed:", e);
-              }
-              setThankYouMessage(
-                `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-              );
-              setShowThankYouMessage(true);
-              setIsFeedbackModalOpen(false);
-              setFeedbackCompleted(true);
-              // setShowThankYouMessage(true);
-              setIsRecording(false);
-
-              setInterviewCompleted(true);
+            await closeFeedbackModal(currentQuestion, currentAnswer, {
+              closingMessage: response.data.data.closing_message,
+            });
               // if (mediaRecorderRef.current) {
               //   mediaRecorderRef.current.stop(); // Stop the video recording
               // }
@@ -720,21 +680,9 @@ const VideoAssessment = () => {
               //     console.error("Silent interview close failed:", e);
               //   }
               // })();
-              try {
-                await closeFeedbackModal(currentQuestion, currentAnswer);
-              } catch (e) {
-                console.error("Silent interview close failed:", e);
-              }
-              setThankYouMessage(
-                `${response.data.data.closing_message} Please Click on "Stop Sharing" button to stop sharing`
-              );
-              setShowThankYouMessage(true);
-              setIsFeedbackModalOpen(false);
-              setFeedbackCompleted(true);
-              // setShowThankYouMessage(true);
-              setIsRecording(false);
-
-              setInterviewCompleted(true);
+            await closeFeedbackModal(currentQuestion, currentAnswer, {
+              closingMessage: response.data.data.closing_message,
+            });
               // if (mediaRecorderRef.current) {
               //   mediaRecorderRef.current.stop(); // Stop the video recording
               // }
@@ -799,6 +747,7 @@ const VideoAssessment = () => {
 
     return doc;
   };
+  const submissionPayload = useRef(null);
   const closeFeedbackModal = async (
     currentQuestion,
     currentAnswer,
@@ -860,7 +809,7 @@ const VideoAssessment = () => {
 
       const response = await axios.post(
         `${Server}/api/v1/videoInterview/uploadVideo/${userId}/${jobId}/${candidateId}`,
-        formData,
+        submissionPayload.current || (submissionPayload.current = formData),
         {
           headers: {
             "Content-Type": "multipart/form-data", // Confirm if this is needed, else you can omit it
@@ -872,6 +821,15 @@ const VideoAssessment = () => {
       // const getResults = await axios.get("http://54.227.240.212:5001/results");
       // console.log(getResults.data);
 
+      if (response.data?.status !== true) throw new Error("Submission not confirmed");
+      setThankYouMessage((typeof options.closingMessage === "string" && options.closingMessage.trim()) || "Thank you for attending the interview. Your responses have been submitted for review.");
+      setShowThankYouMessage(true);
+      setInterviewCompleted(true);
+      setIsRecording(false);
+      setSpeech(false);
+      [screenStream, micStream, SpeechStream, webcamRef.current?.srcObject].forEach(
+        (stream) => stream?.getTracks().forEach((track) => track.stop())
+      );
       toast.success("Data Submitted for Review");
       // if (!options.silent) {
       //   toast.success("Data Submitted for Review");
@@ -889,7 +847,8 @@ const VideoAssessment = () => {
     } finally { setSpinner(false); } // Show thank you message
   };
   const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
+    speechPlayback.stop();
+    window.speechSynthesis?.cancel();
 
     // Unmute the microphone after stopping speech
     const stream = webcamRef.current?.video?.srcObject;
@@ -939,68 +898,17 @@ const VideoAssessment = () => {
 
   // console.log(speech);
 
-  const convertTextToSpeech = async (Question) => {
-    try {
-      let payLoad = {
-        textInput: `${Question}`,
-      };
-      const { data } = await axios.post(
-        `${Server}/api/v1/parser/convert/tts`,
-        payLoad,
-        {
-          headers: {
-            // Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-          },
-          responseType: "arraybuffer",
-        }
-      );
-      const audioBlob = new Blob([data], { type: "audio/mpeg" });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      // console.log(audioUrl);
-
-      if (audioRef.current) {
-        if (audioRef.current.src) {
-          URL.revokeObjectURL(audioRef.current.src); // Revoke the old URL to prevent memory leaks
-        }
-        audioRef.current.src = audioUrl;
-        const handleAudioEnd = () => {
-          // Set speech to true after playback has finished
-          // convertTextToSpeech("Now you can start answering");
-          setSpeech(true);
-          setTimeout(() => {
-            setShowNextButton(true);
-          }, [5000]);
-          audioRef.current.removeEventListener("ended", handleAudioEnd);
-        };
-
-        audioRef.current.addEventListener("ended", handleAudioEnd);
-
-        audioRef.current.play();
-        // Automatically play the audio
-      }
-      // audioRef.current.src = audioUrl;
-      // audioRef.current.play(); // Automatically play the audio
-    } catch (error) {
-      // console.log(error);
-    }
-  };
-  useEffect(() => {
-    if (!interviewCompleted) {
-      if (displayedQuestion?.length != 0) {
-        // console.log("tts started");
-        convertTextToSpeech(`${displayedQuestion}.Now you can start answer.`);
-      }
-    } else {
-      if (showThankYouMessage) {
-        setIsRecording(false);
-        convertTextToSpeech(thankYouMessage);
+  const speechPlayback = useInterviewSpeech(
+    showThankYouMessage ? thankYouMessage : (isRecording && !next && !spinner && !submissionError ? displayedQuestion : ""),
+    `${Server}/api/v1/parser/convert/tts`,
+    () => {
+      if (!showThankYouMessage && !interviewCompleted) {
+        setSpeech(true);
+        setShowNextButton(true);
       }
     }
-  }, [displayedQuestion, showThankYouMessage]);
-  // console.log(audioRef);
-  window.addEventListener("beforeunload", () => {
-    window.speechSynthesis.cancel();
-  });
+  );
+
   // console.log(new Date(expireIn));
   const handleStartInterviewClick = () => {
     if (lastCompletedStep === 0) {
@@ -1017,7 +925,7 @@ const VideoAssessment = () => {
       <PracticeHeader type="Video" title={jobTitle || "Interview"} assessment>
         {isRecording && !spinner && !submissionError && !showThankYouMessage && interviewStatus !== "Completed" && !(currentTime > expireIn) && <span className="ss-recording">● Recording</span>}
       </PracticeHeader>
-      {initialised ? <PracticeLoading title="Preparing your assessment" /> : maintenanceMode ? <AssessmentState kind="maintenance" /> : interviewStatus === "Completed" ? <AssessmentState /> : currentTime > expireIn ? <AssessmentState kind="expired" email={interviewerEmail} /> : spinner ? <PracticeLoading title="Submitting your responses" description="Keep this tab open while your answers and recording are submitted." /> : submissionError ? <section className="ss-session-state"><h2>Submission needs attention</h2><p>Your submission could not be confirmed. Keep this tab open and try again.</p><Button type="primary" onClick={() => closeFeedbackModal(...retrySubmission.current)}>Retry submission</Button></section> : showThankYouMessage ? <AssessmentState /> : <>
+      {initialised ? <PracticeLoading title="Preparing your assessment" /> : maintenanceMode ? <AssessmentState kind="maintenance" /> : interviewStatus === "Completed" ? <AssessmentState /> : currentTime > expireIn ? <AssessmentState kind="expired" email={interviewerEmail} /> : spinner ? <PracticeLoading title="Submitting your responses" description="Keep this tab open while your answers and recording are submitted." /> : submissionError ? <section className="ss-session-state"><h2>Submission needs attention</h2><p>Your submission could not be confirmed. Keep this tab open and try again.</p><Button type="primary" onClick={() => closeFeedbackModal(...retrySubmission.current)}>Retry submission</Button></section> : showThankYouMessage ? <><AssessmentState message={thankYouMessage} processing /><SpeechControls playback={speechPlayback} closing /></> : <>
           <div className="ss-session-toolbar">
             <strong>
               {isRecording ? "Question " + questionCount : "Device check"}
@@ -1040,6 +948,8 @@ const VideoAssessment = () => {
                       title={nextFetch}
                       description="Please keep this tab open."
                     />
+                  ) : !speechPlayback.ready ? (
+                    <PracticeLoading title="Preparing question audio" description="Your question will appear when the audio is ready." />
                   ) : (
                     <>
                       {isCodingRound ? (
@@ -1063,6 +973,7 @@ const VideoAssessment = () => {
                           </h1>
                         </>
                       )}
+                      <SpeechControls playback={speechPlayback} />
                       <div className="ss-voice-state">
                         <span className={speech ? "ss-listening" : ""}>
                           ▂ ▅ ▃ ▇ ▄ ▆ ▂ ▅ ▃ ▇ ▄ ▆ ▂
@@ -1113,7 +1024,7 @@ const VideoAssessment = () => {
                   </Button>
                 </div>
               )}
-              <audio ref={audioRef} style={{ display: "none" }} />
+
             </section>
             <aside className="ss-video-side">
               <section className="ss-card ss-card-padding">

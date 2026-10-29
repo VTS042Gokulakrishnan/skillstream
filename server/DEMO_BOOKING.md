@@ -11,6 +11,10 @@
 
 ## Website integration
 
+The GoHighLevel website origin is `https://demo.skillstremjobs.us`. Set the backend environment variable `DEMO_BOOKING_ALLOWED_ORIGINS=https://demo.skillstremjobs.us` (also included in the configuration example).
+
+The website must POST to the deployed Node backend's URL. Hosting the website on GoHighLevel does not deploy this Express endpoint there; use `https://<backend-domain>/api/demo-booking` as the fetch URL below. For direct browser submissions, leave `DEMO_BOOKING_API_KEY` unset. Connect this request to your form's submit handler and replace the sample values with the visitor's field values.
+
 ```js
 const response = await fetch("https://yourdomain.com/api/demo-booking", {
   method: "POST",
