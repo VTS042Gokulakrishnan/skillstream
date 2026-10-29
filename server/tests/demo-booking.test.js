@@ -28,6 +28,37 @@ test("rejects malformed fields and JSON without sending", async t => {
   for (const body of [{ ...payload, email: "bad\r\nBcc: attacker@example.com" }, { ...payload, month: "Feb", day: "30" }, { ...payload, time: "25:00 PM" }, "{"]) assert.equal((await f.request(body)).status, 400);
   assert.equal(f.sent.length, 0);
 });
+test("accepts JSON sent as text/plain and preserves contact fields without trusting recipients", async t => {
+  const f = await fixture(t);
+  const response = await f.request({ ...payload, phone: "1234567890", ref: "SSAI-example", type: "demo_booking", notify_to: ["other@example.com"] }, { "Content-Type": "text/plain;charset=UTF-8" });
+  assert.equal(response.status, 200);
+  assert.equal(f.sent[0].to, config.DEMO_BOOKING_TO);
+  for (const value of ["1234567890", "SSAI-example"]) assert.ok(f.sent[0].html.includes(value));
+  assert.ok(f.sent[0].text.includes("type: demo_booking"));
+});
+test("rejects malformed plain text and unsupported content types without sending", async t => {
+  const f = await fixture(t);
+  assert.equal((await f.request("not JSON", { "Content-Type": "text/plain" })).status, 400);
+  assert.equal((await f.request(payload, { "Content-Type": "application/x-www-form-urlencoded" })).status, 415);
+  assert.equal(f.sent.length, 0);
+});
+test("accepts landing page numeric day and field aliases, preserving metadata", async t => {
+  const f = await fixture(t);
+  const booking = { name: "Gokul", email: "visitor@example.com", day: 29, month: "Oct", time: "09:30 AM",
+    booked_at: "2026-10-29T13:06:56.494Z", source: "Skill Stream AI landing page", event: "demo_booking",
+    date_label: "Oct 29", page_url: "https://demo.skillstreamjobs.us/#section-demo-scheduler",
+    timezone_label: "Central Time (US & Canada)", user_agent: "Mozilla/5.0" };
+  assert.equal((await f.request(booking)).status, 200);
+  for (const value of Object.values(booking)) assert.ok(f.sent[0].text.includes(String(value)));
+  assert.ok(f.sent[0].text.includes(`submittedAt: ${booking.booked_at}`));
+  assert.ok(f.sent[0].text.includes(`page: ${booking.source}`));
+});
+test("rejects invalid numeric days and unsafe optional metadata", async t => {
+  const f = await fixture(t);
+  for (const day of [0, 32, 1.5, true]) assert.equal((await f.request({ ...payload, day })).status, 400);
+  assert.equal((await f.request({ ...payload, timezone_label: "Central\nInjected" })).status, 400);
+  assert.equal(f.sent.length, 0);
+});
 test("allows configured preflight and rejects unknown origins", async t => {
   const f = await fixture(t);
   const response = await f.request(null, { Origin: "https://example.com", "Access-Control-Request-Method": "POST" }, "OPTIONS");

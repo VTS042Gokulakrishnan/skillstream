@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const { timingSafeEqual } = require("crypto");
+const { demoBookingEmail } = require("../services/demoBookingEmail");
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const days = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -36,13 +37,29 @@ module.exports = function createDemoBookingRouter({ env = process.env, createTra
     }
     entry.count += 1;
     attempts.set(key, entry);
-    if (!req.is("application/json")) return res.status(415).json({ success: false, message: "Use application/json." });
+    if (!req.is(["application/json", "text/plain"])) return res.status(415).json({ success: false, message: "Send a JSON body with Content-Type: application/json." });
     next();
-  }, express.json({ limit: "8kb" }), async (req, res) => {
+  }, express.json({ limit: "8kb", type: ["application/json", "text/plain"] }), async (req, res) => {
     const data = {};
+    const body = req.body || {};
+    const input = {
+      ...body,
+      day: Number.isInteger(body.day) ? String(body.day) : body.day,
+      page: body.page ?? body.source,
+      submittedAt: body.submittedAt ?? body.booked_at,
+    };
     const limits = { name: 120, email: 254, month: 3, day: 2, time: 8, page: 200, submittedAt: 35 };
     for (const [key, limit] of Object.entries(limits)) {
-      const value = req.body && req.body[key];
+      const value = input[key];
+      if (typeof value !== "string" || !value.trim() || value.length > limit || /[\r\n\x00-\x1f\x7f]/.test(value)) {
+        return res.status(400).json({ success: false, message: `Invalid ${key}.` });
+      }
+      data[key] = value.trim();
+    }
+    const optionalLimits = { event: 80, type: 80, phone: 40, ref: 120, date_label: 80, page_url: 2048, source: 200, timezone_label: 120, user_agent: 1024 };
+    for (const [key, limit] of Object.entries(optionalLimits)) {
+      if (body[key] === undefined) continue;
+      const value = body[key];
       if (typeof value !== "string" || !value.trim() || value.length > limit || /[\r\n\x00-\x1f\x7f]/.test(value)) {
         return res.status(400).json({ success: false, message: `Invalid ${key}.` });
       }
@@ -67,7 +84,7 @@ module.exports = function createDemoBookingRouter({ env = process.env, createTra
         from: env.DEMO_BOOKING_FROM, to: env.DEMO_BOOKING_TO,
         replyTo: { name: data.name, address: data.email },
         subject: "New Skill Stream demo request",
-        text: `New demo request (requested time, not a confirmed appointment)\n\n${Object.entries(data).map(([key, value]) => `${key}: ${value}`).join("\n")}\nreceivedAt: ${new Date().toISOString()}\n\nThe supplied booking date has no year or timezone; confirm these with the requester.`,
+        ...demoBookingEmail(data),
       });
       if (!result.accepted || result.accepted.length === 0) throw new Error("No recipient accepted");
       return res.status(200).json({ success: true, message: "Demo request sent successfully." });

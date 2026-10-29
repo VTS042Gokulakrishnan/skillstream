@@ -11,7 +11,9 @@
 
 ## Website integration
 
-The GoHighLevel website origin is `https://demo.skillstremjobs.us`. Set the backend environment variable `DEMO_BOOKING_ALLOWED_ORIGINS=https://demo.skillstremjobs.us` (also included in the configuration example).
+Send `Content-Type: application/json` with a JSON-stringified body. JSON sent with `text/plain` (including a charset) is also supported for browser integrations. URL-encoded and multipart form bodies are not supported. Optional `phone`, `ref`, and `type` fields are accepted; phone and reference appear in the HTML email. Client-provided `notify_to` is ignored: configure all recipients with the server's comma-separated `DEMO_BOOKING_TO` variable.
+
+The GoHighLevel website origin is `https://demo.skillstreamjobs.us`. Set the backend environment variable `DEMO_BOOKING_ALLOWED_ORIGINS=https://demo.skillstreamjobs.us` (also included in the configuration example).
 
 The website must POST to the deployed Node backend's URL. Hosting the website on GoHighLevel does not deploy this Express endpoint there; use `https://<backend-domain>/api/demo-booking` as the fetch URL below. For direct browser submissions, leave `DEMO_BOOKING_API_KEY` unset. Connect this request to your form's submit handler and replace the sample values with the visitor's field values.
 
@@ -34,7 +36,7 @@ if (!response.ok) throw new Error(result.message);
 // Display result.message to the visitor.
 ```
 
-All seven fields are required strings. Months use Jan–Dec and times use a 12-hour clock with AM/PM. The requested date has no year or timezone in this payload; confirm these with the requester. `submittedAt` is client-supplied metadata; the email also includes a server-generated `receivedAt`.
+Required fields are name, email, month, day, time, page (or source), and submittedAt (or booked_at). The day accepts an integer or string; other required fields are strings. Existing page and submittedAt fields take precedence over aliases. Optional event, date_label, page_url, source, timezone_label, and user_agent strings are included in the email. Months use Jan–Dec and times use a 12-hour clock with AM/PM. The requested date has no year; confirm it with the requester. Include timezone_label for the requested timezone. `submittedAt` is client-supplied metadata; the email also includes a server-generated `receivedAt`.
 
 ## Webhook / other backend
 

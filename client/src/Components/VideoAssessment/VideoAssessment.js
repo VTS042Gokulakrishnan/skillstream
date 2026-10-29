@@ -23,7 +23,7 @@ import { isMobile, isTablet, isDesktop } from "react-device-detect";
 import logo from "assets/images/loader.png";
 import AccessInstructions from "../AccessInstructions/AccessInstructions";
 import * as faceapi from "face-api.js";
-import CodeEditor from "./CodeEditor";
+import MainInterviewCodeEditor from "./MainInterviewCodeEditor";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 
 const ffmpeg = new FFmpeg();
@@ -953,16 +953,12 @@ const VideoAssessment = () => {
                   ) : (
                     <>
                       {isCodingRound ? (
-                        <div className="ss-practice-inline-editor">
-                        <CodeEditor
-                          setShowEditor={setShowEditor}
-                          setCollapsedQuestion={setCollapsedQuestion}
+                        <MainInterviewCodeEditor
+                          key={questionCount}
                           question={displayedQuestion}
-                          showEditor={showEditor}
                           setShowNextButton={setShowNextButton}
                           setCodingAnswer={setCodingAnswer}
                         />
-                        </div>
                       ) : (
                         <>
                           <div className="ss-ai-orb" aria-hidden="true">
