@@ -60,7 +60,7 @@ test("candidate search filters rows and preserves the original job and candidate
   render(<EmployerApplicantTable jobs={[job]} mode="applicants" renderDetails={(candidate, sourceJob)=><button onClick={()=>action(candidate,sourceJob)}>Original approve action</button>}/>);
   fireEvent.change(screen.getByPlaceholderText("Search name, skills, or keywords…"),{target:{value:"React"}});
   expect(screen.queryByText("Rahul Sharma")).toBeNull();
-  fireEvent.click(screen.getByRole("button",{name:"View profile"}));
+  fireEvent.click(screen.getByRole("button",{name:"View applicant"}));
   fireEvent.click(await screen.findByText("Original approve action"));
   expect(action).toHaveBeenCalledWith(person,job);
 });
