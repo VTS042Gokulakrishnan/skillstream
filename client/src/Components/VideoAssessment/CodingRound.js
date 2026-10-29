@@ -229,6 +229,7 @@ export default function CodingRound() {
     a.click();
   };
 
+
   const stopRecording = () => {
     if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
   };
@@ -238,7 +239,7 @@ export default function CodingRound() {
     try {
       setIsRunning(true);
       const { data } = await axios.post(
-        `https://skillstream-backend-1.onrender.com/api/v1/codingInterview/code/execute`,
+        `https://api.skillstreamjobs.ca/api/v1/codingInterview/code/execute`,
         { language, code }
       );
       setOutput(String(data?.output ?? "No output"));

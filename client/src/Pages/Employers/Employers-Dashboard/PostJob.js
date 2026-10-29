@@ -123,7 +123,6 @@ const PostJob = () => {
   // const [jobSkillsError, setJobSkillsError] = useState("");
   // const [responsibilitiesError, setresponsibilitiesError] = useState("");
   const [employmentTypeError, setEmploymentTypeError] = useState("");
-  const [isGeneratewithAI, setIsGenrateWithAI] = useState(false);
   const [loader, setLoader] = useState(false);
   const [skillGenLoader, setSkillGenLoader] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -730,7 +729,6 @@ const PostJob = () => {
         setSkillExperience(data?.keySkills_responsibilities);
         setJobSkills(data?.skills?.map((skill) => skill.toUpperCase()));
         setLoader(false);
-        setIsGenrateWithAI(true);
       } else {
         toast.error("Please select a job title");
         setJobTitleError("Job title is required");
@@ -961,7 +959,7 @@ const PostJob = () => {
                             )}
                           </div>
                           <div className="form-group  col-lg-12 col-md-12">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div className="em-job-type-label">
                               <label>Job Type</label>
                               {jobType === "Contract" &&
                                 Country === "United States" && (
@@ -1831,7 +1829,7 @@ const PostJob = () => {
                                   !JobTitle ||
                                   !JobDescription ||
                                   loader ||
-                                  isGeneratewithAI
+                                  skillGenLoader
                                 }
                               >
                                 Generate Skills
@@ -1840,7 +1838,7 @@ const PostJob = () => {
                             <Select
                               showSearch
                               mode="multiple"
-                              style={{ width: "100%", overflow: "scroll" }}
+                              style={{ width: "100%" }}
                               optionFilterProp="children"
                               filterOption={filterOption}
                               className="custom-select"

@@ -19,6 +19,46 @@
 @media(max-width:1000px){.em-two-col{grid-template-columns:minmax(0,1fr)}}
 
 .em-workspace form,.em-setup form{opacity:1;animation:none}
+/* Ant Select owns the field border; its search input must not inherit form-field styling. */
+.em-page-content .default-form .ant-select.custom-select {
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  height:auto;
+  min-height:45px;
+}
+.em-page-content .default-form .ant-select.custom-select .ant-select-selector {
+  min-height:45px;
+  height:auto!important;
+  padding:0 13px!important;
+  align-items:center;
+}
+.em-page-content .default-form .ant-select-single.custom-select .ant-select-selector {
+  height:45px!important;
+}
+.em-page-content .default-form .ant-select-multiple.custom-select .ant-select-selector {
+  padding:5px 9px!important;
+}
+.em-page-content .default-form .ant-select input.ant-select-selection-search-input {
+  min-height:0!important;
+  height:100%!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+.em-page-content .default-form .ant-select-disabled .ant-select-selection-item {
+  color:#172b4d;
+  -webkit-text-fill-color:#172b4d;
+  opacity:1;
+}
+.em-job-fields .form-group > label,.em-job-type-label label { display:block; line-height:24px; }
+.em-page-content .em-job-fields .form-group > label { margin-bottom:8px; }
+.em-job-type-label { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
+.em-job-type-label label { margin-bottom:0; }
+.em-job-type-label .ant-btn { height:24px; padding:0 8px; font-size:12px; }
 .em-workspace .em-global-search{flex-direction:row;gap:10px}
 .em-global-search>svg{flex-shrink:0}.em-setup-form{display:block}
 .em-page-content .post-job-steps{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0!important;margin:0 0 24px!important}

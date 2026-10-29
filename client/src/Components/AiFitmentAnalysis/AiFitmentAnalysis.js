@@ -1241,7 +1241,7 @@ const AiFitmentAnalysis = () => {
                               <Select
                                 showSearch
                                 mode="multiple"
-                                style={{ width: "100%", overflow: "scroll" }}
+                                style={{ width: "100%" }}
                                 optionFilterProp="children"
                                 virtual={false}
                                 filterOption={filterOption}

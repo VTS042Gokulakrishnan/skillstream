@@ -29,7 +29,7 @@
 .jd-page .sidebar-widget { background:#fff; border:1px solid #e1e8f2; border-radius:16px; padding:24px; margin-bottom:20px; }
 .jd-page .widget-title { font-size:18px; font-weight:600; margin-bottom:20px; }
 .jd-page .job-overview li { padding-left:34px; margin-bottom:16px; }
-.jd-page .job-overview h5 { font-size:13px; color:#64748b; margin:0 0 5px; }
+.jd-page .job-overview h5 { font-size:13px; color:#172b4d; font-weight:500; margin:0 0 5px; }
 .jd-page .job-overview span { color:#172b4d; font-size:14px; overflow-wrap:anywhere; }
 .jd-page .job-skills { display:flex; flex-wrap:wrap; gap:8px; }
 .jd-page .job-skills li { margin:0; }
