@@ -20,3 +20,11 @@
 .ss-profile-editor .form-group .error-message{font-size:12px;color:#d32f45;margin-top:6px}
 @media(max-width:767px){.ss-profile-editor .widget-title{padding:20px!important}.ss-profile-editor .widget-content{padding:20px!important}.ss-profile-editor .uploading-outer{padding:14px}.ss-profile-editor .default-form .form-group{width:100%}.ss-profile-editor .upper-title-box h3{font-size:24px}}
 .ss-profile-editor .ant-select.custom-select{padding:0!important;border:0!important;background:transparent!important;height:auto!important}
+/* Keep the visible field on the selector, never on its internal search input. */
+.ss-profile-editor .default-form .ant-select.custom-select { min-height:46px; }
+.ss-profile-editor .default-form .ant-select.custom-select .ant-select-selector { min-height:46px!important;height:auto!important;padding:0 14px!important; }
+.ss-profile-editor .default-form .ant-select-single.custom-select .ant-select-selector { height:46px!important; }
+.ss-profile-editor .default-form .ant-select-multiple.custom-select .ant-select-selector { padding:5px 10px!important; }
+.ss-profile-editor .default-form .form-group .ant-select input.ant-select-selection-search-input { min-height:0!important;height:100%!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important; }
+.ss-profile-editor .default-form .form-group .ant-select-disabled .ant-select-selection-item { color:#203650;-webkit-text-fill-color:#203650;opacity:1; }
+.ss-profile-editor .default-form .form-group > label { display:block;line-height:24px;margin-bottom:8px; }

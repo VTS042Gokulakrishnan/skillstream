@@ -391,7 +391,8 @@ const Profile = () => {
       SetTeamSize(data?.Employer[0]?.teamSize);
       SetDescription(data?.Employer[0]?.description);
       SetprimaryIndustry(data?.Employer[0]?.primaryIndustry);
-      SetCity(data?.Employer[0]?.city);
+      SetCity(data?.Employer[0]?.city || "");
+      setState(data?.Employer[0]?.state || "");
       SetAddress(data?.Employer[0]?.address);
       SetCountry(data?.Employer[0]?.country);
       SetFacebook(data?.Employer[0]?.social[0]?.facebook);
@@ -432,43 +433,27 @@ const Profile = () => {
       // console.log(error);
     }
   };
-  // Fetch states based on selected country
-  const fetchStates = async () => {
-    try {
-      const Country = "United States";
-      const { data } = await axios.get(
-        `${Server}/api/v1/data/states/${Country}`
-      );
-      console.log(data.states);
-
-      setStateData(data.states); // Set state data
-    } catch (error) {
-      // console.log(error);
-    }
-  };
+  // Ignore responses for a previous country or state after the selection changes.
   useEffect(() => {
+    let active = true;
+    setStateData([]);
     if (country) {
-      fetchStates(); // Fetch states when country changes
+      axios.get(`${Server}/api/v1/data/states/${encodeURIComponent(country)}`)
+        .then(({ data }) => { if (active) setStateData(data.states || []); })
+        .catch(() => { if (active) setStateData([]); });
     }
+    return () => { active = false; };
   }, [country]);
   useEffect(() => {
-    if (state) {
-      fetchCities(); // Fetch states when country changes
+    let active = true;
+    SetCityData([]);
+    if (country && state) {
+      axios.get(`${Server}/api/v1/data/cities/${encodeURIComponent(country)}/${encodeURIComponent(state)}`)
+        .then(({ data }) => { if (active) SetCityData(data.cities || []); })
+        .catch(() => { if (active) SetCityData([]); });
     }
-  }, [state]);
-  const fetchCities = async () => {
-    try {
-      const Country = "United States";
-
-      const { data } = await axios.get(
-        `${Server}/api/v1/data/cities/${Country}/${state}`
-      );
-      // console.log(data.country_city);
-      SetCityData(data.cities);
-    } catch (error) {
-      // console.log(error);
-    }
-  };
+    return () => { active = false; };
+  }, [country, state]);
   const fetchSkills = async () => {
     try {
       const { data } = await axios.get(`${Server}/api/v1/data/skills`);
@@ -866,7 +851,16 @@ const Profile = () => {
                             value={country}
                             virtual={false}
                             disabled
-                            onChange={(e) => SetCountry(e)}
+                            onChange={(e) => {
+                              SetCountry(e);
+                              setState("");
+                              SetCity("");
+                              setStateData([]);
+                              SetCityData([]);
+                              SetCountryError("");
+                              SetStateError("");
+                              SetCityError("");
+                            }}
                           />
                           {countryError && (
                             <div
@@ -888,9 +882,16 @@ const Profile = () => {
                             className="custom-select"
                             placeholder="Select State"
                             options={stateOptions}
-                            value={state}
+                            value={state || undefined}
+                            disabled={!country}
                             virtual={false}
-                            onChange={(e) => setState(e)}
+                            onChange={(e) => {
+                              setState(e);
+                              SetCity("");
+                              SetCityData([]);
+                              SetStateError("");
+                              SetCityError("");
+                            }}
                           />
                           {stateError && (
                             <div
@@ -912,10 +913,11 @@ const Profile = () => {
                             className="custom-select"
                             placeholder="Select City"
                             options={cityOptions}
-                            value={city}
+                            value={city || undefined}
+                            disabled={!country || !state}
                             virtual={false}
                             // value={primaryIndustry}
-                            onChange={(e) => SetCity(e)}
+                            onChange={(e) => { SetCity(e); SetCityError(""); }}
                           />
                           {cityError && (
                             <div
