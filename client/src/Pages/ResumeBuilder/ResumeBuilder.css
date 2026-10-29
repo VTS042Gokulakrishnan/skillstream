@@ -31,3 +31,9 @@
 @media(max-height:720px) and (min-width:761px){.rb-library .rb-mini{height:160px}.rb-library .rb-mini iframe{transform:scale(.142);left:calc(50% - 56.374px)}}
 @media(max-width:760px){.rb-app .rb-library{padding:16px}.rb-library .rb-page-heading{gap:12px}.rb-library .rb-cards{grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}.rb-library .rb-mini{height:180px}.rb-library .rb-mini iframe{transform:scale(.16);left:calc(50% - 63.52px)}.rb-app .rb-library .rb-card-tools button{min-height:44px;font-size:12px}}
 @media(max-height:720px) and (min-width:761px){.rb-app .rb-library{padding-top:12px}.rb-library .rb-page-heading{margin-bottom:10px}.rb-library .rb-library-note{margin-bottom:12px;padding:8px 12px}.rb-library .rb-mini{height:135px}.rb-library .rb-mini iframe{transform:scale(.12);left:calc(50% - 47.64px)}}
+
+/* Fit the entire A4 sample to each gallery card at every viewport width. */
+.rb-template .rb-mini.rb-mini-full{height:auto;aspect-ratio:794 / 1123;width:100%;background:white}
+.rb-template .rb-mini-full iframe{width:794px;height:1123px;top:0;transform-origin:top left}
+.rb-template-grid{align-items:start}
+.rb-template-grid .rb-template{width:100%;min-width:0}

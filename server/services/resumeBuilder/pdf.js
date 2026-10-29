@@ -20,8 +20,9 @@ async function generatePdf(doc) {
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(false);
     await page.setRequestInterception(true);
-    page.on('request', request => request.abort());
+    page.on('request', request => request.url().startsWith('data:image/') ? request.continue() : request.abort());
     await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.evaluate(async () => { await Promise.all(Array.from(document.images, image => image.decode().catch(() => {}))); });
     return Buffer.from(await page.pdf({ format: doc.settings.paper, preferCSSPageSize: true, printBackground: true, timeout: 30000 }));
   } finally {
     try { if (browser) await browser.close(); } finally { active--; }
