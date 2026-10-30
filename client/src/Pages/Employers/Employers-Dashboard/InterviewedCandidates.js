@@ -1,3 +1,5 @@
+import { interviewStage } from "../../../Components/EmployerUI/interviewStage";
+import ApplicantReview from "../../../Components/EmployerUI/ApplicantReview";
 import EmployerApplicantTable from "../../../Components/EmployerUI/EmployerApplicantTable";
 import EmployerAvatar from "../../../Components/EmployerUI/EmployerAvatar";
 // InterviewedCandidates.js
@@ -44,7 +46,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import "./Applicants.css";
 import { jwtDecode } from "jwt-decode";
-import { Segmented } from "antd";
+import { Select } from "antd";
 import { Progress } from "antd";
 import ResumePreviewDrawer from "Components/ReaderDrawer/ResumePreviewDrawer";
 
@@ -432,8 +434,8 @@ const InterviewedCandidates = () => {
   // Tabs
   const [activeTab, setActiveTab] = useState("myJobs"); // myJobs | otherJobs
   const [mainTab, setMainTab] = useState("applicants"); // applicants | vendorApplicants
-  const [roundTab, setRoundTab] = useState("video"); // video | coding
-  const [stageTab, setStageTab] = useState("pending"); // pending | completed
+  const [roundTab, setRoundTab] = useState("all"); // all | video | coding
+  const [stageTab, setStageTab] = useState("all"); // all | pending | completed
   const [roleAccess, setRoleAccess] = useState("");
 
   // Loaders
@@ -533,17 +535,8 @@ const InterviewedCandidates = () => {
     !!a?.CodingInterviewStatus;
 
   const matchRoundStage = (a, round, stage) => {
-    if (round === "video") {
-      const status = getVideoInterviewStatus(a);
-      if (stage === "pending") return status !== "Completed";
-      return status === "Completed" || hasVideoInterviewAssets(a);
-    }
-    if (round === "coding") {
-      if (stage === "pending")
-        return !a?.CodingInterviewStatus || a?.CodingInterviewStatus === "Sent";
-      return a?.CodingInterviewStatus === "Completed";
-    }
-    return false;
+    if (round === "all") return matchRoundStage(a,"video",stage) || matchRoundStage(a,"coding",stage);
+    return stage === "all" || stage === interviewStage(a,round).toLowerCase().replaceAll(" ","-");
   };
   // ----------------------
   // Get Interview score
@@ -665,6 +658,12 @@ const InterviewedCandidates = () => {
       setAdminLoader(false);
     }
   };
+  useEffect(() => {
+    let stopped = false, timer;
+    const refresh = async () => { if (!document.hidden) await getApplicants(); if (!stopped) timer = setTimeout(refresh,15000); };
+    timer=setTimeout(refresh,15000);
+    return ()=>{stopped=true;clearTimeout(timer);};
+  }, [userId, access, organisationId]);
   useEffect(() => {
     const filtered = jobFilter.filter((job) => {
       if (jobTitleFilter === "All") return true;
@@ -877,9 +876,9 @@ const InterviewedCandidates = () => {
   // ----------------------
   // Dropdown menu (same behavior)
   // ----------------------
-  const getMenuItemsByRound = (candidate) => {
+  const getMenuItemsByRound = (candidate, selectedRound = roundTab) => {
     // VIDEO ROUND menu
-    if (roundTab === "video") {
+    if (selectedRound === "video") {
       return [
         ...(candidate?.video
           ? [
@@ -1088,12 +1087,6 @@ const InterviewedCandidates = () => {
     return countCandidates(list);
   }, [baseJobs, roundTab]);
   useEffect(() => {
-    // if pending has candidates => stay pending, else go completed
-    if (pendingCount > 0) {
-      setStageTab("pending");
-    } else {
-      setStageTab("completed");
-    }
     setPanelPage(1);
     setApplicantPage({});
   }, [
@@ -1113,240 +1106,11 @@ const InterviewedCandidates = () => {
     setPanelPage(1);
     setApplicantPage({});
   }, [mainTab, activeTab, roundTab, stageTab]);
-  const ApplicantLayout = (givenApplicants, applLoader) => <EmployerApplicantTable mode="interviews" jobs={givenApplicants} loading={applLoader} renderDetails={(i, e, idx2) => {
-                          const currentStatus =
-                            roundTab === "video"
-                              ? getVideoInterviewStatus(i)
-                              : i?.CodingInterviewStatus;
-                          const statusTags =
-                            roundTab === "video"
-                              ? getInterviewStatusTags(i)
-                              : [];
+  const ApplicantLayout = (givenApplicants, applLoader) => <EmployerApplicantTable mode="interviews" onClearFilters={()=>{setRoundTab("all");setStageTab("all");}} jobs={givenApplicants} loading={applLoader} renderDetails={(i,e) => <ApplicantReview applicant={i} job={{...e,userId:e.userId || userId}} onResume={c=>openResumeDrawer(c.resume,e.jobSkills)} onVendor={mainTab === "vendorApplicants" ? showVendorModal : undefined}
+    onInvite={(c,type)=>{setSelectedCandidate({userId:e.userId || userId,candidateId:c.id,jobId:e.jobId,from:e.EmailAddress,to:c.email,candidateName:c.name,JobTitle:e.JobTitle,companyName:e.companyName,CodingInterviewStatus:c.CodingInterviewStatus,interviewStatus:c.interviewStatus,preferredType:type});setIsModalOpen(true);}}
+    renderResults={(c,type)=> (type === "video" ? c.interviewSummary || c.video || c.transcript : c.CodingInterviewSummary || c.codingVideo || c.codingQ_A) ? <Dropdown menu={{items:getMenuItemsByRound(c,type)}} trigger={["click"]}><Button onClick={()=>handleResults(c)}>View results</Button></Dropdown> : null}
+  />}/>;
 
-                          const isPending =
-                            roundTab === "video"
-                              ? currentStatus !== "Completed"
-                              : !currentStatus || currentStatus === "Sent";
-                          const isCompleted =
-                            roundTab === "video"
-                              ? currentStatus === "Completed" ||
-                                hasVideoInterviewAssets(i)
-                              : currentStatus === "Completed";
-
-                          const score =
-                            roundTab === "video"
-                              ? getVideoInterviewScore(i)
-                              : getCodingInterviewScore(i);
-
-                          return (
-                            <div className="widget-content" key={idx2}>
-                              <div className="row">
-                                <div className="col-lg-12">
-                                  <div className="candidate-block-three">
-                                    <div className="inner-box">
-                                      <div className="content">
-                                        {/* LEFT */}
-                                        <div>
-                                          <figure className="image">
-                                            <EmployerAvatar src={i?.image} name={i?.name} size={60} />
-                                          </figure>
-
-                                          <h4>
-                                            <a href="#">{i?.name}</a>
-                                          </h4>
-
-                                          <ul className="candidate-info">
-                                            <li>
-                                              <span className="icon flaticon-map-locator"></span>
-                                              {i?.country || "N/A"}
-                                            </li>
-                                            <br />
-                                            <li>
-                                              <FaBriefcase
-                                                className="icon"
-                                                style={{ marginRight: "8px" }}
-                                              />
-                                              {i?.jobTitle || "N/A"}
-                                            </li>
-
-                                            {mainTab === "vendorApplicants" && (
-                                              <li>
-                                                <Button
-                                                  icon={<EyeOutlined />}
-                                                  onClick={() =>
-                                                    showVendorModal(i?.vendor)
-                                                  }
-                                                >
-                                                  Vendor Details
-                                                </Button>
-                                              </li>
-                                            )}
-                                          </ul>
-                                          {statusTags.length > 0 && (
-                                            <div
-                                              style={{
-                                                display: "flex",
-                                                flexWrap: "wrap",
-                                                gap: "6px",
-                                                marginTop: "10px",
-                                              }}
-                                            >
-                                              {statusTags.map((tag) => (
-                                                <Tag
-                                                  color={tag.color}
-                                                  key={tag.label}
-                                                >
-                                                  {tag.label}
-                                                </Tag>
-                                              ))}
-                                            </div>
-                                          )}
-
-                                          {/* ✅ Live Pipeline Status Panel */}
-                                          {roundTab === "video" && (
-                                            <LiveStatusPanel
-                                              applicant={i}
-                                              userId={userId}
-                                              jobId={e.jobId}
-                                              candidateId={String(i?.id)}
-                                            />
-                                          )}
-                                        </div>
-
-                                        {/* RIGHT ACTIONS (same style as Shortlisted icons) */}
-                                        <div className="btn-box-one">
-                                          <div className="button-container">
-                                            {/* ✅ Interview Score Progress (replaces tags) */}
-                                            {score !== null &&
-                                              score !== undefined && (
-                                                <Tooltip
-                                                  title={`${
-                                                    roundTab === "video"
-                                                      ? "Video"
-                                                      : "Coding"
-                                                  } Score`}
-                                                >
-                                                  <div
-                                                    style={{
-                                                      display: "flex",
-                                                      alignItems: "center",
-                                                      justifyContent: "center",
-                                                      width: "56px",
-                                                      height: "56px",
-                                                      borderRadius: "10px",
-                                                      background: "#fff",
-                                                      border:
-                                                        "1px solid #e9e9e9",
-                                                    }}
-                                                  >
-                                                    <Progress
-                                                      type="circle"
-                                                      width={44}
-                                                      percent={Number(score)}
-                                                    />
-                                                  </div>
-                                                </Tooltip>
-                                              )}
-
-                                            {/* ✅ View Resume (same as existing) */}
-                                            <Tooltip title="View Resume">
-                                              <button type="button" aria-label="View resume"
-                                                className="square green"
-                                                style={{
-                                                  backgroundColor: "#1E88E5",
-                                                }}
-                                                onClick={() => {
-                                                  console.log("clicked button");
-                                                  openResumeDrawer(
-                                                    i?.resume,
-                                                    e?.jobSkills 
-                                                     
-                                                  );
-                                                }}
-                                              >
-                                                <EyeOutlined />
-                                              </button>
-                                            </Tooltip>
-
-                                            {/* ✅ Pending => Send Invite (square icon like existing) */}
-                                            {isPending && (
-                                              <Tooltip title="Send / Resend Interview Invite">
-                                                <div
-                                                  className="square red"
-                                                  onClick={() =>
-                                                    handleOpenModal({
-                                                      userId: userId,
-                                                      candidateId: i?.id,
-                                                      jobId: e?.jobId,
-                                                      from: e?.EmailAddress,
-                                                      to: i?.email,
-                                                      candidateName: i?.name,
-                                                      JobTitle: e?.JobTitle,
-                                                      companyName:
-                                                        e?.companyName,
-                                                      CodingInterviewStatus:
-                                                        i?.CodingInterviewStatus,
-                                                      interviewStatus:
-                                                        i?.interviewStatus,
-                                                    })
-                                                  }
-                                                  style={{
-                                                    backgroundColor: "#FFC107",
-                                                  }}
-                                                >
-                                                  <VideoCameraOutlined />
-                                                </div>
-                                              </Tooltip>
-                                            )}
-
-                                            {/* ✅ Completed => Results dropdown (round-specific items) */}
-                                            {isCompleted && (
-                                              <Tooltip title="View Results">
-                                                <div
-                                                  className="square green"
-                                                  style={{
-                                                    backgroundColor: "#00BCD4",
-                                                  }}
-                                                >
-                                                  <Dropdown
-                                                    menu={{
-                                                      items:
-                                                        getMenuItemsByRound(i),
-                                                    }}
-                                                    trigger={["click"]}
-                                                  >
-                                                    <button
-                                                      style={{
-                                                        border: "none",
-                                                        background:
-                                                          "transparent",
-                                                        cursor: "pointer",
-                                                      }}
-                                                      onClick={() =>
-                                                        handleResults(i)
-                                                      }
-                                                    >
-                                                      <FileTextOutlined />
-                                                    </button>
-                                                  </Dropdown>
-                                                </div>
-                                              </Tooltip>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      {/* end inner content */}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }} />;
-
-  // ----------------------
-  // UI
-  // ----------------------
   return (
     <div>
       <section className="user-dashboard">
@@ -1470,25 +1234,28 @@ const InterviewedCandidates = () => {
                       <div
                         style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
                       >
-                        <Segmented
+                        <Select style={{minWidth: 190}} aria-label="Interview type"
                           value={roundTab}
                           onChange={(val) => {
                             setRoundTab(val);
                             setPanelPage(1);
                           }}
                           options={[
+                            { label: "All interview types", value: "all" },
                             { label: "Video Round", value: "video" },
                             { label: "Coding Round", value: "coding" },
                           ]}
                         />
 
-                        <Segmented
+                        <Select style={{minWidth: 190}} aria-label="Interview status"
                           value={stageTab}
                           onChange={(val) => {
                             setStageTab(val);
                             setPanelPage(1);
                           }}
                           options={[
+                            { label: "All statuses", value: "all" },
+                            ...[{value:"not-sent",label:"Not sent"},{value:"in-progress",label:"In progress"},{value:"processing",label:"Processing"},{value:"expired",label:"Expired"},{value:"failed",label:"Failed"}],
                             {
                               label: `Pending (${pendingCount})`,
                               value: "pending",
@@ -1503,8 +1270,7 @@ const InterviewedCandidates = () => {
 
                       {/* Optional small hint text */}
                       <div style={{ fontSize: 12, color: "#666" }}>
-                        Tip: Pending = invite sent but not attended • Completed
-                        = results available
+                        Video and coding rounds are tracked independently.
                       </div>
                     </div>
 

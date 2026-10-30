@@ -1,3 +1,5 @@
+const { deliverInterviewNotifications } = require("../services/interviewNotifications");
+const { invitationUpdate } = require("../services/interviewInvitation");
 const { createPdf } = require("../services/interviewFeedbackPdf");
 const axios = require("axios");
 const fs = require("fs");
@@ -327,11 +329,12 @@ async function candidateSendEmail(
   };
   try {
     let info = await mailTransporter.sendMail(mailOptions);
+    if (info.rejected?.length && !info.accepted?.length) throw new Error("Email recipient was rejected");
     console.log("Email sent:", info.response);
     console.log("Interview email sent to candidate");
   } catch (error) {
     console.log("Interview update sending failed", error.message);
-    // Email failed, but execution continues
+    throw error;
   }
 }
 async function EmployerSendEmail(
@@ -462,11 +465,12 @@ async function EmployerSendEmail(
 
   try {
     let info = await mailTransporter.sendMail(details);
+    if (info.rejected?.length && !info.accepted?.length) throw new Error("Email recipient was rejected");
     console.log("Email sent:", info.response);
     console.log("Interview email sent to employer");
   } catch (error) {
     console.log("Interview update sending failed", error.message);
-    // Email failed, but execution continues
+    throw error;
   }
 }
 
@@ -1069,6 +1073,13 @@ const controller = {
       } = req.body;
       // console.log(req.body);
       const { jobId, userId, candidateId } = req.params;
+      const interviewOwner = await employerModel.findOne({userId, "jobs.jobId":jobId}).lean();
+      const existingApplicant = interviewOwner?.jobs?.find(job=>job.jobId===jobId)?.applicants?.find(person=>String(person.id)===candidateId);
+      if (!existingApplicant) return res.status(404).json({status:false,message:"Applicant not found"});
+      let inviteUpdate;
+      try { inviteUpdate = invitationUpdate(existingApplicant,"video",req.body); }
+      catch(error) { return res.status(409).json({status:false,message:error.message}); }
+
       let mailTransporter =
         region === "United States"
           ? nodemailer.createTransport({
@@ -1230,17 +1241,7 @@ const controller = {
               "jobs.jobId": jobId,
               "jobs.applicants.id": candidateObjectId,
             },
-            {
-              $set: {
-                "jobs.$[job].applicants.$[applicant].interviewStatus": "Sent",
-                "jobs.$[job].applicants.$[applicant].instructions":
-                  instructions,
-                "jobs.$[job].applicants.$[applicant].isCodingRound":
-                  isCodingRound,
-                "jobs.$[job].applicants.$[applicant].interviewViewLinkExpiresin":
-                  expires_in,
-              },
-            },
+            inviteUpdate,
             {
               arrayFilters: [
                 { "job.jobId": jobId },
@@ -1537,6 +1538,8 @@ const controller = {
             {
               "jobs.$[job].applicants.$[applicant].videoUploadStatus": "Pending",
               "jobs.$[job].applicants.$[applicant].qaPdfStatus": "Pending",
+              "jobs.$[job].applicants.$[applicant].candidateEmailStatus": "Pending",
+              "jobs.$[job].applicants.$[applicant].employerEmailStatus": "Pending",
             }
           );
 
@@ -1578,7 +1581,11 @@ const controller = {
               "jobs.$[job].applicants.$[applicant].interviewSummary": summary,
               "jobs.$[job].applicants.$[applicant].videoUploadStatus": "In Progress",
               "jobs.$[job].applicants.$[applicant].qaPdfStatus": "Pending",
+              "jobs.$[job].applicants.$[applicant].candidateEmailStatus": "Pending",
+              "jobs.$[job].applicants.$[applicant].employerEmailStatus": "Pending",
               "jobs.$[job].applicants.$[applicant].analysisSavedAt": new Date(),
+              "jobs.$[job].applicants.$[applicant].notificationContext": {candidateEmail,candidateName,jobTitle,companyName,region,email},
+              "jobs.$[job].applicants.$[applicant].notificationError": null,
               "jobs.$[job].applicants.$[applicant].videoUploadStartedAt": new Date(),
               "jobs.$[job].applicants.$[applicant].videoUploadError": null,
               "jobs.$[job].applicants.$[applicant].qaPdfError": null,
@@ -1697,36 +1704,15 @@ const controller = {
                 completedExtraFields
               );
 
-              try {
-                const parsedSummary =
-                  typeof data === "string" ? JSON.parse(data) : data;
-                const pdfBytes = await createPdf(parsedSummary);
+              await deliverInterviewNotifications({
+                sendCandidate: () => candidateSendEmail(candidateEmail,candidateName,jobTitle,companyName,region,email),
+                sendEmployer: async () => {
+                  const pdfBytes = await createPdf(typeof data === "string" ? JSON.parse(data) : data);
+                  await EmployerSendEmail(candidateEmail,videoData,jobTitle,region,email,pdfBytes);
+                },
+                update: values => updateApplicant(Object.fromEntries(Object.entries(values).map(([key,value])=>[`jobs.$[job].applicants.$[applicant].${key}`,value])))
+              });
 
-                await candidateSendEmail(
-                  candidateEmail,
-                  candidateName,
-                  jobTitle,
-                  companyName,
-                  region,
-                  email,
-                );
-
-                await EmployerSendEmail(
-                  candidateEmail,
-                  videoData,
-                  jobTitle,
-                  region,
-                  email,
-                  pdfBytes,
-                );
-
-                console.log("Email sent in video analysis");
-              } catch (notificationError) {
-                console.error(
-                  "Post-upload PDF/email generation failed:",
-                  notificationError,
-                );
-              }
             } catch (uploadError) {
               console.error("Post-response upload/email failed:", uploadError);
               await pushLiveStatusRaw(
@@ -1791,6 +1777,13 @@ const controller = {
       } = req.body;
       // console.log(req.body);
       const { jobId, userId, candidateId } = req.params;
+      const interviewOwner = await employerModel.findOne({userId, "jobs.jobId":jobId}).lean();
+      const existingApplicant = interviewOwner?.jobs?.find(job=>job.jobId===jobId)?.applicants?.find(person=>String(person.id)===candidateId);
+      if (!existingApplicant) return res.status(404).json({status:false,message:"Applicant not found"});
+      let inviteUpdate;
+      try { inviteUpdate = invitationUpdate(existingApplicant,"coding",req.body); }
+      catch(error) { return res.status(409).json({status:false,message:error.message}); }
+
       let mailTransporter =
         region === "United States"
           ? nodemailer.createTransport({
@@ -1968,17 +1961,7 @@ const controller = {
               "jobs.jobId": jobId,
               "jobs.applicants.id": candidateObjectId,
             },
-            {
-              $set: {
-                "jobs.$[job].applicants.$[applicant].CodingInterviewStatus":
-                  "Sent",
-                "jobs.$[job].applicants.$[applicant].CodingInstructions":
-                  instructions,
-                "jobs.$[job].applicants.$[applicant].CodingLevel": level,
-                "jobs.$[job].applicants.$[applicant].CodingInterviewViewLinkExpiresin":
-                  expires_in,
-              },
-            },
+            inviteUpdate,
             {
               arrayFilters: [
                 { "job.jobId": jobId },
@@ -2358,6 +2341,32 @@ const controller = {
         .json({ error: "Internal Server Error", status: false });
     }
   },
+  async retryInterviewNotifications(req,res) {
+    const {userId,jobId,candidateId}=req.params;
+    try {
+      const owner=await employerModel.findOne({userId}).lean();
+      const ownAccount=req.user?.role === "Employer" && req.user?.userId===userId;
+      const sameOrganisation=req.user?.role === "Employer" && req.user?.access === "Admin" && req.user?.organisationId && String(req.user.organisationId)===String(owner?.organisationId);
+      if(!ownAccount && !sameOrganisation) return res.status(403).json({status:false,message:"Access denied"});
+      const applicant=owner?.jobs?.find(job=>job.jobId===jobId)?.applicants?.find(person=>String(person.id)===candidateId);
+      if(!applicant?.notificationContext || applicant.interviewStatus !== "Completed") return res.status(409).json({status:false,message:"No completed interview notification is available to retry"});
+      const base={userId,"jobs.jobId":jobId,"jobs.applicants.id":new ObjectId(candidateId)};
+      const options={arrayFilters:[{"job.jobId":jobId},{"applicant.id":new ObjectId(candidateId)}]};
+      // Only one retry may claim a failed notification at a time.
+      const claim=await employerModel.updateOne({...base,"jobs":{$elemMatch:{jobId,applicants:{$elemMatch:{id:new ObjectId(candidateId),notificationRetrying:{$ne:true},notificationError:{$ne:null}}}}}},{$set:{"jobs.$[job].applicants.$[applicant].notificationRetrying":true}},options);
+      if(!claim.modifiedCount) return res.status(409).json({status:false,message:"Notifications already sent or retry in progress"});
+      try {
+        const c=applicant.notificationContext;
+        const success=await deliverInterviewNotifications({
+          candidateStatus:applicant.candidateEmailStatus,employerStatus:applicant.employerEmailStatus,
+          sendCandidate:()=>candidateSendEmail(c.candidateEmail,c.candidateName,c.jobTitle,c.companyName,c.region,c.email),
+          sendEmployer:async()=>EmployerSendEmail(c.candidateEmail,{Location:applicant.video},c.jobTitle,c.region,c.email,await createPdf(JSON.parse(applicant.interviewSummary))),
+          update:values=>employerModel.updateOne(base,{$set:Object.fromEntries(Object.entries(values).map(([key,value])=>[`jobs.$[job].applicants.$[applicant].${key}`,value]))},options)
+        });
+        return res.status(success?200:502).json({status:success,message:success?"Notifications sent":"Notification failed; please retry later"});
+      } finally {await employerModel.updateOne(base,{$set:{"jobs.$[job].applicants.$[applicant].notificationRetrying":false}},options);}
+    } catch(error) {return res.status(500).json({status:false,message:"Unable to retry notifications"});}
+  },
    async getLiveStatus(req, res) {
   try {
     const { userId, jobId, candidateId } = req.params;
@@ -2371,12 +2380,30 @@ const controller = {
       { $match: { "jobs.applicants.id": candidateObjectId } },
       {
         $project: {
-          interviewStatus:     "$jobs.applicants.interviewStatus",
-          interviewLiveStatus: "$jobs.applicants.interviewLiveStatus",
-          videoUploadStatus:   "$jobs.applicants.videoUploadStatus",
-          qaPdfStatus:         "$jobs.applicants.qaPdfStatus",
-          videoUploadError:    "$jobs.applicants.videoUploadError",
-          qaPdfError:          "$jobs.applicants.qaPdfError",
+          interviewStatus:     { $ifNull: ["$jobs.applicants.interviewStatus", null] },
+          interviewLiveStatus: { $ifNull: ["$jobs.applicants.interviewLiveStatus", null] },
+          videoUploadStatus:   { $ifNull: ["$jobs.applicants.videoUploadStatus", null] },
+          qaPdfStatus:         { $ifNull: ["$jobs.applicants.qaPdfStatus", null] },
+          candidateEmailStatus: { $ifNull: ["$jobs.applicants.candidateEmailStatus", null] },
+          employerEmailStatus: { $ifNull: ["$jobs.applicants.employerEmailStatus", null] },
+          notificationError: { $ifNull: ["$jobs.applicants.notificationError", null] },
+          analysisSavedAt: { $ifNull: ["$jobs.applicants.analysisSavedAt", null] },
+          interviewSummary: { $ifNull: ["$jobs.applicants.interviewSummary", null] },
+          video: { $ifNull: ["$jobs.applicants.video", null] },
+          transcript: { $ifNull: ["$jobs.applicants.transcript", null] },
+          CodingInterviewStatus: { $ifNull: ["$jobs.applicants.CodingInterviewStatus", null] },
+          CodingInterviewSummary: { $ifNull: ["$jobs.applicants.CodingInterviewSummary", null] },
+          codingVideo: { $ifNull: ["$jobs.applicants.codingVideo", null] },
+          codingQ_A: { $ifNull: ["$jobs.applicants.codingQ_A", null] },
+          interviewViewLinkExpiresin: { $ifNull: ["$jobs.applicants.interviewViewLinkExpiresin", null] },
+          CodingInterviewViewLinkExpiresin: { $ifNull: ["$jobs.applicants.CodingInterviewViewLinkExpiresin", null] },
+          notificationRetrying: { $ifNull: ["$jobs.applicants.notificationRetrying", false] },
+          interviewAttempts: { $ifNull: ["$jobs.applicants.interviewAttempts", null] },
+          videoInviteSentAt: { $ifNull: ["$jobs.applicants.videoInviteSentAt", null] },
+          codingInviteSentAt: { $ifNull: ["$jobs.applicants.codingInviteSentAt", null] },
+
+          videoUploadError:    { $ifNull: ["$jobs.applicants.videoUploadError", null] },
+          qaPdfError:          { $ifNull: ["$jobs.applicants.qaPdfError", null] },
         },
       },
     ]);

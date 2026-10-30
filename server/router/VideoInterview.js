@@ -1,3 +1,4 @@
+const { Authorization } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
 const {
@@ -16,6 +17,7 @@ const {
   CodingGenerateQuestions,
   CodingAnalyse,
   getLiveStatus,
+  retryInterviewNotifications,
   pushCandidateLiveStatus,
   // getLink,
 } = require("../controller/VideoInterview");
@@ -39,4 +41,5 @@ router.post("/coding/generate/questions", CodingGenerateQuestions);
 router.post("/coding/analyse/:userId/:jobId/:candidateId", CodingAnalyse);
 router.get("/liveStatus/:userId/:jobId/:candidateId", getLiveStatus);
 router.post("/pushStatus/:userId/:jobId/:candidateId", pushCandidateLiveStatus);
+router.post("/retryNotifications/:userId/:jobId/:candidateId", Authorization, retryInterviewNotifications);
 module.exports = router;

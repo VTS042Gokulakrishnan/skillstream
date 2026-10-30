@@ -64,3 +64,17 @@ test("candidate search filters rows and preserves the original job and candidate
   fireEvent.click(await screen.findByText("Original approve action"));
   expect(action).toHaveBeenCalledWith(person,job);
 });
+
+test("newest applications appear first across jobs", () => {
+  const jobs=[{jobId:"older",JobTitle:"Old role",applicants:[{id:"1",name:"Older applicant",appliedTime:"2026-10-01"}]},{jobId:"newer",JobTitle:"New role",applicants:[{id:"2",name:"Newest applicant",appliedTime:"2026-10-29"}]}];
+  render(<EmployerApplicantTable jobs={jobs} mode="applicants" renderDetails={()=>null}/>);
+  const rows=screen.getAllByRole("row");
+  expect(rows.findIndex(row=>row.textContent.includes("Newest applicant"))).toBeLessThan(rows.findIndex(row=>row.textContent.includes("Older applicant")));
+});
+test("interview details open in a drawer with both round labels", async () => {
+  render(<EmployerApplicantTable mode="interviews" jobs={[{jobId:"job",applicants:[{id:"person",name:"Dual round candidate",interviewStatus:"Completed",CodingInterviewStatus:"Sent"}]}]} renderDetails={()=> <div>Round details fixture</div>}/>);
+  expect(screen.getByText("Video + Coding")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button",{name:"View interview"}));
+  expect(await screen.findByText("Round details fixture")).toBeTruthy();
+  expect(screen.getByText("Interview details")).toBeTruthy();
+});

@@ -1,0 +1,11 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {invitationUpdate}=require('./interviewInvitation');
+const prefix='jobs.$[job].applicants.$[applicant].';
+const now=new Date('2026-10-29T00:00:00Z');
+test('completed video can be invited to coding without resetting video',()=>{const u=invitationUpdate({interviewStatus:'Completed',video:'saved.mp4'},'coding',{level:'medium'},now);assert.equal(u.$set[prefix+'CodingInterviewStatus'],'Sent');assert.equal(u.$set[prefix+'interviewStatus'],undefined);assert.equal(u.$unset,undefined);});
+test('retake archives video assets and summary before clearing latest results',()=>{const u=invitationUpdate({interviewStatus:'Completed',video:'saved.mp4',interviewSummary:'summary',transcript:'qa.pdf'},'video',{retake:true},now);assert.equal(u.$push[prefix+'interviewAttempts'].video,'saved.mp4');assert.equal(u.$push[prefix+'interviewAttempts'].interviewSummary,'summary');assert.equal(u.$unset[prefix+'video'],'');assert.equal(u.$set[prefix+'interviewStatus'],'Sent');});
+test('completed invitation requires explicit retake',()=>{assert.throws(()=>invitationUpdate({CodingInterviewStatus:'Completed'},'coding',{},now),/retake/);});
+test('valid resend retains expiry and instructions',()=>{const expiry=new Date('2026-10-30T00:00:00Z');const u=invitationUpdate({interviewStatus:'Sent',interviewViewLinkExpiresin:expiry,instructions:['original'],isCodingRound:false},'video',{expiryHours:168,instructions:['changed']},now);assert.equal(u.$set[prefix+'interviewViewLinkExpiresin'],expiry);assert.deepEqual(u.$set[prefix+'instructions'],['original']);});
+test('expired invitation renews for configured validity',()=>{const u=invitationUpdate({interviewStatus:'Sent',interviewViewLinkExpiresin:new Date('2026-10-28')},'video',{expiryHours:48},now);assert.equal(u.$set[prefix+'interviewViewLinkExpiresin'].getTime()-now.getTime(),48*3600000);});
+test('active processing cannot be reset by resend',()=>{assert.throws(()=>invitationUpdate({interviewStatus:'Analysis In Progress'},'video',{},now),/processing/);});
